@@ -1,0 +1,57 @@
+name: Build Native iOS App (iPhone)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Build Web Bundle
+        run: npm run build
+
+      - name: Sync Capacitor iOS Project
+        run: npx cap sync ios
+
+      - name: Setup CocoaPods
+        run: |
+          cd ios/App
+          pod install
+
+      - name: Build Native iOS App (Xcode)
+        run: |
+          xcodebuild -workspace ios/App/App.xcworkspace \
+                     -scheme App \
+                     -configuration Debug \
+                     -sdk iphoneos \
+                     -derivedDataPath ios/build \
+                     CODE_SIGNING_ALLOWED=NO \
+                     CODE_SIGNING_REQUIRED=NO
+
+      - name: Create Payload and IPA Package
+        run: |
+          mkdir -p ios/Payload
+          cp -r ios/build/Build/Products/Debug-iphoneos/App.app ios/Payload/
+          cd ios
+          zip -r Bluemake-iOS-Native.ipa Payload
+
+      - name: Upload iOS App Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bluemake-iOS-Native-IPA
+          path: ios/Bluemake-iOS-Native.ipa
