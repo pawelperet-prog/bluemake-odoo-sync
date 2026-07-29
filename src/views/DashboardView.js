@@ -1,6 +1,7 @@
 import { getProducts, getCategories, checkApiStatus } from '../services/odooApi.js';
 import { openSettingsModal } from './SettingsModal.js';
 import { openCreateProductModal } from './CreateProductModal.js';
+import { openReportWindow, downloadReportHtml } from '../utils/reportGenerator.js';
 
 export function renderDashboardView(container, navigateTo) {
   let activeFilter = 'RAW'; // 'RAW' (Surowiec), 'FINISHED' (Produkt gotowy), 'ALL' (Wszystkie)
@@ -16,6 +17,10 @@ export function renderDashboardView(container, navigateTo) {
         <h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Bluemake</h1>
       </div>
       <div class="flex items-center gap-2">
+        <button id="hdr-print-report" title="Drukuj Zestawienie Surowców" class="flex items-center gap-1 bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-caps px-3 py-1.5 rounded border border-outline-variant text-xs font-bold transition-all active:scale-95">
+          <span class="material-symbols-outlined text-[16px]">print</span>
+          <span class="hidden sm:inline">RAPORT</span>
+        </button>
         <div id="conn-pill" class="flex items-center gap-1.5 bg-surface-container rounded-full px-3 py-1 cursor-pointer">
           <div id="conn-dot" class="w-2 h-2 rounded-full bg-gray-400"></div>
           <span id="conn-label" class="font-label-caps text-label-caps text-on-surface-variant">Sprawdzanie...</span>
@@ -25,7 +30,7 @@ export function renderDashboardView(container, navigateTo) {
     </header>
 
     <main class="flex-1 w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-stack-md flex flex-col gap-3 mt-14 mb-24">
-      <!-- Search & Add Bar -->
+      <!-- Search & Add & Print Bar -->
       <div class="flex flex-col sm:flex-row gap-2 w-full">
         <div class="relative flex-1 h-touch-target-min">
           <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
@@ -33,12 +38,19 @@ export function renderDashboardView(container, navigateTo) {
         </div>
         
         <!-- Interactive Category Select Button -->
-        <button id="cat-selector-btn" class="h-touch-target-min bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-caps px-4 rounded flex items-center justify-center gap-2 transition-colors flex-shrink-0 font-bold border border-outline-variant">
+        <button id="cat-selector-btn" class="h-touch-target-min bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-caps px-3.5 rounded flex items-center justify-center gap-1.5 transition-colors flex-shrink-0 font-bold border border-outline-variant">
           <span class="material-symbols-outlined text-[18px]">filter_list</span>
           <span id="cat-btn-label">SUROWIEC (ID: 4)</span>
         </button>
 
-        <button id="btn-add-product" class="h-touch-target-min bg-[#ff6b00] hover:bg-[#e66000] text-white font-label-caps px-4 rounded flex items-center justify-center gap-2 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0">
+        <!-- Printable Report Button -->
+        <button id="btn-print-report" class="h-touch-target-min bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-4 rounded flex items-center justify-center gap-1.5 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0">
+          <span class="material-symbols-outlined text-[18px]">print</span>
+          ZESTAWIENIE HTML
+        </button>
+
+        <!-- Add Rod Button -->
+        <button id="btn-add-product" class="h-touch-target-min bg-[#ff6b00] hover:bg-[#e66000] text-white font-label-caps px-4 rounded flex items-center justify-center gap-1.5 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0">
           <span class="material-symbols-outlined text-[20px]">add_box</span>
           DODAJ PRĘT
         </button>
@@ -288,6 +300,17 @@ export function renderDashboardView(container, navigateTo) {
   container.querySelector('#close-cat-modal').addEventListener('click', () => {
     container.querySelector('#cat-modal').classList.add('hidden');
   });
+
+  const handlePrintReport = () => {
+    if (allProducts && allProducts.length > 0) {
+      openReportWindow(allProducts);
+    } else {
+      alert('Brak pobranych produktów do wygenerowania raportu.');
+    }
+  };
+
+  container.querySelector('#btn-print-report').addEventListener('click', handlePrintReport);
+  container.querySelector('#hdr-print-report').addEventListener('click', handlePrintReport);
 
   container.querySelector('#btn-add-product').addEventListener('click', () => {
     openCreateProductModal(() => loadData());
