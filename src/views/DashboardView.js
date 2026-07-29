@@ -1,7 +1,7 @@
 import { getProducts, getCategories, checkApiStatus } from '../services/odooApi.js';
 import { openSettingsModal } from './SettingsModal.js';
 import { openCreateProductModal } from './CreateProductModal.js';
-import { openReportWindow, downloadReportHtml } from '../utils/reportGenerator.js';
+import { openReportWindow } from '../utils/reportGenerator.js';
 
 export function renderDashboardView(container, navigateTo) {
   let activeFilter = 'RAW'; // 'RAW' (Surowiec), 'FINISHED' (Produkt gotowy), 'ALL' (Wszystkie)
@@ -17,9 +17,9 @@ export function renderDashboardView(container, navigateTo) {
         <h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Bluemake</h1>
       </div>
       <div class="flex items-center gap-2">
-        <button id="hdr-print-report" title="Drukuj Zestawienie Surowców" class="flex items-center gap-1 bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-caps px-3 py-1.5 rounded border border-outline-variant text-xs font-bold transition-all active:scale-95">
-          <span class="material-symbols-outlined text-[16px]">print</span>
-          <span class="hidden sm:inline">RAPORT</span>
+        <button id="hdr-valuation" title="Podstrona Wyceny i Raportu Magazynu" class="flex items-center gap-1 bg-primary text-on-primary font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
+          <span class="material-symbols-outlined text-[16px]">payments</span>
+          <span>WYCENA</span>
         </button>
         <div id="conn-pill" class="flex items-center gap-1.5 bg-surface-container rounded-full px-3 py-1 cursor-pointer">
           <div id="conn-dot" class="w-2 h-2 rounded-full bg-gray-400"></div>
@@ -30,11 +30,11 @@ export function renderDashboardView(container, navigateTo) {
     </header>
 
     <main class="flex-1 w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-stack-md flex flex-col gap-3 mt-14 mb-24">
-      <!-- Search & Add & Print Bar -->
+      <!-- Search & Action Buttons Bar -->
       <div class="flex flex-col sm:flex-row gap-2 w-full">
         <div class="relative flex-1 h-touch-target-min">
           <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
-          <input id="search-input" class="w-full h-full pl-12 pr-4 bg-surface-container rounded border-none font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:ring-2 focus:ring-primary focus:bg-surface" placeholder="Szukaj pręta / materiału (SKU lub Nazwa)" type="text"/>
+          <input id="search-input" class="w-full h-full pl-12 pr-4 bg-surface-container rounded border-none font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:ring-2 focus:ring-primary focus:bg-surface" placeholder="Szukaj pręta / blachy (SKU lub Nazwa)" type="text"/>
         </div>
         
         <!-- Interactive Category Select Button -->
@@ -43,14 +43,20 @@ export function renderDashboardView(container, navigateTo) {
           <span id="cat-btn-label">SUROWIEC (ID: 4)</span>
         </button>
 
+        <!-- Valuation Subpage Button -->
+        <button id="btn-open-valuation" class="h-touch-target-min bg-emerald-700 hover:bg-emerald-800 text-white font-label-caps px-4 rounded flex items-center justify-center gap-1.5 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0">
+          <span class="material-symbols-outlined text-[18px]">payments</span>
+          WYCENA & WAGA
+        </button>
+
         <!-- Printable Report Button -->
-        <button id="btn-print-report" class="h-touch-target-min bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-4 rounded flex items-center justify-center gap-1.5 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0">
+        <button id="btn-print-report" class="h-touch-target-min bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-3.5 rounded flex items-center justify-center gap-1.5 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0">
           <span class="material-symbols-outlined text-[18px]">print</span>
-          ZESTAWIENIE HTML
+          RAPORT HTML
         </button>
 
         <!-- Add Rod Button -->
-        <button id="btn-add-product" class="h-touch-target-min bg-[#ff6b00] hover:bg-[#e66000] text-white font-label-caps px-4 rounded flex items-center justify-center gap-1.5 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0">
+        <button id="btn-add-product" class="h-touch-target-min bg-[#ff6b00] hover:bg-[#e66000] text-white font-label-caps px-3.5 rounded flex items-center justify-center gap-1.5 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0">
           <span class="material-symbols-outlined text-[20px]">add_box</span>
           DODAJ PRĘT
         </button>
@@ -88,15 +94,19 @@ export function renderDashboardView(container, navigateTo) {
 
     <!-- BottomNavBar (Mobile Only) -->
     <nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 bg-surface px-margin-mobile border-t-2 border-primary md:hidden">
-      <div class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-1 cursor-pointer transition-all duration-150 active:scale-90">
+      <div class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-3 py-1 cursor-pointer transition-all duration-150 active:scale-90">
         <span class="material-symbols-outlined mb-1">dashboard</span>
         <span class="font-label-caps text-label-caps">Dashboard</span>
       </div>
-      <div id="nav-scanner" class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
+      <div id="nav-val" class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
+        <span class="material-symbols-outlined mb-1">payments</span>
+        <span class="font-label-caps text-label-caps">Wycena</span>
+      </div>
+      <div id="nav-scanner" class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
         <span class="material-symbols-outlined mb-1">barcode_scanner</span>
         <span class="font-label-caps text-label-caps">Scanner</span>
       </div>
-      <div id="nav-history" class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
+      <div id="nav-history" class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
         <span class="material-symbols-outlined mb-1">history</span>
         <span class="font-label-caps text-label-caps">History</span>
       </div>
@@ -186,7 +196,6 @@ export function renderDashboardView(container, navigateTo) {
   function filterAndRender() {
     const listEl = container.querySelector('#product-list');
 
-    // Offline Handling (When disconnected or API returned null)
     if (allProducts === null) {
       listEl.innerHTML = `
         <div class="bg-surface-container-lowest border-2 border-red-300 rounded-lg p-6 text-center flex flex-col items-center gap-3 my-6 shadow-md">
@@ -242,7 +251,6 @@ export function renderDashboardView(container, navigateTo) {
     btnAll.className = `px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${activeFilter === 'ALL' ? activeClasses : inactiveClasses}`;
   }
 
-  // Compact High-Density List Rendering
   function renderCompactProductList(products) {
     const listEl = container.querySelector('#product-list');
     if (!products || products.length === 0) {
@@ -301,16 +309,13 @@ export function renderDashboardView(container, navigateTo) {
     container.querySelector('#cat-modal').classList.add('hidden');
   });
 
-  const handlePrintReport = () => {
-    if (allProducts && allProducts.length > 0) {
-      openReportWindow(allProducts);
-    } else {
-      alert('Brak pobranych produktów do wygenerowania raportu.');
-    }
-  };
+  container.querySelector('#btn-open-valuation').addEventListener('click', () => navigateTo('valuation'));
+  container.querySelector('#hdr-valuation').addEventListener('click', () => navigateTo('valuation'));
+  container.querySelector('#nav-val').addEventListener('click', () => navigateTo('valuation'));
 
-  container.querySelector('#btn-print-report').addEventListener('click', handlePrintReport);
-  container.querySelector('#hdr-print-report').addEventListener('click', handlePrintReport);
+  container.querySelector('#btn-print-report').addEventListener('click', () => {
+    if (allProducts) openReportWindow(allProducts);
+  });
 
   container.querySelector('#btn-add-product').addEventListener('click', () => {
     openCreateProductModal(() => loadData());
