@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html lang="pl"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scanner - Odoo Industrial Sync</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts for Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary": "#152023",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f1f4f3",
+                    "primary": "#181f21",
+                    "on-tertiary-fixed-variant": "#3e484c",
+                    "surface": "#f7faf9",
+                    "on-secondary-fixed": "#410006",
+                    "on-tertiary-fixed": "#131d21",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#ebeeed",
+                    "inverse-primary": "#c1c8ca",
+                    "surface-container-high": "#e6e9e8",
+                    "surface-tint": "#586062",
+                    "secondary-fixed": "#ffdad8",
+                    "error-container": "#ffdad6",
+                    "surface-bright": "#f7faf9",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-highest": "#e0e3e2",
+                    "on-background": "#181c1c",
+                    "on-primary-fixed": "#161d1f",
+                    "outline-variant": "#c3c7c8",
+                    "secondary-container": "#ff7675",
+                    "tertiary-fixed": "#d9e4e9",
+                    "secondary-fixed-dim": "#ffb3b0",
+                    "on-error": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "tertiary-container": "#2a3538",
+                    "surface-dim": "#d7dbda",
+                    "on-secondary-fixed-variant": "#881d24",
+                    "primary-container": "#2d3436",
+                    "on-primary-container": "#959c9f",
+                    "outline": "#747879",
+                    "secondary": "#a83639",
+                    "primary-fixed-dim": "#c1c8ca",
+                    "primary-fixed": "#dde4e6",
+                    "on-secondary-container": "#720b16",
+                    "tertiary-fixed-dim": "#bdc8cd",
+                    "inverse-surface": "#2d3131",
+                    "on-surface-variant": "#434749",
+                    "on-tertiary-container": "#929da2",
+                    "inverse-on-surface": "#eef1f0",
+                    "on-surface": "#181c1c",
+                    "surface-variant": "#e0e3e2",
+                    "background": "#f7faf9",
+                    "on-primary-fixed-variant": "#41484a",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "stack-md": "16px",
+                    "margin-desktop": "32px",
+                    "stack-lg": "24px",
+                    "touch-target-min": "48px",
+                    "stack-sm": "8px",
+                    "gutter": "16px",
+                    "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                    "label-caps": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "numeric-display": ["Inter"]
+            },
+            "fontSize": {
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "numeric-display": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+
+        @keyframes scanline {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .animate-scanline {
+            animation: scanline 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        /* Hide TopAppBar border on mobile to follow rules, even though JSON injects it, 
+           the rule "PROHIBIT all top/bottom border lines" takes precedence for layout */
+        .top-app-bar-container {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Tonal shift instead of border */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background h-screen flex flex-col overflow-hidden font-body-md text-body-md">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-margin-mobile h-touch-target-min w-full bg-surface top-app-bar-container z-50 sticky top-0">
+<div class="flex items-center gap-stack-sm text-on-surface-variant active:scale-95 transition-transform duration-100 hover:bg-surface-container-high rounded p-1 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="settings_remote">settings_remote</span>
+</div>
+<div class="font-headline-md text-headline-md font-bold text-primary truncate px-2">
+            Odoo Industrial Sync
+        </div>
+<div class="flex items-center gap-stack-sm text-on-surface-variant active:scale-95 transition-transform duration-100 hover:bg-surface-container-high rounded p-1 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="cloud_done">cloud_done</span>
+</div>
+</header>
+<!-- Main Scanner Canvas -->
+<main class="flex-1 relative bg-tertiary overflow-hidden">
+<!-- Camera Feed Placeholder -->
+<div class="absolute inset-0 bg-cover bg-center" data-alt="A point-of-view shot looking through a camera viewfinder in a brightly lit industrial warehouse. The focus is on a heavy-duty steel shelving unit with thick metal rods and crossbeams. Industrial minimalism style, high contrast, sharp details. A small metallic tag with a blurred QR code is attached to one of the steel rods. The overall lighting is harsh, functional warehouse lighting, creating a bright light-mode aesthetic despite the industrial setting. Deep slate and bright white tones dominate." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDWPixnLNPbRaRKXOLCmMRPnTH4Ixchu62T9yFsuT4NwtN0QeN8Ihw5mgRei-5vpOQEyrZYMe8nCEtMrXsRqN_gQixEPvzxe6FN3kKRVNwaG5N5R-JSatqWWzX4hXSjiqyeeeSNal-7PrHHagRL2UOnPHp1FXbs5UiShvvgMoA_ngMAfncdd1iXNc-vu-Y1euBHgsjI08YhaTeOggpOrCJwDiMOEkcUGsYXVtKHIj_WsTlwfrEGv-GHw4ldcqRvWWV2Er7tXz7PSu0');">
+</div>
+<!-- Semi-transparent overlay to focus on the scanner frame -->
+<div class="absolute inset-0 flex flex-col pointer-events-none z-10">
+<!-- Top block -->
+<div class="flex-1 bg-tertiary/70 backdrop-blur-[2px]"></div>
+<!-- Middle row with cutout -->
+<div class="flex h-64 md:h-80 w-full">
+<!-- Left block -->
+<div class="flex-1 bg-tertiary/70 backdrop-blur-[2px]"></div>
+<!-- The Scanner Frame Cutout -->
+<div class="w-64 md:w-80 h-full relative">
+<!-- Frame Borders (Industrial corners) -->
+<div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-surface-container-lowest"></div>
+<div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-surface-container-lowest"></div>
+<div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-surface-container-lowest"></div>
+<div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-surface-container-lowest"></div>
+<!-- Subtle inner border for the full square -->
+<div class="absolute inset-0 border border-surface-container-lowest/30"></div>
+<!-- Animated Scan Line -->
+<div class="absolute left-0 right-0 h-[2px] bg-secondary shadow-[0_0_8px_rgba(168,54,57,0.8)] animate-scanline z-20"></div>
+</div>
+<!-- Right block -->
+<div class="flex-1 bg-tertiary/70 backdrop-blur-[2px]"></div>
+</div>
+<!-- Bottom block -->
+<div class="flex-1 bg-tertiary/70 backdrop-blur-[2px] relative flex flex-col items-center">
+<!-- Instruction Text -->
+<div class="mt-stack-lg px-margin-mobile text-center">
+<p class="font-headline-md text-headline-md text-surface-container-lowest bg-tertiary/50 px-4 py-2 rounded-lg inline-block shadow-lg border border-surface-container-lowest/10">
+                        Zeskanuj kod QR z pręta
+                    </p>
+</div>
+</div>
+</div>
+<!-- Interactive UI Elements (Flashlight, Zoom) -->
+<div class="absolute top-stack-md right-margin-mobile flex flex-col gap-stack-md z-20">
+<button class="w-touch-target-min h-touch-target-min rounded-full bg-surface-container-lowest/10 backdrop-blur-md border border-surface-container-lowest/30 flex items-center justify-center text-surface-container-lowest hover:bg-surface-container-lowest/20 active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="flashlight_off">flashlight_off</span>
+</button>
+<button class="w-touch-target-min h-touch-target-min rounded-full bg-surface-container-lowest/10 backdrop-blur-md border border-surface-container-lowest/30 flex items-center justify-center text-surface-container-lowest hover:bg-surface-container-lowest/20 active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="zoom_in">zoom_in</span>
+</button>
+</div>
+<!-- Simulated Scan Success Indicator (Hidden by default, used for interaction demo logic if needed) -->
+<div class="absolute inset-0 bg-surface-container-lowest/90 z-30 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300" id="scan-success">
+<div class="w-16 h-16 rounded-full bg-[#4CAF50] flex items-center justify-center mb-stack-md">
+<span class="material-symbols-outlined text-surface-container-lowest !text-4xl fill" data-icon="check">check</span>
+</div>
+<p class="font-headline-md text-headline-md text-primary">Kod odczytany</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-stack-sm">Ładowanie karty produktu...</p>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 bg-surface px-margin-mobile pb-2 md:hidden" style="box-shadow: 0 -1px 10px rgba(0,0,0,0.05);">
+<!-- Dashboard (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-highest rounded-xl active:scale-90 transition-all duration-150 h-full w-full max-w-[80px]">
+<span class="material-symbols-outlined mb-1" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps truncate">Dashboard</span>
+</button>
+<!-- Scanner (Active) -->
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-1 hover:bg-surface-container-highest active:scale-90 transition-all duration-150 h-full w-full max-w-[80px]">
+<span class="material-symbols-outlined mb-1 fill" data-icon="barcode_scanner">barcode_scanner</span>
+<span class="font-label-caps text-label-caps truncate">Scanner</span>
+</button>
+<!-- History (Inactive) -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-highest rounded-xl active:scale-90 transition-all duration-150 h-full w-full max-w-[80px]">
+<span class="material-symbols-outlined mb-1" data-icon="history">history</span>
+<span class="font-label-caps text-label-caps truncate">History</span>
+</button>
+</nav>
+<!-- Desktop Navigation Warning (Since BottomNav is hidden on md+ in typical scenarios, providing a fallback or keeping layout clean) -->
+<div class="hidden md:flex fixed bottom-0 w-full bg-surface p-4 border-t border-surface-variant items-center justify-center z-50 text-on-surface-variant font-label-caps text-label-caps">
+<span class="material-symbols-outlined mr-2">info</span> Scanner interface optimized for mobile devices.
+    </div>
+<!-- Script to simulate scanning interaction for demonstration -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Optional: Click the center frame to simulate a successful scan
+            const scannerFrame = document.querySelector('.relative.w-64');
+            const successOverlay = document.getElementById('scan-success');
+
+            if (scannerFrame && successOverlay) {
+                // Make the wrapper pointer-events-auto just for this demo
+                scannerFrame.parentElement.classList.remove('pointer-events-none');
+                scannerFrame.parentElement.classList.add('cursor-pointer');
+                
+                scannerFrame.parentElement.addEventListener('click', () => {
+                    successOverlay.classList.remove('opacity-0');
+                    successOverlay.classList.add('opacity-100');
+                    // In a real app, you would route to the product card here
+                    setTimeout(() => {
+                        successOverlay.classList.remove('opacity-100');
+                        successOverlay.classList.add('opacity-0');
+                    }, 2000);
+                });
+            }
+        });
+    </script>
+</body></html>

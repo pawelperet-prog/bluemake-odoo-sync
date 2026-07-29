@@ -1,0 +1,16 @@
+{
+  "short_name": "Bluemake",
+  "name": "Bluemake Odoo 19 Sync",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": ".",
+  "background_color": "#f7faf9",
+  "theme_color": "#181f21",
+  "display": "standalone",
+  "orientation": "portrait"
+}

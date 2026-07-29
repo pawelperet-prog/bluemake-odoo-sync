@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+android/app/build/
+android/build/
+android/.gradle/
+.gradle/
+
+# IDE / OS files
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Local env / logs
+*.log
+.env.local
+.env.*.local
+
+# Generated APKs (optional - ignore build outputs)
+# OdooIndustrialSync.apk

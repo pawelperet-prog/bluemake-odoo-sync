@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>History &amp; Sync Status</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary": "#152023",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f1f4f3",
+                        "primary": "#181f21",
+                        "on-tertiary-fixed-variant": "#3e484c",
+                        "surface": "#f7faf9",
+                        "on-secondary-fixed": "#410006",
+                        "on-tertiary-fixed": "#131d21",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#ebeeed",
+                        "inverse-primary": "#c1c8ca",
+                        "surface-container-high": "#e6e9e8",
+                        "surface-tint": "#586062",
+                        "secondary-fixed": "#ffdad8",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#f7faf9",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e0e3e2",
+                        "on-background": "#181c1c",
+                        "on-primary-fixed": "#161d1f",
+                        "outline-variant": "#c3c7c8",
+                        "secondary-container": "#ff7675",
+                        "tertiary-fixed": "#d9e4e9",
+                        "secondary-fixed-dim": "#ffb3b0",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#2a3538",
+                        "surface-dim": "#d7dbda",
+                        "on-secondary-fixed-variant": "#881d24",
+                        "primary-container": "#2d3436",
+                        "on-primary-container": "#959c9f",
+                        "outline": "#747879",
+                        "secondary": "#a83639",
+                        "primary-fixed-dim": "#c1c8ca",
+                        "primary-fixed": "#dde4e6",
+                        "on-secondary-container": "#720b16",
+                        "tertiary-fixed-dim": "#bdc8cd",
+                        "inverse-surface": "#2d3131",
+                        "on-surface-variant": "#434749",
+                        "on-tertiary-container": "#929da2",
+                        "inverse-on-surface": "#eef1f0",
+                        "on-surface": "#181c1c",
+                        "surface-variant": "#e0e3e2",
+                        "background": "#f7faf9",
+                        "on-primary-fixed-variant": "#41484a",
+                        "on-primary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "margin-desktop": "32px",
+                        "stack-lg": "24px",
+                        "touch-target-min": "48px",
+                        "stack-sm": "8px",
+                        "gutter": "16px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "numeric-display": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "numeric-display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.03em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #F4F7F6; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0; }
+        .nav-active { border-bottom: 2px solid theme('colors.primary'); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md pt-[64px] pb-[80px] md:pb-0">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-tertiary border-b border-outline-variant dark:border-outline fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-[64px]">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed">settings_remote</span>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">Odoo Industrial Sync</span>
+</div>
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed">cloud_done</span>
+</header>
+<main class="flex-grow flex flex-col px-margin-mobile py-stack-lg max-w-4xl mx-auto w-full gap-stack-lg">
+<!-- Status Section -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-stack-md flex flex-col gap-stack-sm md:flex-row md:items-center md:justify-between shadow-sm">
+<div class="flex flex-col gap-2">
+<h2 class="font-headline-md text-headline-md text-primary">API Connection Status</h2>
+<div class="flex items-center gap-4 text-on-surface-variant font-body-md text-body-md">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-green-500"></div>
+<span>Odoo API: <strong class="text-on-surface">Connected</strong></span>
+</div>
+<span class="text-outline">|</span>
+<span>UID: <strong>9</strong></span>
+<span class="text-outline">|</span>
+<span>Database: <strong>odoo</strong></span>
+</div>
+</div>
+<button class="bg-[#FF6B00] hover:bg-orange-600 text-white font-label-caps text-label-caps px-6 h-touch-target-min rounded flex items-center justify-center gap-2 active:scale-95 transition-transform duration-100 shadow-md">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">sync</span>
+                SYNCHRONIZUJ TERAZ
+            </button>
+</section>
+<!-- History List -->
+<section class="flex flex-col gap-stack-md">
+<h3 class="font-headline-md text-headline-md text-on-surface border-b border-outline-variant pb-2">Recent Activities</h3>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col">
+<!-- Item 1: Pending -->
+<div class="p-stack-md border-b border-outline-variant hover:bg-surface-container-low flex flex-col md:flex-row gap-stack-md justify-between items-start md:items-center transition-colors">
+<div class="flex items-start gap-4">
+<div class="bg-surface-container p-3 rounded-full flex-shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant">cut</span>
+</div>
+<div>
+<div class="font-body-lg text-body-lg text-primary font-bold">Ucięcie S355-FI20: -1.5m</div>
+<div class="font-body-md text-body-md text-on-surface-variant mt-1">Nowy stan: 14.0m</div>
+<div class="font-label-caps text-label-caps text-outline mt-2">Dziś, 10:45 AM</div>
+</div>
+</div>
+<div class="flex items-center gap-2 bg-yellow-100 text-yellow-800 border border-yellow-300 px-3 py-1 rounded-full font-label-caps text-label-caps self-start md:self-auto">
+<span class="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                        PENDING
+                    </div>
+</div>
+<!-- Item 2: Synchronized -->
+<div class="p-stack-md border-b border-outline-variant hover:bg-surface-container-low flex flex-col md:flex-row gap-stack-md justify-between items-start md:items-center transition-colors">
+<div class="flex items-start gap-4">
+<div class="bg-surface-container p-3 rounded-full flex-shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant">inventory_2</span>
+</div>
+<div>
+<div class="font-body-lg text-body-lg text-primary font-bold">Przyjęcie S235-PL10: +50 szt.</div>
+<div class="font-body-md text-body-md text-on-surface-variant mt-1">Nowy stan: 150 szt.</div>
+<div class="font-label-caps text-label-caps text-outline mt-2">Dziś, 09:12 AM</div>
+</div>
+</div>
+<div class="flex items-center gap-2 bg-green-100 text-green-800 border border-green-300 px-3 py-1 rounded-full font-label-caps text-label-caps self-start md:self-auto">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                        SYNCHRONIZED
+                    </div>
+</div>
+<!-- Item 3: Synchronized -->
+<div class="p-stack-md hover:bg-surface-container-low flex flex-col md:flex-row gap-stack-md justify-between items-start md:items-center transition-colors">
+<div class="flex items-start gap-4">
+<div class="bg-surface-container p-3 rounded-full flex-shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant">straighten</span>
+</div>
+<div>
+<div class="font-body-lg text-body-lg text-primary font-bold">Korekta C45-FI50: -0.2m</div>
+<div class="font-body-md text-body-md text-on-surface-variant mt-1">Powód: Uszkodzenie materiału</div>
+<div class="font-label-caps text-label-caps text-outline mt-2">Wczoraj, 15:30 PM</div>
+</div>
+</div>
+<div class="flex items-center gap-2 bg-green-100 text-green-800 border border-green-300 px-3 py-1 rounded-full font-label-caps text-label-caps self-start md:self-auto">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                        SYNCHRONIZED
+                    </div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile only based on active state logic for primary destinations) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 bg-surface dark:bg-tertiary px-margin-mobile border-t border-outline-variant shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container px-4 py-1 hover:bg-surface-container-highest dark:hover:bg-tertiary-container rounded active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps mt-1">Dashboard</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-container px-4 py-1 hover:bg-surface-container-highest dark:hover:bg-tertiary-container rounded active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined">barcode_scanner</span>
+<span class="font-label-caps text-label-caps mt-1">Scanner</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container dark:bg-secondary-container dark:text-on-secondary-container rounded-xl px-4 py-1 active:scale-90 transition-all duration-150">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">history</span>
+<span class="font-label-caps text-label-caps mt-1">History</span>
+</button>
+</nav>
+</body></html>
