@@ -1,24 +1,16 @@
 import { getProducts, checkApiStatus } from '../services/odooApi.js';
 import { parseMaterialType, parseSteelGrade, calculateWeightKg, formatSpecs, STEEL_GRADES } from '../utils/valuationCalculator.js';
 import { generateRawMaterialsHtml } from '../utils/reportGenerator.js';
+import { getMarketReferencePrice, DEFAULT_MARKET_PRICES } from '../utils/marketPrices.js';
 
 const LOCAL_STORAGE_PRICES_KEY = 'odoo_raw_material_prices';
 
 function loadSavedPrices() {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_PRICES_KEY);
-    return raw ? JSON.parse(raw) : {
-      'S355': 4.50,
-      'S235': 4.20,
-      '1.4301': 16.50,
-      'HM': 4.80,
-      'HMT': 5.20,
-      'C45': 5.00,
-      '42CRMO4': 7.50,
-      'DEFAULT': 4.50
-    };
+    return raw ? JSON.parse(raw) : { ...DEFAULT_MARKET_PRICES };
   } catch (e) {
-    return { 'DEFAULT': 4.50 };
+    return { ...DEFAULT_MARKET_PRICES };
   }
 }
 
@@ -44,13 +36,17 @@ export function renderValuationView(container, navigateTo) {
         <h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Wycena & Raport Surowców</h1>
       </div>
       <div class="flex items-center gap-2">
+        <button id="btn-fill-market" title="Wypełnij średnimi cenami rynkowymi stali" class="bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-3 py-1.5 rounded flex items-center gap-1.5 text-xs font-bold shadow-sm uppercase">
+          <span class="material-symbols-outlined text-[16px]">trending_up</span>
+          <span>CENY RYNKOWE</span>
+        </button>
         <button id="btn-export-excel" class="bg-emerald-700 hover:bg-emerald-800 text-white font-label-caps px-3 py-1.5 rounded flex items-center gap-1.5 text-xs font-bold shadow-sm uppercase">
           <span class="material-symbols-outlined text-[16px]">table_chart</span>
-          EKSPORTUJ EXCEL
+          <span class="hidden sm:inline">EXCEL</span>
         </button>
-        <button id="btn-export-pdf" class="bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-3 py-1.5 rounded flex items-center gap-1.5 text-xs font-bold shadow-sm uppercase">
+        <button id="btn-export-pdf" class="bg-primary hover:bg-tertiary text-on-primary font-label-caps px-3 py-1.5 rounded flex items-center gap-1.5 text-xs font-bold shadow-sm uppercase">
           <span class="material-symbols-outlined text-[16px]">print</span>
-          DRUKUJ / PDF
+          <span class="hidden sm:inline">PDF</span>
         </button>
       </div>
     </header>
@@ -73,27 +69,33 @@ export function renderValuationView(container, navigateTo) {
         </div>
       </div>
 
-      <!-- Filters Section -->
+      <!-- Filters & Reference Info Bar -->
       <div class="flex flex-col gap-2 bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/40">
-        <!-- Type Filter Pills -->
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-xs font-bold text-on-surface-variant uppercase mr-1">Rodzaj:</span>
-          <button id="type-all" class="px-3 py-1 text-xs font-bold rounded-full bg-primary text-on-primary shadow-sm">WSZYSTKIE</button>
-          <button id="type-blacha" class="px-3 py-1 text-xs font-bold rounded-full bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest">BLACHY</button>
-          <button id="type-pret" class="px-3 py-1 text-xs font-bold rounded-full bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest">PRĘTY</button>
-          <button id="type-plaskownik" class="px-3 py-1 text-xs font-bold rounded-full bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest">PŁASKOWNIKI</button>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <!-- Type Filter Pills -->
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-bold text-on-surface-variant uppercase mr-1">Rodzaj:</span>
+            <button id="type-all" class="px-3 py-1 text-xs font-bold rounded-full bg-primary text-on-primary shadow-sm">WSZYSTKIE</button>
+            <button id="type-blacha" class="px-3 py-1 text-xs font-bold rounded-full bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest">BLACHY</button>
+            <button id="type-pret" class="px-3 py-1 text-xs font-bold rounded-full bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest">PRĘTY</button>
+            <button id="type-plaskownik" class="px-3 py-1 text-xs font-bold rounded-full bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest">PŁASKOWNIKI</button>
+          </div>
+
+          <button id="btn-fill-market-sec" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold px-3 py-1 rounded text-xs flex items-center gap-1">
+            <span class="material-symbols-outlined text-[15px]">bolt</span> Użyj Średnich Cen Rynkowych
+          </button>
         </div>
 
         <!-- Grade Filter Pills -->
         <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-outline-variant/30">
           <span class="text-xs font-bold text-on-surface-variant uppercase mr-1">Gatunek:</span>
           <button data-grade="ALL" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-primary text-on-primary">WSZYSTKIE</button>
-          <button data-grade="S355" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-amber-100 text-amber-900 border-amber-300">S355</button>
-          <button data-grade="1.4301" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-blue-100 text-blue-900 border-blue-300">1.4301</button>
-          <button data-grade="HM" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-emerald-100 text-emerald-900 border-emerald-300">HM</button>
-          <button data-grade="HMT" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-purple-100 text-purple-900 border-purple-300">HMT</button>
-          <button data-grade="S235" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-sky-100 text-sky-900 border-sky-300">S235</button>
-          <button data-grade="C45" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-teal-100 text-teal-900 border-teal-300">C45</button>
+          <button data-grade="S355" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-amber-100 text-amber-900 border-amber-300">S355 (~4.50zł)</button>
+          <button data-grade="1.4301" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-blue-100 text-blue-900 border-blue-300">1.4301 (~17.50zł)</button>
+          <button data-grade="HM" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-emerald-100 text-emerald-900 border-emerald-300">HM (~5.80zł)</button>
+          <button data-grade="HMT" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-purple-100 text-purple-900 border-purple-300">HMT (~6.20zł)</button>
+          <button data-grade="S235" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-sky-100 text-sky-900 border-sky-300">S235 (~4.15zł)</button>
+          <button data-grade="C45" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-teal-100 text-teal-900 border-teal-300">C45 (~5.10zł)</button>
         </div>
       </div>
 
@@ -107,7 +109,7 @@ export function renderValuationView(container, navigateTo) {
               <th class="p-3">Nazwa Surowca & Wymiar</th>
               <th class="p-3 text-right">Stan</th>
               <th class="p-3 text-right">Waga (kg)</th>
-              <th class="p-3 text-right">Cena PLN/kg</th>
+              <th class="p-3 text-right">Cena PLN/kg (Rynkowa)</th>
               <th class="p-3 text-right">Wartość (PLN)</th>
             </tr>
           </thead>
@@ -148,7 +150,18 @@ export function renderValuationView(container, navigateTo) {
     const grade = parseSteelGrade(p.sku, p.name);
     if (itemPrices[p.sku] !== undefined) return itemPrices[p.sku];
     if (itemPrices[grade] !== undefined) return itemPrices[grade];
-    return itemPrices['DEFAULT'] || 4.50;
+    return getMarketReferencePrice(p.sku, p.name, grade);
+  }
+
+  function applyMarketPrices() {
+    allProducts.forEach(p => {
+      const grade = parseSteelGrade(p.sku, p.name);
+      const marketPrice = getMarketReferencePrice(p.sku, p.name, grade);
+      itemPrices[p.sku] = marketPrice;
+      itemPrices[grade] = marketPrice;
+    });
+    savePrices(itemPrices);
+    renderTable();
   }
 
   function renderTable() {
@@ -182,6 +195,7 @@ export function renderValuationView(container, navigateTo) {
       const weightKg = calculateWeightKg(p);
       const specs = formatSpecs(p);
       const pricePerKg = getPriceForProduct(p);
+      const marketRef = getMarketReferencePrice(p.sku, p.name, grade);
       const rowValuation = weightKg * pricePerKg;
 
       totalWeightSum += weightKg;
@@ -213,7 +227,10 @@ export function renderValuationView(container, navigateTo) {
             ${weightKg.toFixed(1)} kg
           </td>
           <td class="p-3 text-right">
-            <input data-sku="${p.sku}" data-grade="${grade}" type="number" step="0.1" value="${pricePerKg.toFixed(2)}" class="price-input w-24 bg-surface-container border border-outline-variant rounded px-2 py-1 text-right font-mono font-bold text-primary focus:ring-2 focus:ring-primary"/>
+            <div class="flex flex-col items-end gap-0.5">
+              <input data-sku="${p.sku}" data-grade="${grade}" type="number" step="0.1" value="${pricePerKg.toFixed(2)}" class="price-input w-24 bg-surface-container border border-outline-variant rounded px-2 py-1 text-right font-mono font-bold text-primary focus:ring-2 focus:ring-primary"/>
+              <span class="text-[10px] text-slate-500 font-mono">rys: ~${marketRef.toFixed(2)} zł</span>
+            </div>
           </td>
           <td class="p-3 text-right font-mono font-bold text-primary text-base">
             ${rowValuation.toFixed(2)} zł
@@ -302,6 +319,9 @@ export function renderValuationView(container, navigateTo) {
   }
 
   // Action listeners
+  container.querySelector('#btn-fill-market').addEventListener('click', applyMarketPrices);
+  container.querySelector('#btn-fill-market-sec').addEventListener('click', applyMarketPrices);
+
   container.querySelector('#btn-back').addEventListener('click', () => navigateTo('dashboard'));
   container.querySelector('#btn-export-excel').addEventListener('click', exportToCsv);
   container.querySelector('#btn-export-pdf').addEventListener('click', () => {
