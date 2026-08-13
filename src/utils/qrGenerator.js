@@ -38,15 +38,29 @@ export async function renderQrInDom(container) {
     if (el.dataset.qrDone) return;
     el.dataset.qrDone = '1';
     const code = el.getAttribute('data-qr');
+    // Use actual pixel size of container, fallback to 150
+    const sz = Math.max(64, el.offsetWidth || el.offsetHeight || 150);
     try {
       new window.QRCode(el, {
         text: code,
-        width: 220,
-        height: 220,
+        width: sz,
+        height: sz,
         correctLevel: window.QRCode.CorrectLevel.M
       });
+      // Force canvas to fill parent
+      const canvas = el.querySelector('canvas');
+      if (canvas) {
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+      }
+      const img = el.querySelector('img');
+      if (img) {
+        img.style.width = '100%';
+        img.style.height = '100%';
+      }
     } catch (e) {
       console.warn('QR render error for', code, e);
     }
   });
 }
+

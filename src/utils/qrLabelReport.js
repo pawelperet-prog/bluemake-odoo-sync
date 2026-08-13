@@ -104,12 +104,25 @@ export function generateQrLabelsHtml(products) {
       align-items: center;
       justify-content: center;
       background: #ffffff;
+      overflow: hidden;
     }
 
-    .qr-column svg {
-      width: 100%;
-      height: 100%;
+    .qr-column svg,
+    .qr-column canvas,
+    .qr-column img,
+    .qr-column [data-qr],
+    .qr-column [data-code] {
+      width: 100% !important;
+      height: 100% !important;
       display: block;
+      object-fit: contain;
+    }
+
+    /* qrcodejs wraps canvas in a div - scale that too */
+    .qr-column > div > canvas,
+    .qr-column > div > img {
+      width: 100% !important;
+      height: 100% !important;
     }
 
     .text-column {
@@ -268,15 +281,27 @@ export function openQrLabelsWindow(products) {
     const safeSku = sku.replace(/"/g, '&quot;');
 
     return `
-      <div class="qr-label-card bg-white border border-slate-300 rounded p-1.5 flex flex-row items-center justify-between gap-1.5 shadow-sm overflow-hidden" style="width: 50mm; height: 30mm; flex-shrink: 0;">
-        <div class="w-[26mm] h-[26mm] flex-shrink-0 flex items-center justify-center bg-white">
-          <div data-qr="${safeSku}" style="width:100%;height:100%;"></div>
+      <div style="
+        width: 300px; height: 180px;
+        background: #fff;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        padding: 6px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        overflow: hidden;
+        flex-shrink: 0;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      ">
+        <div style="width:150px;height:150px;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;">
+          <div data-qr="${safeSku}" style="width:150px;height:150px;"></div>
         </div>
-        
-        <div class="flex-1 min-w-0 h-[26mm] flex flex-col justify-between overflow-hidden">
-          <div class="font-mono text-[11pt] font-black text-black bg-slate-100 px-1 border border-black rounded-sm leading-tight break-all">${sku}</div>
-          <div class="text-[8.5pt] font-black text-black leading-tight line-clamp-3 overflow-hidden text-ellipsis">${name}</div>
-          <div class="flex justify-between text-[5.5pt] font-bold text-black border-t border-black pt-0.5">
+        <div style="flex:1;min-width:0;height:150px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;">
+          <div style="font-family:monospace;font-size:14px;font-weight:900;color:#000;background:#f1f5f9;padding:2px 5px;border:1px solid #000;border-radius:2px;word-break:break-all;line-height:1.2;">${sku}</div>
+          <div style="font-size:12px;font-weight:700;color:#000;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${name}</div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;color:#000;border-top:1px solid #000;padding-top:2px;">
             <span>ID: ${p.id}</span>
             <span>Stan: ${Number(p.quantity || 0).toFixed(1)}${uom}</span>
           </div>
