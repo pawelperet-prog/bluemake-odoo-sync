@@ -12,31 +12,21 @@ export function generateQrLabelsHtml(products) {
     const name = p.name || 'Produkt';
     const category = p.categoryName || (p.categoryId === 4 ? 'Surowiec' : 'Produkt');
     const uom = p.uom || 'm';
-    const qrSvg = generateQrSvg(sku, { size: 140, padding: 1 });
+    const qrSvg = generateQrSvg(sku, { size: 250, padding: 0 });
 
     return `
       <div class="qr-label-card">
-        <div class="label-header">
-          <span class="brand">BLUEMAKE</span>
-          <span class="sku-badge">${sku}</span>
+        <div class="qr-column">
+          ${qrSvg}
         </div>
         
-        <div class="label-body">
-          <div class="qr-wrapper">
-            ${qrSvg}
+        <div class="text-column">
+          <div class="sku-badge">${sku}</div>
+          <div class="product-name" title="${name}">${name}</div>
+          <div class="label-footer">
+            <span>Odoo ID: ${p.id}</span>
+            <span>Stan: ${Number(p.quantity || 0).toFixed(1)}${uom}</span>
           </div>
-          <div class="info-wrapper">
-            <div class="product-name" title="${name}">${name}</div>
-            <div class="product-meta">
-              <span class="meta-item">Strefa 5</span>
-              <span class="meta-item font-mono font-bold">${Number(p.quantity || 0).toFixed(1)} ${uom}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="label-footer">
-          <span>Odoo ID: ${p.id}</span>
-          <span>${category}</span>
         </div>
       </div>
     `;
@@ -96,46 +86,21 @@ export function generateQrLabelsHtml(products) {
       background: #ffffff;
       border: 1px dashed #64748b;
       border-radius: 2mm;
-      padding: 1.5mm 2mm;
+      padding: 1.5mm;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      align-items: center;
       justify-content: space-between;
+      gap: 1.5mm;
       overflow: hidden;
       position: relative;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
 
-    .label-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1.5px solid #000;
-      padding-bottom: 1px;
-    }
-
-    .brand { font-size: 6.5pt; font-weight: 900; color: #ff6b00; letter-spacing: 0.5px; }
-
-    .sku-badge {
-      font-family: monospace;
-      font-size: 10.5pt;
-      font-weight: 900;
-      color: #000000;
-      background: #f8fafc;
-      padding: 0.5px 3px;
-      border-radius: 1px;
-      border: 0.5pt solid #000000;
-    }
-
-    .label-body {
-      display: flex;
-      align-items: center;
-      gap: 1.5mm;
-      flex: 1;
-      margin: 1px 0;
-    }
-
-    .qr-wrapper {
-      width: 23mm;
-      height: 23mm;
+    .qr-column {
+      width: 26mm;
+      height: 26mm;
       flex-shrink: 0;
       display: flex;
       align-items: center;
@@ -143,43 +108,46 @@ export function generateQrLabelsHtml(products) {
       background: #ffffff;
     }
 
-    .qr-wrapper svg {
+    .qr-column svg {
       width: 100%;
       height: 100%;
       display: block;
     }
 
-    .info-wrapper {
+    .text-column {
       flex: 1;
       min-width: 0;
+      height: 26mm;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      gap: 1px;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .sku-badge {
+      font-family: monospace;
+      font-size: 11pt;
+      font-weight: 900;
+      color: #000000;
+      background: #f1f5f9;
+      padding: 1px 3px;
+      border-radius: 1px;
+      border: 1px solid #000000;
+      line-height: 1.1;
+      word-break: break-all;
     }
 
     .product-name {
-      font-size: 9.5pt;
+      font-size: 8.5pt;
       font-weight: 900;
       color: #000000;
       line-height: 1.15;
-      max-height: 16mm;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
       overflow: hidden;
+      text-overflow: ellipsis;
       word-break: break-word;
-    }
-
-    .product-meta {
-      display: flex;
-      gap: 3px;
-      font-size: 5.5pt;
-      color: #475569;
-      margin-top: 1px;
-    }
-
-    .meta-item {
-      background: #f1f5f9;
-      padding: 0.5px 2px;
-      border-radius: 1px;
     }
 
     .label-footer {
@@ -227,7 +195,7 @@ export function generateQrLabelsHtml(products) {
         max-width: 50mm !important;
         max-height: 30mm !important;
         margin: 0 !important;
-        padding: 1.5mm 2mm !important;
+        padding: 1.5mm !important;
         border: none !important;
         box-shadow: none !important;
         border-radius: 0 !important;
@@ -290,27 +258,21 @@ export function openQrLabelsWindow(products) {
     const sku = p.sku;
     const name = p.name || 'Produkt';
     const uom = p.uom || 'm';
-    const qrSvg = generateQrSvg(sku, { size: 140, padding: 1 });
+    const qrSvg = generateQrSvg(sku, { size: 250, padding: 0 });
 
     return `
-      <div class="qr-label-card bg-white border border-slate-300 rounded p-1.5 flex flex-col justify-between shadow-sm overflow-hidden" style="width: 50mm; height: 30mm; flex-shrink: 0;">
-        <div class="flex justify-between items-center border-b border-black pb-0.5">
-          <span class="text-[7pt] font-black text-[#ff6b00]">BLUEMAKE</span>
-          <span class="font-mono text-[10.5pt] font-black text-black bg-slate-100 px-1 border border-black rounded-sm">${sku}</span>
+      <div class="qr-label-card bg-white border border-slate-300 rounded p-1.5 flex flex-row items-center justify-between gap-1.5 shadow-sm overflow-hidden" style="width: 50mm; height: 30mm; flex-shrink: 0;">
+        <div class="w-[26mm] h-[26mm] flex-shrink-0 flex items-center justify-center bg-white">
+          ${qrSvg}
         </div>
         
-        <div class="flex items-center gap-1.5 flex-1 my-0.5">
-          <div class="w-[23mm] h-[23mm] flex-shrink-0 flex items-center justify-center bg-white">
-            ${qrSvg}
+        <div class="flex-1 min-w-0 h-[26mm] flex flex-col justify-between overflow-hidden">
+          <div class="font-mono text-[11pt] font-black text-black bg-slate-100 px-1 border border-black rounded-sm leading-tight break-all">${sku}</div>
+          <div class="text-[8.5pt] font-black text-black leading-tight line-clamp-3 overflow-hidden text-ellipsis">${name}</div>
+          <div class="flex justify-between text-[5.5pt] font-bold text-black border-t border-black pt-0.5">
+            <span>ID: ${p.id}</span>
+            <span>Stan: ${Number(p.quantity || 0).toFixed(1)}${uom}</span>
           </div>
-          <div class="flex-1 min-w-0 flex flex-col justify-center">
-            <div class="text-[9.5pt] font-black text-black leading-tight line-clamp-3 overflow-hidden text-ellipsis">${name}</div>
-          </div>
-        </div>
-
-        <div class="flex justify-between text-[5.5pt] font-bold text-black border-t border-black pt-0.5">
-          <span>Odoo ID: ${p.id}</span>
-          <span>Stan: ${Number(p.quantity || 0).toFixed(1)}${uom}</span>
         </div>
       </div>
     `;
