@@ -414,64 +414,113 @@ export async function syncPendingItems() {
   }
 }
 
+export const ODOO_DISCUSS_CHANNELS = [
+  { id: 9, name: '#Materiał (Domyślny dla surowców)', checked: true },
+  { id: 11, name: '#Wszystko (Kanał ogólny)', checked: true }
+];
+
 export const ODOO_MANAGERS = [
   { partnerId: 8, userId: 6, name: 'Mateusz Klimkowski', email: 'M.klimkowski@bluemake.eu' },
   { partnerId: 6, userId: 5, name: 'Paweł Peret', email: 'p.peret@bluemake.eu' }
 ];
 
 /**
- * Send Low Stock Alert message directly into Odoo 19 product chatter with notifications to M. Klimkowski / P. Peret
+ * Send Low Stock Alert message directly into Odoo 19 Discuss Channels (#Materiał / #Wszystko) and Product Chatter
  */
-export async function sendLowStockAlert({ productId, sku, name, currentQuantity, uom = 'm', operatorName, recipientPartnerIds = [8, 6], customNote = '' }) {
+export async function sendLowStockAlert({ 
+  productId, 
+  sku, 
+  name, 
+  currentQuantity, 
+  uom = 'm', 
+  operatorName, 
+  channelIds = [9, 11],
+  recipientPartnerIds = [8, 6], 
+  customNote = '' 
+}) {
   const config = getOdooConfig();
   const operator = getCurrentOperator();
   const opName = operatorName || (operator ? operator.name : 'Operator Magazynu');
   const qtyStr = `${Number(currentQuantity).toFixed(1)} ${uom}`;
   
-  const recipientNames = ODOO_MANAGERS
+  const recipientMentions = ODOO_MANAGERS
     .filter(m => recipientPartnerIds.includes(m.partnerId))
-    .map(m => m.name)
-    .join(', ') || 'Dział Zakupów';
+    .map(m => `@${m.name}`)
+    .join(' ');
 
-  const bodyHtml = `
-    <div style="font-family: Arial, sans-serif; padding: 12px; border-left: 5px solid #e11d48; background: #fff1f2; border-radius: 6px;">
-      <h3 style="color: #9f1239; margin-top: 0; margin-bottom: 8px;">🚨 PILNY ALERT: Niski stan surowca poniżej 5.0m</h3>
-      <p style="margin: 4px 0; font-size: 14px;"><b>Produkt:</b> ${name} (<code>${sku}</code>)</p>
-      <p style="margin: 4px 0; font-size: 14px;"><b>Aktualny stan na magazynie:</b> <span style="font-size: 16px; font-weight: bold; color: #b91c1c;">${qtyStr}</span> (Strefa ${config.locationId})</p>
-      <p style="margin: 4px 0; font-size: 13px;"><b>Zgłaszający operator:</b> ${opName}</p>
-      <p style="margin: 4px 0; font-size: 13px;"><b>Data zgłoszenia:</b> ${new Date().toLocaleString('pl-PL')}</p>
-      ${customNote ? `<div style="margin: 10px 0 6px 0; padding: 8px 12px; background: #ffffff; border: 1px solid #fecdd3; border-radius: 4px;"><b style="color: #9f1239;">Notatka od operatora:</b><br/>${customNote}</div>` : ''}
-      <hr style="border: 0; border-top: 1px solid #fecdd3; margin: 10px 0;" />
-      <p style="font-size: 11px; color: #6b7280; margin: 0;"><i>Powiadomienie z systemu Bluemake Odoo Sync wysłane do: ${recipientNames}.</i></p>
+  const channelPostHtml = `
+    <div style="font-family: Arial, sans-serif; padding: 10px 14px; border-left: 5px solid #dc2626; background: #fef2f2; border-radius: 6px; margin: 4px 0;">
+      <div style="font-size: 15px; font-weight: bold; color: #991b1b; margin-bottom: 6px;">
+        🚨 PILNY ALERT: Niski stan surowca (&lt; 5.0m)
+      </div>
+      <div style="font-size: 14px; color: #111827; margin: 3px 0;">
+        <b>Produkt:</b> ${name} (<code>${sku}</code>)
+      </div>
+      <div style="font-size: 14px; color: #111827; margin: 3px 0;">
+        <b>Aktualny stan na magazynie:</b> <span style="font-size: 16px; font-weight: 900; color: #b91c1c; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${qtyStr}</span> (Strefa ${config.locationId})
+      </div>
+      <div style="font-size: 13px; color: #374151; margin: 3px 0;">
+        <b>Zgłaszający operator:</b> ${opName} • <b>Data:</b> ${new Date().toLocaleString('pl-PL')}
+      </div>
+      ${customNote ? `<div style="margin: 8px 0 4px 0; padding: 8px 10px; background: #ffffff; border: 1px solid #fecdd3; border-radius: 4px; font-size: 13px; color: #991b1b;"><b>Notatka:</b> ${customNote}</div>` : ''}
+      <div style="margin-top: 8px; font-size: 13px; font-weight: bold; color: #1e40af;">
+        Powiadomiono: ${recipientMentions || '@Mateusz Klimkowski @Paweł Peret'}
+      </div>
     </div>
   `;
 
-  try {
-    const res = await callOdooRpc('product.product', 'message_post', [productId], {
-      body: bodyHtml,
-      message_type: 'comment',
-      subtype_xmlid: 'mail.mt_comment',
-      partner_ids: recipientPartnerIds
-    });
+  let sentChannelsCount = 0;
+  const errors = [];
 
-    const alertHistoryItem = {
-      id: Date.now(),
-      sku: sku,
-      title: `🚨 Alert zapotrzebowania (${sku})`,
-      details: `Stan: ${qtyStr} • Wysłano do: ${recipientNames}`,
-      time: 'Dziś, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      operator: opName,
-      operatorRole: 'Magazynier / Operator',
-      status: 'SYNCHRONIZED',
-      error: null,
-      productId
-    };
-    saveHistoryItem(alertHistoryItem);
+  // 1. Post to Odoo Discuss Channels (e.g. #Materiał, #Wszystko)
+  for (const cId of (channelIds || [9])) {
+    try {
+      await callOdooRpc('discuss.channel', 'message_post', [cId], {
+        body: channelPostHtml,
+        message_type: 'comment',
+        subtype_xmlid: 'mail.mt_comment',
+        partner_ids: recipientPartnerIds
+      });
+      sentChannelsCount++;
+    } catch (err) {
+      console.warn(`Błąd wysyłania do kanału ID ${cId}:`, err);
+      errors.push(`Kanał ${cId}: ${err.message}`);
+    }
+  }
 
-    return { success: true, messageId: res };
-  } catch (err) {
-    console.error('sendLowStockAlert Error:', err);
-    return { success: false, error: err.message || 'Błąd wysyłania alertu do Odoo' };
+  // 2. Also log to product chatter if productId provided
+  if (productId) {
+    try {
+      await callOdooRpc('product.product', 'message_post', [productId], {
+        body: channelPostHtml,
+        message_type: 'comment',
+        subtype_xmlid: 'mail.mt_comment',
+        partner_ids: recipientPartnerIds
+      });
+    } catch (err) {
+      console.warn('Błąd zapisu w chatterze produktu:', err);
+    }
+  }
+
+  const alertHistoryItem = {
+    id: Date.now(),
+    sku: sku,
+    title: `🚨 Alert na czacie Odoo (${sku})`,
+    details: `Stan: ${qtyStr} • Wysłano do: #Materiał / #Wszystko`,
+    time: 'Dziś, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    operator: opName,
+    operatorRole: 'Magazynier / Operator',
+    status: sentChannelsCount > 0 ? 'SYNCHRONIZED' : 'ERROR',
+    error: errors.length > 0 ? errors.join('; ') : null,
+    productId
+  };
+  saveHistoryItem(alertHistoryItem);
+
+  if (sentChannelsCount > 0) {
+    return { success: true, channelsCount: sentChannelsCount };
+  } else {
+    return { success: false, error: errors.join('; ') || 'Nie udało się wysłać na czat Odoo' };
   }
 }
+
 
