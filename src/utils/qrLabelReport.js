@@ -277,7 +277,7 @@ export function openSingleQrLabelWindow(product) {
 }
 
 /**
- * Open In-App Printable QR Label Modal (Prevents about:blank#blocked Popup Blockers on Android/iOS/Mobile)
+ * Open In-App Printable QR Label Modal (Compatible with Mobile Android/iOS & Desktop)
  */
 export function openQrLabelsWindow(products) {
   const existing = document.getElementById('qr-modal-backdrop');
@@ -334,17 +334,26 @@ export function openQrLabelsWindow(products) {
         </div>
 
         <!-- Controls -->
-        <div class="flex flex-wrap gap-2 justify-between items-center bg-surface-container p-2.5 rounded-lg border border-outline-variant/40">
+        <div class="flex flex-col sm:flex-row gap-2 justify-between items-center bg-surface-container p-2.5 rounded-lg border border-outline-variant/40">
           <span class="text-xs font-bold text-primary flex items-center gap-1">
             <span class="material-symbols-outlined text-green-600 text-[18px]">check_circle</span>
-            Etykiety wygenerowane w 50x30mm
+            Etykiety w formacie 50x30mm
           </span>
-          <div class="flex gap-2">
-            <button id="btn-print-modal-direct" class="bg-[#ff6b00] hover:bg-[#e66000] text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-1 shadow-md uppercase transition-transform active:scale-95">
-              <span class="material-symbols-outlined text-[18px]">print</span> DRUKUJ TERAZ
+          
+          <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+            <!-- Button 1: Direct System Print -->
+            <button id="btn-print-modal-direct" class="flex-1 sm:flex-initial bg-[#ff6b00] hover:bg-[#e66000] text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center justify-center gap-1 shadow-md uppercase transition-transform active:scale-95">
+              <span class="material-symbols-outlined text-[18px]">print</span> DRUKUJ (SYSTEM)
             </button>
-            <button id="btn-download-modal-file" class="bg-surface-container-high hover:bg-surface-container-highest text-primary text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 border border-outline-variant uppercase">
-              <span class="material-symbols-outlined text-[18px]">download</span> POBIERZ HTML
+
+            <!-- Button 2: Open Printable Blob Sheet (Mobile Friendly) -->
+            <button id="btn-open-print-sheet" class="flex-1 sm:flex-initial bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1 shadow-md uppercase transition-transform active:scale-95">
+              <span class="material-symbols-outlined text-[18px]">open_in_new</span> ARKUSZ DRUKU
+            </button>
+
+            <!-- Button 3: Download HTML File -->
+            <button id="btn-download-modal-file" class="bg-surface-container-high hover:bg-surface-container-highest text-primary text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1 border border-outline-variant uppercase">
+              <span class="material-symbols-outlined text-[18px]">download</span> POBIERZ PLIK
             </button>
           </div>
         </div>
@@ -355,7 +364,8 @@ export function openQrLabelsWindow(products) {
         </div>
 
         <!-- Footer -->
-        <div class="pt-2 border-t border-outline-variant flex justify-end">
+        <div class="pt-2 border-t border-outline-variant flex justify-between items-center">
+          <p class="text-[11px] text-on-surface-variant">Na telefonach z Androidem użyj przycisku <strong>ARKUSZ DRUKU</strong> lub <strong>POBIERZ PLIK</strong></p>
           <button id="btn-close-modal-bottom" class="bg-surface-container-high text-primary font-bold px-4 py-2 rounded-lg text-xs hover:bg-surface-container-highest">
             ZAMKNIJ
           </button>
@@ -371,6 +381,7 @@ export function openQrLabelsWindow(products) {
   const closeBtn = document.getElementById('close-qr-modal-btn');
   const closeBottomBtn = document.getElementById('btn-close-modal-bottom');
   const printBtn = document.getElementById('btn-print-modal-direct');
+  const openSheetBtn = document.getElementById('btn-open-print-sheet');
   const downloadBtn = document.getElementById('btn-download-modal-file');
 
   const closeModal = () => backdrop.remove();
@@ -384,10 +395,31 @@ export function openQrLabelsWindow(products) {
   printBtn.addEventListener('click', () => {
     printLabelsDirectly(activeProducts);
   });
+
+  openSheetBtn.addEventListener('click', () => {
+    openPrintableBlobSheet(activeProducts);
+  });
 }
 
 /**
- * Direct Print via In-App Hidden Iframe (No Popup Blocker Trigger)
+ * Open Printable Blob Sheet HTML in new tab/blob for Mobile Android/iOS System Print Manager
+ */
+function openPrintableBlobSheet(products) {
+  const html = generateQrLabelsHtml(products);
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const blobUrl = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => a.remove(), 1000);
+}
+
+/**
+ * Direct Print via In-App Hidden Iframe
  */
 function printLabelsDirectly(products) {
   const fullHtml = generateQrLabelsHtml(products);
@@ -420,7 +452,7 @@ function printLabelsDirectly(products) {
       console.warn('Iframe print error:', e);
       window.print();
     }
-  }, 300);
+  }, 350);
 }
 
 export function downloadQrLabelsHtml(products) {
