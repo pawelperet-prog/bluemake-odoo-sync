@@ -1,7 +1,7 @@
 import { generateQrSvg } from './qrGenerator.js';
 
 /**
- * Generate 50mm x 30mm Printable QR Code Labels HTML
+ * Generate HTML string for 50mm x 30mm Printable QR Code Labels
  */
 export function generateQrLabelsHtml(products) {
   const activeProducts = (products || []).filter(p => p.sku && p.sku.trim().length > 0);
@@ -48,106 +48,58 @@ export function generateQrLabelsHtml(products) {
   <meta charset="utf-8" />
   <title>Etykiety QR 50x30mm - Bluemake Odoo</title>
   <style>
-    /* CSS Reset & General Styles */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    @page {
+      size: 50mm 30mm !important;
+      margin: 0mm !important;
     }
 
-    body {
-      background-color: #f1f5f9;
-      color: #0f172a;
-      padding: 20px;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+
+    body { background-color: #cbd5e1; padding: 20px; }
 
     .no-print {
-      max-w: 1000px;
-      margin: 0 auto 20px auto;
+      max-width: 800px;
+      margin: 0 auto 20px;
       background: #ffffff;
       padding: 16px 24px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      border: 1px solid #94a3b8;
     }
-
-    .no-print h1 {
-      font-size: 18px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    .no-print p {
-      font-size: 12px;
-      color: #64748b;
-      margin-top: 2px;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 10px;
-    }
-
-    button {
-      cursor: pointer;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-weight: 700;
-      font-size: 13px;
+    
+    .no-print h1 { font-size: 18px; color: #0f172a; margin-bottom: 6px; font-weight: bold; }
+    .no-print p { font-size: 13px; color: #334155; line-height: 1.4; }
+    .btn-print {
+      background: #ff6b00;
+      color: #fff;
+      font-weight: bold;
+      padding: 12px 24px;
       border: none;
-      transition: all 0.15s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 12px;
       text-transform: uppercase;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
-    .btn-primary {
-      background-color: #ff6b00;
-      color: #ffffff;
-    }
-
-    .btn-primary:hover {
-      background-color: #e66000;
-    }
-
-    .btn-secondary {
-      background-color: #1e293b;
-      color: #ffffff;
-    }
-
-    .btn-secondary:hover {
-      background-color: #0f172a;
-    }
-
-    /* Screen Grid Display */
-    .labels-container {
+    .labels-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
       justify-content: center;
-      max-width: 1200px;
-      margin: 0 auto;
     }
 
-    /* 50mm x 30mm Label Box Exact Specs */
     .qr-label-card {
       width: 50mm;
       height: 30mm;
       background: #ffffff;
-      border: 1px dashed #cbd5e1;
+      border: 1px dashed #64748b;
       border-radius: 2mm;
       padding: 1.5mm 2mm;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      page-break-inside: avoid;
-      break-inside: avoid;
       overflow: hidden;
       position: relative;
     }
@@ -156,16 +108,11 @@ export function generateQrLabelsHtml(products) {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 0.5pt solid #e2e8f0;
+      border-bottom: 1.5px solid #000;
       padding-bottom: 1px;
     }
 
-    .brand {
-      font-size: 6.5pt;
-      font-weight: 900;
-      color: #ff6b00;
-      letter-spacing: 0.5px;
-    }
+    .brand { font-size: 6.5pt; font-weight: 900; color: #ff6b00; letter-spacing: 0.5px; }
 
     .sku-badge {
       font-family: monospace;
@@ -212,14 +159,11 @@ export function generateQrLabelsHtml(products) {
 
     .product-name {
       font-size: 9.5pt;
-      font-weight: 800;
+      font-weight: 900;
       color: #000000;
       line-height: 1.15;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
+      max-height: 16mm;
       overflow: hidden;
-      text-overflow: ellipsis;
       word-break: break-word;
     }
 
@@ -240,11 +184,11 @@ export function generateQrLabelsHtml(products) {
     .label-footer {
       display: flex;
       justify-content: space-between;
-      font-size: 4.5pt;
-      color: #94a3b8;
-      border-top: 0.4pt solid #f1f5f9;
+      font-size: 5.5pt;
+      font-weight: 900;
+      color: #000000;
+      border-top: 1px solid #000;
       padding-top: 1px;
-      font-weight: 600;
     }
 
     /* Print Specific Styles for 50x30mm Label Printers */
@@ -268,7 +212,7 @@ export function generateQrLabelsHtml(products) {
         display: none !important;
       }
 
-      .labels-container {
+      .labels-grid {
         display: block !important;
         margin: 0 !important;
         padding: 0 !important;
@@ -295,8 +239,6 @@ export function generateQrLabelsHtml(products) {
   </style>
 </head>
 <body>
-
-  <!-- Controls (Hidden on Print) -->
   <div class="no-print">
     <div>
       <h1>🏷️ Etykiety Kodów QR (50mm x 30mm)</h1>
@@ -312,8 +254,7 @@ export function generateQrLabelsHtml(products) {
     </div>
   </div>
 
-  <!-- Label Grid / Sheet -->
-  <div class="labels-container">
+  <div class="labels-grid">
     ${labelCardsHtml}
   </div>
 
@@ -335,15 +276,151 @@ export function openSingleQrLabelWindow(product) {
   openQrLabelsWindow([product]);
 }
 
+/**
+ * Open In-App Printable QR Label Modal (Prevents about:blank#blocked Popup Blockers on Android/iOS/Mobile)
+ */
 export function openQrLabelsWindow(products) {
-  const html = generateQrLabelsHtml(products);
-  const win = window.open('', '_blank');
-  if (win) {
-    win.document.write(html);
-    win.document.close();
-  } else {
-    downloadQrLabelsHtml(products);
-  }
+  const existing = document.getElementById('qr-modal-backdrop');
+  if (existing) existing.remove();
+
+  const activeProducts = (products || []).filter(p => p.sku && p.sku.trim().length > 0);
+
+  const labelCardsPreviewHtml = activeProducts.map(p => {
+    const sku = p.sku;
+    const name = p.name || 'Produkt';
+    const uom = p.uom || 'm';
+    const qrSvg = generateQrSvg(sku, { size: 140, padding: 1 });
+
+    return `
+      <div class="qr-label-card bg-white border border-slate-300 rounded p-1.5 flex flex-col justify-between shadow-sm overflow-hidden" style="width: 50mm; height: 30mm; flex-shrink: 0;">
+        <div class="flex justify-between items-center border-b border-black pb-0.5">
+          <span class="text-[7pt] font-black text-[#ff6b00]">BLUEMAKE</span>
+          <span class="font-mono text-[10.5pt] font-black text-black bg-slate-100 px-1 border border-black rounded-sm">${sku}</span>
+        </div>
+        
+        <div class="flex items-center gap-1.5 flex-1 my-0.5">
+          <div class="w-[17.5mm] h-[17.5mm] flex-shrink-0 flex items-center justify-center">
+            ${qrSvg}
+          </div>
+          <div class="flex-1 min-w-0 flex flex-col justify-center">
+            <div class="text-[9.5pt] font-black text-black leading-tight line-clamp-3 overflow-hidden text-ellipsis">${name}</div>
+          </div>
+        </div>
+
+        <div class="flex justify-between text-[5.5pt] font-bold text-black border-t border-black pt-0.5">
+          <span>Odoo ID: ${p.id}</span>
+          <span>Stan: ${Number(p.quantity || 0).toFixed(1)}${uom}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const modalHtml = `
+    <div id="qr-modal-backdrop" class="fixed inset-0 bg-primary/70 backdrop-blur-md z-[150] flex items-center justify-center p-3">
+      <div class="bg-surface-container-lowest border-2 border-primary rounded-xl p-4 max-w-2xl w-full shadow-2xl flex flex-col gap-3 max-h-[92vh] overflow-y-auto">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center border-b border-outline-variant pb-2">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#ff6b00] text-2xl">qr_code_2</span>
+            <div>
+              <h2 class="font-bold text-primary text-base">Podgląd i Druk Etykiet QR (50x30mm)</h2>
+              <p class="text-xs text-on-surface-variant">Liczba pozycji: ${activeProducts.length}</p>
+            </div>
+          </div>
+          <button id="close-qr-modal-btn" class="p-1.5 text-on-surface-variant hover:text-primary rounded-full hover:bg-surface-container-high transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex flex-wrap gap-2 justify-between items-center bg-surface-container p-2.5 rounded-lg border border-outline-variant/40">
+          <span class="text-xs font-bold text-primary flex items-center gap-1">
+            <span class="material-symbols-outlined text-green-600 text-[18px]">check_circle</span>
+            Etykiety wygenerowane w 50x30mm
+          </span>
+          <div class="flex gap-2">
+            <button id="btn-print-modal-direct" class="bg-[#ff6b00] hover:bg-[#e66000] text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center gap-1 shadow-md uppercase transition-transform active:scale-95">
+              <span class="material-symbols-outlined text-[18px]">print</span> DRUKUJ TERAZ
+            </button>
+            <button id="btn-download-modal-file" class="bg-surface-container-high hover:bg-surface-container-highest text-primary text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1 border border-outline-variant uppercase">
+              <span class="material-symbols-outlined text-[18px]">download</span> POBIERZ HTML
+            </button>
+          </div>
+        </div>
+
+        <!-- Preview Grid -->
+        <div class="flex flex-wrap gap-3 justify-center p-3 bg-slate-200 rounded-lg max-h-[55vh] overflow-y-auto border border-slate-300">
+          ${labelCardsPreviewHtml}
+        </div>
+
+        <!-- Footer -->
+        <div class="pt-2 border-t border-outline-variant flex justify-end">
+          <button id="btn-close-modal-bottom" class="bg-surface-container-high text-primary font-bold px-4 py-2 rounded-lg text-xs hover:bg-surface-container-highest">
+            ZAMKNIJ
+          </button>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  const backdrop = document.getElementById('qr-modal-backdrop');
+  const closeBtn = document.getElementById('close-qr-modal-btn');
+  const closeBottomBtn = document.getElementById('btn-close-modal-bottom');
+  const printBtn = document.getElementById('btn-print-modal-direct');
+  const downloadBtn = document.getElementById('btn-download-modal-file');
+
+  const closeModal = () => backdrop.remove();
+  closeBtn.addEventListener('click', closeModal);
+  closeBottomBtn.addEventListener('click', closeModal);
+
+  downloadBtn.addEventListener('click', () => {
+    downloadQrLabelsHtml(activeProducts);
+  });
+
+  printBtn.addEventListener('click', () => {
+    printLabelsDirectly(activeProducts);
+  });
+}
+
+/**
+ * Direct Print via In-App Hidden Iframe (No Popup Blocker Trigger)
+ */
+function printLabelsDirectly(products) {
+  const fullHtml = generateQrLabelsHtml(products);
+
+  const existingFrame = document.getElementById('app-print-frame');
+  if (existingFrame) existingFrame.remove();
+
+  const printFrame = document.createElement('iframe');
+  printFrame.id = 'app-print-frame';
+  printFrame.style.position = 'fixed';
+  printFrame.style.right = '0';
+  printFrame.style.bottom = '0';
+  printFrame.style.width = '0';
+  printFrame.style.height = '0';
+  printFrame.style.border = '0';
+  printFrame.style.visibility = 'hidden';
+
+  document.body.appendChild(printFrame);
+
+  const doc = printFrame.contentWindow.document;
+  doc.open();
+  doc.write(fullHtml);
+  doc.close();
+
+  setTimeout(() => {
+    try {
+      printFrame.contentWindow.focus();
+      printFrame.contentWindow.print();
+    } catch (e) {
+      console.warn('Iframe print error:', e);
+      window.print();
+    }
+  }, 300);
 }
 
 export function downloadQrLabelsHtml(products) {
