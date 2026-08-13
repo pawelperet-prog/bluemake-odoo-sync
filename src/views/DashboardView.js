@@ -3,10 +3,11 @@ import { openSettingsModal } from './SettingsModal.js';
 import { openCreateProductModal } from './CreateProductModal.js';
 import { openReportWindow } from '../utils/reportGenerator.js';
 import { openQrLabelsWindow, openSingleQrLabelWindow } from '../utils/qrLabelReport.js';
+import { openLowStockAlertModal } from './LowStockModal.js';
 import { getCurrentOperator, openLoginModal } from '../services/authService.js';
 
 export function renderDashboardView(container, navigateTo) {
-  let activeFilter = 'RAW'; // 'RAW' (Surowiec), 'FINISHED' (Produkt gotowy), 'ALL' (Wszystkie)
+  let activeFilter = 'RAW'; // 'RAW' (Surowiec), 'FINISHED' (Produkt gotowy), 'LOW' (Niski stan < 5m), 'ALL' (Wszystkie)
   let selectedCategoryId = null; // Specific Odoo category ID filter
   let allCategories = [];
   let allProducts = null;
@@ -77,7 +78,7 @@ export function renderDashboardView(container, navigateTo) {
         </button>
       </div>
 
-      <!-- Filter Pills (Surowce vs Produkty vs Wszystkie) -->
+      <!-- Filter Pills (Surowce vs Produkty vs Niski stan vs Wszystkie) -->
       <div class="flex flex-wrap items-center gap-2">
         <button id="filter-raw" class="px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 bg-primary text-on-primary shadow-sm">
           <span class="material-symbols-outlined text-[15px]">inventory_2</span>
@@ -86,6 +87,10 @@ export function renderDashboardView(container, navigateTo) {
         <button id="filter-finished" class="px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest">
           <span class="material-symbols-outlined text-[15px]">precision_manufacturing</span>
           PRODUKTY (KAT. 5)
+        </button>
+        <button id="filter-low" class="px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 bg-rose-100 text-rose-800 border border-rose-300 hover:bg-rose-200">
+          <span class="material-symbols-outlined text-[15px] text-rose-600">warning</span>
+          NISKI STAN (&lt; 5m)
         </button>
         <button id="filter-all" class="px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest">
           <span class="material-symbols-outlined text-[15px]">list</span>
@@ -247,6 +252,7 @@ export function renderDashboardView(container, navigateTo) {
 
       if (activeFilter === 'RAW') return p.isRawMaterial;
       if (activeFilter === 'FINISHED') return p.isFinishedProduct;
+      if (activeFilter === 'LOW') return Number(p.quantity) < 5.0;
       return true;
     });
 
@@ -256,13 +262,17 @@ export function renderDashboardView(container, navigateTo) {
   function updateFilterButtonsUI() {
     const btnRaw = container.querySelector('#filter-raw');
     const btnFinished = container.querySelector('#filter-finished');
+    const btnLow = container.querySelector('#filter-low');
     const btnAll = container.querySelector('#filter-all');
 
     const activeClasses = 'bg-primary text-on-primary shadow-sm';
     const inactiveClasses = 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest';
+    const activeLowClasses = 'bg-rose-600 text-white shadow-md font-bold';
+    const inactiveLowClasses = 'bg-rose-100 text-rose-800 border border-rose-300 hover:bg-rose-200';
 
     btnRaw.className = `px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${activeFilter === 'RAW' ? activeClasses : inactiveClasses}`;
     btnFinished.className = `px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${activeFilter === 'FINISHED' ? activeClasses : inactiveClasses}`;
+    btnLow.className = `px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${activeFilter === 'LOW' ? activeLowClasses : inactiveLowClasses}`;
     btnAll.className = `px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${activeFilter === 'ALL' ? activeClasses : inactiveClasses}`;
   }
 
@@ -277,33 +287,56 @@ export function renderDashboardView(container, navigateTo) {
       return;
     }
 
-    listEl.innerHTML = products.map(p => `
-      <div class="bg-surface-container-lowest border ${p.isLowStock ? 'border-error/60' : 'border-outline-variant/40'} rounded p-3 shadow-sm hover:border-primary/50 transition-colors flex flex-row items-center justify-between gap-3">
-        <div class="flex flex-col gap-0.5 flex-1 min-w-0">
-          <div class="flex items-center gap-2">
-            <span class="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-surface-container text-primary border border-outline-variant/30 flex-shrink-0">${p.sku}</span>
-            <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${p.categoryId === 4 ? 'bg-[#ff6b00]/10 text-[#ff6b00] border border-[#ff6b00]/30' : 'bg-primary/10 text-primary border border-primary/20'}">
-              ${p.categoryName || (p.categoryId === 4 ? 'SUROWIEC' : 'PRODUKT')}
-            </span>
-          </div>
-          <h2 class="font-body-md text-body-md font-bold text-on-surface truncate mt-0.5">${p.name}</h2>
-          <div class="text-xs text-on-surface-variant flex items-center gap-2">
-            <span>Strefa 5</span>
-            <span>•</span>
-            <span class="font-bold ${p.isLowStock ? 'text-error' : 'text-primary'}">Stan: ${Number(p.quantity).toFixed(1)}${p.uom}</span>
-          </div>
-        </div>
+    listEl.innerHTML = products.map(p => {
+      const isLow = Number(p.quantity) < 5.0;
 
-        <div class="flex items-center gap-1.5 flex-shrink-0">
-          <button data-product-id="${p.id}" title="Drukuj etykietę QR 50x30mm dla tego produktu" class="print-single-qr-btn px-2.5 py-2 bg-indigo-100 text-indigo-950 hover:bg-indigo-200 border border-indigo-300 font-label-caps text-xs rounded transition-colors uppercase font-bold flex items-center gap-1">
-            <span class="material-symbols-outlined text-[16px]">qr_code_2</span> QR
-          </button>
-          <button data-product-id="${p.id}" class="update-stock-btn px-3 py-2 bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary font-label-caps text-xs rounded transition-colors uppercase font-bold flex items-center gap-1">
-            <span class="material-symbols-outlined text-[16px]">edit</span> UPDATE
-          </button>
+      return `
+        <div class="bg-surface-container-lowest border ${isLow ? 'border-rose-500/70 bg-rose-50/20' : 'border-outline-variant/40'} rounded p-3 shadow-sm hover:border-primary/50 transition-colors flex flex-row items-center justify-between gap-3">
+          <div class="flex flex-col gap-0.5 flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-surface-container text-primary border border-outline-variant/30 flex-shrink-0">${p.sku}</span>
+              <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${p.categoryId === 4 ? 'bg-[#ff6b00]/10 text-[#ff6b00] border border-[#ff6b00]/30' : 'bg-primary/10 text-primary border border-primary/20'}">
+                ${p.categoryName || (p.categoryId === 4 ? 'SUROWIEC' : 'PRODUKT')}
+              </span>
+              ${isLow ? `
+                <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-rose-600 text-white flex-shrink-0 flex items-center gap-0.5">
+                  <span class="material-symbols-outlined text-[12px]">warning</span> NISKI STAN
+                </span>
+              ` : ''}
+            </div>
+            <h2 class="font-body-md text-body-md font-bold text-on-surface truncate mt-0.5">${p.name}</h2>
+            <div class="text-xs text-on-surface-variant flex items-center gap-2">
+              <span>Strefa 5</span>
+              <span>•</span>
+              <span class="font-bold ${isLow ? 'text-rose-600 font-extrabold' : 'text-primary'}">Stan: ${Number(p.quantity).toFixed(1)}${p.uom}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
+            ${isLow ? `
+              <button data-product-id="${p.id}" title="Wyślij powiadomienie o niskim stanie do M. Klimkowskiego / P. Pereta w Odoo" class="alert-low-stock-btn px-2 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-label-caps text-xs rounded transition-all uppercase font-bold flex items-center gap-1 shadow-sm active:scale-95">
+                <span class="material-symbols-outlined text-[15px]">campaign</span> ZGŁOŚ
+              </button>
+            ` : ''}
+            <button data-product-id="${p.id}" title="Drukuj etykietę QR 50x30mm dla tego produktu" class="print-single-qr-btn px-2.5 py-1.5 bg-indigo-100 text-indigo-950 hover:bg-indigo-200 border border-indigo-300 font-label-caps text-xs rounded transition-colors uppercase font-bold flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">qr_code_2</span> QR
+            </button>
+            <button data-product-id="${p.id}" class="update-stock-btn px-3 py-1.5 bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary font-label-caps text-xs rounded transition-colors uppercase font-bold flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">edit</span> UPDATE
+            </button>
+          </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('.alert-low-stock-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const pId = Number(btn.getAttribute('data-product-id'));
+        const product = allProducts.find(item => item.id === pId);
+        if (product) openLowStockAlertModal(product);
+      });
+    });
 
     listEl.querySelectorAll('.print-single-qr-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -324,6 +357,35 @@ export function renderDashboardView(container, navigateTo) {
       });
     });
   }
+
+  // Filter button event handlers
+  container.querySelector('#filter-raw').addEventListener('click', () => {
+    activeFilter = 'RAW';
+    selectedCategoryId = null;
+    updateFilterButtonsUI();
+    filterAndRender();
+  });
+
+  container.querySelector('#filter-finished').addEventListener('click', () => {
+    activeFilter = 'FINISHED';
+    selectedCategoryId = null;
+    updateFilterButtonsUI();
+    filterAndRender();
+  });
+
+  container.querySelector('#filter-low').addEventListener('click', () => {
+    activeFilter = 'LOW';
+    selectedCategoryId = null;
+    updateFilterButtonsUI();
+    filterAndRender();
+  });
+
+  container.querySelector('#filter-all').addEventListener('click', () => {
+    activeFilter = 'ALL';
+    selectedCategoryId = null;
+    updateFilterButtonsUI();
+    filterAndRender();
+  });
 
   // Event Listeners
   container.querySelector('#search-input').addEventListener('input', () => filterAndRender());
@@ -350,30 +412,6 @@ export function renderDashboardView(container, navigateTo) {
 
   container.querySelector('#btn-add-product').addEventListener('click', () => {
     openCreateProductModal(() => loadData());
-  });
-
-  container.querySelector('#filter-raw').addEventListener('click', () => {
-    activeFilter = 'RAW';
-    selectedCategoryId = 4;
-    container.querySelector('#cat-btn-label').textContent = 'SUROWIEC (ID: 4)';
-    updateFilterButtonsUI();
-    filterAndRender();
-  });
-
-  container.querySelector('#filter-finished').addEventListener('click', () => {
-    activeFilter = 'FINISHED';
-    selectedCategoryId = 5;
-    container.querySelector('#cat-btn-label').textContent = 'PRODUKT (ID: 5)';
-    updateFilterButtonsUI();
-    filterAndRender();
-  });
-
-  container.querySelector('#filter-all').addEventListener('click', () => {
-    activeFilter = 'ALL';
-    selectedCategoryId = null;
-    container.querySelector('#cat-btn-label').textContent = 'WSZYSTKIE KAT.';
-    updateFilterButtonsUI();
-    filterAndRender();
   });
 
   container.querySelector('#hdr-operator-btn').addEventListener('click', () => {

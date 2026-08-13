@@ -413,3 +413,65 @@ export async function syncPendingItems() {
     return { syncedCount: 0, errors: [e.message] };
   }
 }
+
+export const ODOO_MANAGERS = [
+  { partnerId: 8, userId: 6, name: 'Mateusz Klimkowski', email: 'M.klimkowski@bluemake.eu' },
+  { partnerId: 6, userId: 5, name: 'Paweł Peret', email: 'p.peret@bluemake.eu' }
+];
+
+/**
+ * Send Low Stock Alert message directly into Odoo 19 product chatter with notifications to M. Klimkowski / P. Peret
+ */
+export async function sendLowStockAlert({ productId, sku, name, currentQuantity, uom = 'm', operatorName, recipientPartnerIds = [8, 6], customNote = '' }) {
+  const config = getOdooConfig();
+  const operator = getCurrentOperator();
+  const opName = operatorName || (operator ? operator.name : 'Operator Magazynu');
+  const qtyStr = `${Number(currentQuantity).toFixed(1)} ${uom}`;
+  
+  const recipientNames = ODOO_MANAGERS
+    .filter(m => recipientPartnerIds.includes(m.partnerId))
+    .map(m => m.name)
+    .join(', ') || 'Dział Zakupów';
+
+  const bodyHtml = `
+    <div style="font-family: Arial, sans-serif; padding: 12px; border-left: 5px solid #e11d48; background: #fff1f2; border-radius: 6px;">
+      <h3 style="color: #9f1239; margin-top: 0; margin-bottom: 8px;">🚨 PILNY ALERT: Niski stan surowca poniżej 5.0m</h3>
+      <p style="margin: 4px 0; font-size: 14px;"><b>Produkt:</b> ${name} (<code>${sku}</code>)</p>
+      <p style="margin: 4px 0; font-size: 14px;"><b>Aktualny stan na magazynie:</b> <span style="font-size: 16px; font-weight: bold; color: #b91c1c;">${qtyStr}</span> (Strefa ${config.locationId})</p>
+      <p style="margin: 4px 0; font-size: 13px;"><b>Zgłaszający operator:</b> ${opName}</p>
+      <p style="margin: 4px 0; font-size: 13px;"><b>Data zgłoszenia:</b> ${new Date().toLocaleString('pl-PL')}</p>
+      ${customNote ? `<div style="margin: 10px 0 6px 0; padding: 8px 12px; background: #ffffff; border: 1px solid #fecdd3; border-radius: 4px;"><b style="color: #9f1239;">Notatka od operatora:</b><br/>${customNote}</div>` : ''}
+      <hr style="border: 0; border-top: 1px solid #fecdd3; margin: 10px 0;" />
+      <p style="font-size: 11px; color: #6b7280; margin: 0;"><i>Powiadomienie z systemu Bluemake Odoo Sync wysłane do: ${recipientNames}.</i></p>
+    </div>
+  `;
+
+  try {
+    const res = await callOdooRpc('product.product', 'message_post', [productId], {
+      body: bodyHtml,
+      message_type: 'comment',
+      subtype_xmlid: 'mail.mt_comment',
+      partner_ids: recipientPartnerIds
+    });
+
+    const alertHistoryItem = {
+      id: Date.now(),
+      sku: sku,
+      title: `🚨 Alert zapotrzebowania (${sku})`,
+      details: `Stan: ${qtyStr} • Wysłano do: ${recipientNames}`,
+      time: 'Dziś, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      operator: opName,
+      operatorRole: 'Magazynier / Operator',
+      status: 'SYNCHRONIZED',
+      error: null,
+      productId
+    };
+    saveHistoryItem(alertHistoryItem);
+
+    return { success: true, messageId: res };
+  } catch (err) {
+    console.error('sendLowStockAlert Error:', err);
+    return { success: false, error: err.message || 'Błąd wysyłania alertu do Odoo' };
+  }
+}
+

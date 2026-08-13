@@ -1,5 +1,6 @@
 import { applyStockAdjustment } from '../services/odooApi.js';
 import { openSingleQrLabelWindow } from '../utils/qrLabelReport.js';
+import { openLowStockAlertModal } from './LowStockModal.js';
 
 export function renderProductView(container, navigateTo, product) {
   const currentProduct = product || {
@@ -10,6 +11,8 @@ export function renderProductView(container, navigateTo, product) {
     uom: 'm',
     location: 'Strefa 5'
   };
+
+  const isLowInitial = Number(currentProduct.quantity) < 5.0;
 
   let operationMode = 'CUT'; // 'CUT' (Ucięcie/Wydanie - odejmij od stanu) vs 'ADD' (Przyjęcie/Dodanie - dodaj do stanu)
   let adjustmentAmount = 0.1; // Domyślna wartość ucięcia/dodania (0.1m / 1 szt)
@@ -35,8 +38,26 @@ export function renderProductView(container, navigateTo, product) {
 
     <!-- Main Content Canvas -->
     <main class="flex-grow p-margin-mobile flex flex-col md:max-w-3xl md:mx-auto md:w-full gap-stack-lg pb-10">
+      
+      <!-- Low Stock Warning Banner (< 5m) -->
+      ${isLowInitial ? `
+        <div class="bg-rose-50 border-2 border-rose-500 rounded-xl p-3.5 flex items-center justify-between gap-3 shadow-sm mt-3 animate-pulse">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="material-symbols-outlined text-rose-600 text-2xl flex-shrink-0">warning</span>
+            <div>
+              <div class="font-bold text-rose-900 text-xs uppercase tracking-wide">Niski stan magazynowy (&lt; 5.0m)</div>
+              <div class="text-xs text-rose-700">Pozostało tylko: <b>${Number(currentProduct.quantity).toFixed(1)}${currentProduct.uom}</b></div>
+            </div>
+          </div>
+          <button id="btn-trigger-low-stock-alert" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-3 py-2 rounded-lg flex items-center gap-1 shadow-md uppercase transition-transform active:scale-95 flex-shrink-0">
+            <span class="material-symbols-outlined text-[16px]">campaign</span>
+            <span>ZGŁOŚ (M.KLIMKOWSKI / P.PERET)</span>
+          </button>
+        </div>
+      ` : ''}
+
       <!-- Product Info Card (Level 1 Elevation) -->
-      <section class="bg-surface-container-lowest border border-surface-container-highest rounded-lg overflow-hidden mt-4">
+      <section class="bg-surface-container-lowest border border-surface-container-highest rounded-lg overflow-hidden ${isLowInitial ? 'mt-1' : 'mt-4'}">
         <div class="bg-surface-container px-4 py-3 border-b border-surface-container-highest flex justify-between items-center">
           <h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Informacje o materiale</h2>
           <div class="flex items-center gap-2">
@@ -44,10 +65,10 @@ export function renderProductView(container, navigateTo, product) {
               <span class="material-symbols-outlined text-[15px]">qr_code_2</span>
               <span>ETYKIETA QR (50x30)</span>
             </button>
-            <div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 rounded border border-surface-container-highest">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]"></span>
-              <span class="font-label-caps text-label-caps text-primary font-bold">ODOO 19</span>
-            </div>
+            <button id="btn-card-alert-trigger" class="flex items-center gap-1 bg-rose-600 hover:bg-rose-700 text-white font-label-caps px-2.5 py-1 rounded text-xs font-bold transition-all active:scale-95 shadow-sm uppercase" title="Wyślij alert niskiego stanu do M. Klimkowskiego / P. Pereta w Odoo">
+              <span class="material-symbols-outlined text-[15px]">notifications_active</span>
+              <span>ALERT ODOO</span>
+            </button>
           </div>
         </div>
         <div class="p-4 flex flex-col gap-stack-md">
@@ -252,6 +273,20 @@ export function renderProductView(container, navigateTo, product) {
     });
   }
 
+  const alertTriggerBtn = container.querySelector('#btn-trigger-low-stock-alert');
+  if (alertTriggerBtn) {
+    alertTriggerBtn.addEventListener('click', () => {
+      openLowStockAlertModal(currentProduct);
+    });
+  }
+
+  const cardAlertBtn = container.querySelector('#btn-card-alert-trigger');
+  if (cardAlertBtn) {
+    cardAlertBtn.addEventListener('click', () => {
+      openLowStockAlertModal(currentProduct);
+    });
+  }
+
   backBtn.addEventListener('click', () => navigateTo('dashboard'));
 
   submitBtn.addEventListener('click', async () => {
@@ -272,7 +307,18 @@ export function renderProductView(container, navigateTo, product) {
     toast.classList.add('opacity-100');
 
     setTimeout(() => {
-      navigateTo('history');
+      if (finalStockVal < 5.0 && operationMode === 'CUT') {
+        // Stock is now low after cut - prompt operator to send alert
+        toast.classList.add('opacity-0', 'pointer-events-none');
+        openLowStockAlertModal({
+          ...currentProduct,
+          quantity: finalStockVal
+        }, () => {
+          navigateTo('history');
+        });
+      } else {
+        navigateTo('history');
+      }
     }, 1200);
   });
 
