@@ -65,11 +65,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #000;
+      border-bottom: 1.5px solid #000;
       padding-bottom: 1px;
     }
-    .brand { font-size: 6pt; font-weight: 900; color: #ff6b00; }
-    .sku { font-family: monospace; font-size: 8.5pt; font-weight: 900; color: #000; }
+    .brand { font-size: 6.5pt; font-weight: 900; color: #ff6b00; }
+    .sku { font-family: monospace; font-size: 11pt; font-weight: 900; color: #000000; }
 
     .body-row {
       display: flex;
@@ -79,8 +79,8 @@
       margin: 1px 0;
     }
     .qr-holder {
-      width: 19mm;
-      height: 19mm;
+      width: 17.5mm;
+      height: 17.5mm;
       flex-shrink: 0;
       display: flex;
       align-items: center;
@@ -95,11 +95,11 @@
       min-width: 0;
     }
     .prod-name {
-      font-size: 6.5pt;
-      font-weight: bold;
-      color: #000;
-      line-height: 1.1;
-      max-height: 14mm;
+      font-size: 9.5pt;
+      font-weight: 900;
+      color: #000000;
+      line-height: 1.15;
+      max-height: 16mm;
       overflow: hidden;
       word-break: break-word;
     }
@@ -107,14 +107,14 @@
     .footer-row {
       display: flex;
       justify-content: space-between;
-      font-size: 5pt;
-      font-weight: bold;
-      color: #333;
-      border-top: 0.5px solid #ccc;
+      font-size: 5.5pt;
+      font-weight: 900;
+      color: #000000;
+      border-top: 1px solid #000;
       padding-top: 1px;
     }
 
-    /* RURYKTYWNE NASTAWY DRUKOWANIA NA DRUKARCE ETYKIET 50x30mm */
+    /* DRUK NA DRUKARCE ETYKIET 50x30mm */
     @media print {
       @page {
         size: 50mm 30mm !important;
@@ -164,14 +164,7 @@
 
   <div class="no-print">
     <h1>🏷️ Etykiety Kodów QR 50mm x 30mm (223 sztuk z Odoo)</h1>
-    <p><strong>⚠️ INSTRUKCJA DRUKOWANIA (BEZ SZAREGO TŁA I ZŁEGO ROZMIARU):</strong><br/>
-    1. Kliknij poniższy przycisk <strong>DRUKUJ ETYKIETY TERAZ</strong>.<br/>
-    2. W oknie drukowania systemu Windows:<br/>
-       - <strong>Docelowa drukarka:</strong> Wybierz Twoją drukarkę etykiet.<br/>
-       - <strong>Rozmiar papieru / etykiety:</strong> Wybierz <code>50mm x 30mm</code> (lub 2" x 1.2").<br/>
-       - <strong>Marginesy:</strong> Wybierz <code>Brak</code> (None).<br/>
-       - <strong>Skala / Rozmiar:</strong> Wybierz <code>Dopasuj do obszaru roboczego / 100%</code> (NIE skaluj).<br/>
-       - <strong>Nagłówki i stopki:</strong> ODZNACZ (wyłącz).</p>
+    <p><strong>ZWIĘKSZONO CZCIONKĘ NAZWY I SKU DLA MAKSYMALNEJ CZYTELNOŚCI NA DRUKARCE.</strong></p>
     <button onclick="window.print()" class="btn-print">🖨️ DRUKUJ ETYKIETY TERAZ</button>
   </div>
 

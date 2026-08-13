@@ -161,7 +161,7 @@ export function generateQrLabelsHtml(products) {
     }
 
     .brand {
-      font-size: 5pt;
+      font-size: 6.5pt;
       font-weight: 900;
       color: #ff6b00;
       letter-spacing: 0.5px;
@@ -169,26 +169,26 @@ export function generateQrLabelsHtml(products) {
 
     .sku-badge {
       font-family: monospace;
-      font-size: 7.5pt;
-      font-weight: 800;
-      color: #0f172a;
+      font-size: 10.5pt;
+      font-weight: 900;
+      color: #000000;
       background: #f8fafc;
-      padding: 0 2px;
+      padding: 0.5px 3px;
       border-radius: 1px;
-      border: 0.3pt solid #cbd5e1;
+      border: 0.5pt solid #000000;
     }
 
     .label-body {
       display: flex;
       align-items: center;
-      gap: 2mm;
+      gap: 1.5mm;
       flex: 1;
       margin: 1px 0;
     }
 
     .qr-wrapper {
-      width: 19mm;
-      height: 19mm;
+      width: 17.5mm;
+      height: 17.5mm;
       flex-shrink: 0;
       display: flex;
       align-items: center;
@@ -211,9 +211,9 @@ export function generateQrLabelsHtml(products) {
     }
 
     .product-name {
-      font-size: 6pt;
-      font-weight: 700;
-      color: #0f172a;
+      font-size: 9.5pt;
+      font-weight: 800;
+      color: #000000;
       line-height: 1.15;
       display: -webkit-box;
       -webkit-line-clamp: 3;
