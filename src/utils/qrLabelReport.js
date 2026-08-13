@@ -247,38 +247,49 @@ export function generateQrLabelsHtml(products) {
       font-weight: 600;
     }
 
-    /* Print Specific Styles for 50x30mm Label Printers & Sticker Sheets */
+    /* Print Specific Styles for 50x30mm Label Printers */
     @media print {
-      .no-print {
-        display: none !important;
+      @page {
+        size: 50mm 30mm !important;
+        margin: 0mm !important;
       }
 
-      body {
-        background: transparent !important;
-        padding: 0 !important;
+      html, body {
+        width: 50mm !important;
+        height: 30mm !important;
         margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .no-print {
+        display: none !important;
       }
 
       .labels-container {
         display: block !important;
         margin: 0 !important;
-        max-width: none !important;
+        padding: 0 !important;
+        width: 50mm !important;
+        background: transparent !important;
       }
 
       .qr-label-card {
+        width: 50mm !important;
+        height: 30mm !important;
+        max-width: 50mm !important;
+        max-height: 30mm !important;
+        margin: 0 !important;
+        padding: 1.5mm 2mm !important;
         border: none !important;
         box-shadow: none !important;
         border-radius: 0 !important;
-        width: 50mm !important;
-        height: 30mm !important;
         page-break-after: always !important;
         break-after: page !important;
         float: none !important;
-      }
-
-      @page {
-        size: 50mm 30mm;
-        margin: 0;
+        background: #ffffff !important;
       }
     }
   </style>
