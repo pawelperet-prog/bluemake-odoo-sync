@@ -1,4 +1,4 @@
-import { generateQrSvg } from './qrGenerator.js';
+import { generateQrSvg, renderQrInDom } from './qrGenerator.js';
 
 /**
  * Generate HTML string for 50mm x 30mm Printable QR Code Labels
@@ -7,17 +7,15 @@ export function generateQrLabelsHtml(products) {
   const activeProducts = (products || []).filter(p => p.sku && p.sku.trim().length > 0);
   const nowStr = new Date().toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' });
 
-  const labelCardsHtml = activeProducts.map(p => {
+  const labelCardsHtml = activeProducts.map((p, i) => {
     const sku = p.sku;
     const name = p.name || 'Produkt';
-    const category = p.categoryName || (p.categoryId === 4 ? 'Surowiec' : 'Produkt');
     const uom = p.uom || 'm';
-    const qrSvg = generateQrSvg(sku, { size: 250, padding: 0 });
 
     return `
       <div class="qr-label-card">
         <div class="qr-column">
-          ${qrSvg}
+          <div id="qr-blob-${i}" data-code="${sku.replace(/"/g,'&quot;')}"></div>
         </div>
         
         <div class="text-column">
@@ -227,15 +225,24 @@ export function generateQrLabelsHtml(products) {
     ${labelCardsHtml}
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>
   <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('[data-code]').forEach(function(el) {
+        var code = el.getAttribute('data-code');
+        if (code) {
+          new QRCode(el, { text: code, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+        }
+      });
+    });
     function downloadHtml() {
-      const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
-      const a = document.createElement('a');
+      var blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+      var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = 'Bluemake_Kody_QR_50x30mm.html';
       a.click();
     }
-  </script>
+  <\/script>
 </body>
 </html>`;
 }
@@ -258,12 +265,12 @@ export function openQrLabelsWindow(products) {
     const sku = p.sku;
     const name = p.name || 'Produkt';
     const uom = p.uom || 'm';
-    const qrSvg = generateQrSvg(sku, { size: 250, padding: 0 });
+    const safeSku = sku.replace(/"/g, '&quot;');
 
     return `
       <div class="qr-label-card bg-white border border-slate-300 rounded p-1.5 flex flex-row items-center justify-between gap-1.5 shadow-sm overflow-hidden" style="width: 50mm; height: 30mm; flex-shrink: 0;">
         <div class="w-[26mm] h-[26mm] flex-shrink-0 flex items-center justify-center bg-white">
-          ${qrSvg}
+          <div data-qr="${safeSku}" style="width:100%;height:100%;"></div>
         </div>
         
         <div class="flex-1 min-w-0 h-[26mm] flex flex-col justify-between overflow-hidden">
@@ -341,6 +348,9 @@ export function openQrLabelsWindow(products) {
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 
   const backdrop = document.getElementById('qr-modal-backdrop');
+
+  // Render QR codes into [data-qr] placeholder divs via qrcodejs CDN
+  renderQrInDom(backdrop);
   const closeBtn = document.getElementById('close-qr-modal-btn');
   const closeBottomBtn = document.getElementById('btn-close-modal-bottom');
   const printBtn = document.getElementById('btn-print-modal-direct');
