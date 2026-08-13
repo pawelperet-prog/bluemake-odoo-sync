@@ -146,11 +146,6 @@ export function renderScannerView(container, navigateTo) {
     console.warn('Html5Qrcode init error:', err);
   }
 
-  const cutout = container.querySelector('#scanner-cutout');
-  cutout.addEventListener('click', () => {
-    handleScannedCode('S355-FI20');
-  });
-
   const manualInput = container.querySelector('#manual-sku-input');
   const manualBtn = container.querySelector('#manual-sku-btn');
   const submitManual = () => {

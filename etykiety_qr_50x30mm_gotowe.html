@@ -114,7 +114,6 @@
       padding-top: 1px;
     }
 
-    /* DRUK NA DRUKARCE ETYKIET 50x30mm */
     @media print {
       @page {
         size: 50mm 30mm !important;
@@ -155,6 +154,7 @@
         border-radius: 0 !important;
         page-break-after: always !important;
         break-after: page !important;
+        float: none !important;
         background: #ffffff !important;
       }
     }
@@ -164,7 +164,7 @@
 
   <div class="no-print">
     <h1>🏷️ Etykiety Kodów QR 50mm x 30mm (223 sztuk z Odoo)</h1>
-    <p><strong>ZWIĘKSZONO CZCIONKĘ NAZWY I SKU DLA MAKSYMALNEJ CZYTELNOŚCI NA DRUKARCE.</strong></p>
+    <p>Standardowy standardowy moduł QR ISO z korekcją błędów Reed-Solomon dla 100% bezbłędnego skanowania.</p>
     <button onclick="window.print()" class="btn-print">🖨️ DRUKUJ ETYKIETY TERAZ</button>
   </div>
 
@@ -3523,8 +3523,8 @@
         if (code && holder) {
           new QRCode(holder, {
             text: code,
-            width: 150,
-            height: 150,
+            width: 160,
+            height: 160,
             correctLevel : QRCode.CorrectLevel.M
           });
         }
