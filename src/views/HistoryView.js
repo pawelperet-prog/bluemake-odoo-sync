@@ -141,7 +141,7 @@ export function renderHistoryView(container, navigateTo) {
       </div>
     `).join('');
   }
-    `).join('');
+
   container.querySelector('#btn-switch-op').addEventListener('click', () => {
     openLoginModal(() => {
       renderHistoryView(container, navigateTo);
