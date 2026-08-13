@@ -139,41 +139,42 @@ export function renderScannerView(container, navigateTo) {
 
   try {
     html5QrcodeScanner = new Html5Qrcode("qr-reader");
-    
-    const qrboxFunction = (viewfinderWidth, viewfinderHeight) => {
-      const minDim = Math.min(viewfinderWidth, viewfinderHeight);
-      const boxSize = Math.floor(minDim * 0.75);
-      return { width: Math.max(220, boxSize), height: Math.max(220, boxSize) };
+
+    const qrboxFn = (w, h) => {
+      const s = Math.floor(Math.min(w, h) * 0.72);
+      return { width: Math.max(200, s), height: Math.max(200, s) };
     };
 
+    // Start with simple environment camera — works on ALL phones
     html5QrcodeScanner.start(
+      { facingMode: "environment" },
       {
-        facingMode: "environment",
-        width: { min: 640, ideal: 1280, max: 1920 },
-        height: { min: 480, ideal: 720, max: 1080 }
-      },
-      {
-        fps: 15,
-        qrbox: qrboxFunction,
-        aspectRatio: 1.0,
-        experimentalFeatures: {
-          useBarCodeDetectorIfSupported: true
-        }
+        fps: 12,
+        qrbox: qrboxFn,
+        experimentalFeatures: { useBarCodeDetectorIfSupported: true }
       },
       (decodedText) => handleScannedCode(decodedText),
       () => {}
     ).catch(err => {
-      console.warn('HD camera stream fallback to default environment camera:', err);
+      console.warn('Camera start failed, trying any camera:', err);
+      // Last fallback: any available camera
       html5QrcodeScanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
+        { facingMode: "user" },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
         (decodedText) => handleScannedCode(decodedText),
         () => {}
-      ).catch(e => console.warn('Camera failed:', e));
+      ).catch(e => {
+        console.error('All camera attempts failed:', e);
+        const reader = document.getElementById('qr-reader');
+        if (reader) {
+          reader.innerHTML = `<div style="color:white;padding:20px;text-align:center;"><p style="font-size:18px;">⚠️ Brak dostępu do kamery</p><p style="font-size:13px;margin-top:8px;">Użyj pola tekstowego poniżej i wpisz SKU ręcznie.</p></div>`;
+        }
+      });
     });
   } catch (err) {
     console.warn('Html5Qrcode init error:', err);
   }
+
 
   const manualInput = container.querySelector('#manual-sku-input');
   const manualBtn = container.querySelector('#manual-sku-btn');
