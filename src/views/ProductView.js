@@ -1,4 +1,5 @@
 import { applyStockAdjustment } from '../services/odooApi.js';
+import { openSingleQrLabelWindow } from '../utils/qrLabelReport.js';
 
 export function renderProductView(container, navigateTo, product) {
   const currentProduct = product || {
@@ -38,9 +39,15 @@ export function renderProductView(container, navigateTo, product) {
       <section class="bg-surface-container-lowest border border-surface-container-highest rounded-lg overflow-hidden mt-4">
         <div class="bg-surface-container px-4 py-3 border-b border-surface-container-highest flex justify-between items-center">
           <h2 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Informacje o materiale</h2>
-          <div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 rounded border border-surface-container-highest">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]"></span>
-            <span class="font-label-caps text-label-caps text-primary font-bold">ODOO 19</span>
+          <div class="flex items-center gap-2">
+            <button id="btn-print-this-qr" class="flex items-center gap-1 bg-indigo-700 hover:bg-indigo-800 text-white font-label-caps px-2.5 py-1 rounded text-xs font-bold transition-all active:scale-95 shadow-sm uppercase">
+              <span class="material-symbols-outlined text-[15px]">qr_code_2</span>
+              <span>ETYKIETA QR (50x30)</span>
+            </button>
+            <div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 rounded border border-surface-container-highest">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]"></span>
+              <span class="font-label-caps text-label-caps text-primary font-bold">ODOO 19</span>
+            </div>
           </div>
         </div>
         <div class="p-4 flex flex-col gap-stack-md">
@@ -237,6 +244,13 @@ export function renderProductView(container, navigateTo, product) {
     adjustmentAmount = Number((integerPart + 0.5).toFixed(1));
     updateUI();
   });
+
+  const printQrBtn = container.querySelector('#btn-print-this-qr');
+  if (printQrBtn) {
+    printQrBtn.addEventListener('click', () => {
+      openSingleQrLabelWindow(currentProduct);
+    });
+  }
 
   backBtn.addEventListener('click', () => navigateTo('dashboard'));
 

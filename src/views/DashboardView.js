@@ -2,7 +2,7 @@ import { getProducts, getCategories, checkApiStatus } from '../services/odooApi.
 import { openSettingsModal } from './SettingsModal.js';
 import { openCreateProductModal } from './CreateProductModal.js';
 import { openReportWindow } from '../utils/reportGenerator.js';
-import { openQrLabelsWindow } from '../utils/qrLabelReport.js';
+import { openQrLabelsWindow, openSingleQrLabelWindow } from '../utils/qrLabelReport.js';
 import { getCurrentOperator, openLoginModal } from '../services/authService.js';
 
 export function renderDashboardView(container, navigateTo) {
@@ -294,13 +294,25 @@ export function renderDashboardView(container, navigateTo) {
           </div>
         </div>
 
-        <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="flex items-center gap-1.5 flex-shrink-0">
+          <button data-product-id="${p.id}" title="Drukuj etykietę QR 50x30mm dla tego produktu" class="print-single-qr-btn px-2.5 py-2 bg-indigo-100 text-indigo-950 hover:bg-indigo-200 border border-indigo-300 font-label-caps text-xs rounded transition-colors uppercase font-bold flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px]">qr_code_2</span> QR
+          </button>
           <button data-product-id="${p.id}" class="update-stock-btn px-3 py-2 bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary font-label-caps text-xs rounded transition-colors uppercase font-bold flex items-center gap-1">
             <span class="material-symbols-outlined text-[16px]">edit</span> UPDATE
           </button>
         </div>
       </div>
     `).join('');
+
+    listEl.querySelectorAll('.print-single-qr-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const pId = Number(btn.getAttribute('data-product-id'));
+        const product = allProducts.find(item => item.id === pId);
+        if (product) openSingleQrLabelWindow(product);
+      });
+    });
 
     listEl.querySelectorAll('.update-stock-btn').forEach(btn => {
       btn.addEventListener('click', () => {

@@ -319,6 +319,11 @@ export function generateQrLabelsHtml(products) {
 </html>`;
 }
 
+export function openSingleQrLabelWindow(product) {
+  if (!product) return;
+  openQrLabelsWindow([product]);
+}
+
 export function openQrLabelsWindow(products) {
   const html = generateQrLabelsHtml(products);
   const win = window.open('', '_blank');
