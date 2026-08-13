@@ -1,7 +1,10 @@
 import { checkApiStatus, getHistory, syncPendingItems } from '../services/odooApi.js';
 import { openSettingsModal } from './SettingsModal.js';
+import { getCurrentOperator, openLoginModal } from '../services/authService.js';
 
 export function renderHistoryView(container, navigateTo) {
+  const currentOp = getCurrentOperator();
+
   container.innerHTML = `
     <!-- TopAppBar -->
     <header class="bg-surface border-b border-outline-variant fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile h-[64px]">
@@ -9,7 +12,13 @@ export function renderHistoryView(container, navigateTo) {
         <span class="material-symbols-outlined text-primary">arrow_back</span>
         <span class="font-headline-md text-headline-md font-bold text-primary">Bluemake</span>
       </div>
-      <span id="hdr-settings" class="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container-high rounded-full p-2">settings_remote</span>
+      <div class="flex items-center gap-2">
+        <button id="btn-switch-op" class="flex items-center gap-1.5 bg-surface-container hover:bg-surface-container-high text-primary px-3 py-1.5 rounded-full border border-outline-variant text-xs font-bold transition-all active:scale-95">
+          <span class="material-symbols-outlined text-[16px]">account_circle</span>
+          <span>${currentOp ? currentOp.name : 'Zaloguj'}</span>
+        </button>
+        <span id="hdr-settings" class="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container-high rounded-full p-2">settings_remote</span>
+      </div>
     </header>
 
     <main class="flex-grow flex flex-col px-margin-mobile py-stack-lg max-w-4xl mx-auto w-full gap-stack-lg mt-[64px] pb-[90px]">
@@ -37,7 +46,7 @@ export function renderHistoryView(container, navigateTo) {
 
       <!-- History List -->
       <section class="flex flex-col gap-stack-md">
-        <h3 class="font-headline-md text-headline-md text-on-surface border-b border-outline-variant pb-2">Ostatnie Aktywności</h3>
+        <h3 class="font-headline-md text-headline-md text-on-surface border-b border-outline-variant pb-2">Ostatnie Aktywności i Audyt Zmian</h3>
         <div id="history-items-list" class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col">
           <!-- Populated dynamically -->
         </div>
@@ -100,7 +109,14 @@ export function renderHistoryView(container, navigateTo) {
             <div>
               <div class="font-body-lg text-body-lg text-primary font-bold">${item.title}</div>
               <div class="font-body-md text-body-md text-on-surface-variant mt-1">${item.details}</div>
-              <div class="font-label-caps text-label-caps text-outline mt-2">${item.time}</div>
+              <div class="flex items-center gap-2 mt-2">
+                <span class="font-label-caps text-label-caps text-outline">${item.time}</span>
+                <span class="text-outline">•</span>
+                <span class="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded border border-primary/20">
+                  <span class="material-symbols-outlined text-[13px]">person</span>
+                  <span>${item.operator || 'Paweł Peret'}</span>
+                </span>
+              </div>
             </div>
           </div>
           <div class="flex items-center gap-2 ${
@@ -125,6 +141,12 @@ export function renderHistoryView(container, navigateTo) {
       </div>
     `).join('');
   }
+    `).join('');
+  container.querySelector('#btn-switch-op').addEventListener('click', () => {
+    openLoginModal(() => {
+      renderHistoryView(container, navigateTo);
+    });
+  });
 
   const syncBtn = container.querySelector('#btn-sync-now');
   syncBtn.addEventListener('click', async () => {

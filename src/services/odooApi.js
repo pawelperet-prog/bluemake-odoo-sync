@@ -1,4 +1,5 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
+import { getCurrentOperator } from './authService.js';
 
 // Odoo Config with LocalStorage persistence support
 const DEFAULT_CONFIG = {
@@ -269,12 +270,15 @@ export async function applyStockAdjustment(productId, newQuantity, sku, oldQuant
   const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const dateStr = 'Dziś, ' + timestamp;
 
+  const operator = getCurrentOperator();
   const historyItem = {
     id: Date.now(),
     sku: sku,
     title: `Korekta ${sku}: ${diff > 0 ? '+' : ''}${diff}m`,
     details: `Nowy stan: ${newQuantity}m`,
     time: dateStr,
+    operator: operator ? operator.name : 'Nieznany Operator',
+    operatorRole: operator ? operator.role : 'Operator',
     status: 'PENDING',
     error: null,
     productId,

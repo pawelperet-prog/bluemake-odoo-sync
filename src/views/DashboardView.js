@@ -3,6 +3,7 @@ import { openSettingsModal } from './SettingsModal.js';
 import { openCreateProductModal } from './CreateProductModal.js';
 import { openReportWindow } from '../utils/reportGenerator.js';
 import { openQrLabelsWindow } from '../utils/qrLabelReport.js';
+import { getCurrentOperator, openLoginModal } from '../services/authService.js';
 
 export function renderDashboardView(container, navigateTo) {
   let activeFilter = 'RAW'; // 'RAW' (Surowiec), 'FINISHED' (Produkt gotowy), 'ALL' (Wszystkie)
@@ -10,15 +11,22 @@ export function renderDashboardView(container, navigateTo) {
   let allCategories = [];
   let allProducts = null;
 
+  const activeOp = getCurrentOperator();
+
   container.innerHTML = `
     <!-- TopAppBar -->
     <header class="fixed top-0 left-0 w-full z-50 bg-surface border-b border-outline-variant h-touch-target-min flex justify-between items-center px-margin-mobile">
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container-high rounded-full p-2 transition-transform duration-100 active:scale-95" id="header-settings">settings_remote</span>
         <h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Bluemake</h1>
       </div>
       <div class="flex items-center gap-2">
-        <button id="hdr-valuation" title="Podstrona Wyceny i Raportu Magazynu" class="flex items-center gap-1 bg-primary text-on-primary font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
+        <!-- Operator Pill -->
+        <button id="hdr-operator-btn" title="Konto Operatora (Zmień / Logowanie)" class="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 font-label-caps px-2.5 py-1 rounded-full text-xs font-bold transition-all active:scale-95">
+          <span class="material-symbols-outlined text-[16px]">account_circle</span>
+          <span>${activeOp ? activeOp.name : 'Zaloguj'}</span>
+        </button>
+        <button id="hdr-valuation" title="Podstrona Wyceny i Raportu Magazynu" class="hidden sm:flex items-center gap-1 bg-primary text-on-primary font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
           <span class="material-symbols-outlined text-[16px]">payments</span>
           <span>WYCENA</span>
         </button>
@@ -354,6 +362,12 @@ export function renderDashboardView(container, navigateTo) {
     container.querySelector('#cat-btn-label').textContent = 'WSZYSTKIE KAT.';
     updateFilterButtonsUI();
     filterAndRender();
+  });
+
+  container.querySelector('#hdr-operator-btn').addEventListener('click', () => {
+    openLoginModal(() => {
+      renderDashboardView(container, navigateTo);
+    });
   });
 
   container.querySelector('#header-settings').addEventListener('click', () => {
