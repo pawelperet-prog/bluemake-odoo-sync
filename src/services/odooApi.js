@@ -171,7 +171,7 @@ export async function getProducts() {
   try {
     const productDomain = [['active', '=', true]];
     const products = await callOdooRpc('product.product', 'search_read', [productDomain], {
-      fields: ['id', 'name', 'default_code', 'uom_id', 'categ_id', 'sale_ok', 'purchase_ok'],
+      fields: ['id', 'name', 'default_code', 'barcode', 'uom_id', 'categ_id', 'sale_ok', 'purchase_ok'],
       limit: 500
     });
 
@@ -201,42 +201,40 @@ export async function getProducts() {
       const isRawMaterial = catId === 4 || (Boolean(p.sale_ok && p.purchase_ok));
       const isFinishedProduct = catId === 5 || (Boolean(p.sale_ok && !p.purchase_ok));
 
+      const codeVal = p.barcode || p.default_code || `SKU-${p.id}`;
+
       return {
         id: p.id,
-        sku: p.default_code || `SKU-${p.id}`,
+        sku: codeVal,
+        barcode: codeVal,
         name: p.name || 'Produkt',
         quantity: typeof stock === 'number' ? stock : 0,
         uom: uomName.toLowerCase().includes('unit') ? 'szt' : (uomName.toLowerCase().includes('m') ? 'm' : uomName),
         location: `Strefa ${config.locationId}`,
+        isLowStock: stock < 5,
         categoryId: catId,
-        categoryName: catName,
-        saleOk: Boolean(p.sale_ok),
-        purchaseOk: Boolean(p.purchase_ok),
-        isRawMaterial: isRawMaterial,
-        isFinishedProduct: isFinishedProduct,
-        isLowStock: stock <= 5.0
+        categoryName: isRawMaterial ? 'Surowiec' : (isFinishedProduct ? 'Produkt' : catName)
       };
     });
   } catch (err) {
-    console.warn('Brak połączenia z Odoo API:', err.message);
-    // Return null to signal offline state without dummy products
-    return null;
+    console.error('getProducts Error:', err);
+    throw err;
   }
 }
 
 /**
  * Create a new product in Odoo 19 & initialize stock in Location 5
  */
-export async function createNewProduct({ name, sku, initialQuantity, categoryId }) {
+export async function createNewProduct({ name, sku, initialQuantity = 0, categoryId, uomName = 'm' }) {
   const config = getOdooConfig();
-  const catId = Number(categoryId) || Number(config.categoryId);
-  const isRaw = catId === 4;
-
   try {
+    const isRaw = categoryId === 4;
+    const catId = categoryId || 4;
+
     const pId = await callOdooRpc('product.product', 'create', [{
       name: name,
       default_code: sku,
-      type: 'consu',
+      barcode: sku,
       is_storable: true,
       sale_ok: true,
       purchase_ok: isRaw,

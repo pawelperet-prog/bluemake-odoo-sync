@@ -114,7 +114,12 @@ export function renderScannerView(container, navigateTo) {
     }
 
     const products = await getProducts();
-    const matched = products ? products.find(p => p.sku.toUpperCase() === codeClean || p.id.toString() === codeClean) : null;
+    const matched = products ? products.find(p => 
+      (p.sku && p.sku.toUpperCase() === codeClean) || 
+      (p.barcode && p.barcode.toUpperCase() === codeClean) || 
+      (p.default_code && String(p.default_code).toUpperCase() === codeClean) || 
+      p.id.toString() === codeClean
+    ) : null;
     
     setTimeout(() => {
       if (matched) {
