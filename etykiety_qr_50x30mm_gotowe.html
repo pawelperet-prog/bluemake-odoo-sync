@@ -79,16 +79,18 @@
       margin: 1px 0;
     }
     .qr-holder {
-      width: 17.5mm;
-      height: 17.5mm;
+      width: 23mm;
+      height: 23mm;
       flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: #ffffff;
     }
     .qr-holder img, .qr-holder canvas {
       width: 100% !important;
       height: 100% !important;
+      image-rendering: pixelated !important;
     }
     .info-holder {
       flex: 1;
@@ -164,7 +166,7 @@
 
   <div class="no-print">
     <h1>🏷️ Etykiety Kodów QR 50mm x 30mm (223 sztuk z Odoo)</h1>
-    <p>Standardowy standardowy moduł QR ISO z korekcją błędów Reed-Solomon dla 100% bezbłędnego skanowania.</p>
+    <p>Powiększony kod QR do 23mm z omijaczym silnikiem renderowania ścieżek SVG dla 100% ostrości pikseli.</p>
     <button onclick="window.print()" class="btn-print">🖨️ DRUKUJ ETYKIETY TERAZ</button>
   </div>
 
@@ -3523,8 +3525,8 @@
         if (code && holder) {
           new QRCode(holder, {
             text: code,
-            width: 160,
-            height: 160,
+            width: 200,
+            height: 200,
             correctLevel : QRCode.CorrectLevel.M
           });
         }

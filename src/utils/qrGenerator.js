@@ -4,31 +4,31 @@
  */
 
 export function generateQrSvg(text, options = {}) {
-  const size = options.size || 200;
+  const size = options.size || 250;
   const color = options.color || '#000000';
   const bgColor = options.bgColor || '#ffffff';
 
   const qr = createQrInstance(text || 'SKU');
   const moduleCount = qr.getModuleCount();
-  const quietZone = 4; // ISO standard 4-module quiet zone
+  const quietZone = 2; // 2-module quiet zone for maximum code scale
   const totalCount = moduleCount + quietZone * 2;
-  const cellSize = size / totalCount;
+  const cellSize = Math.max(4, Math.floor(size / totalCount));
+  const actualSize = cellSize * totalCount;
 
-  let rects = [];
+  let pathParts = [];
   for (let r = 0; r < moduleCount; r++) {
     for (let c = 0; c < moduleCount; c++) {
       if (qr.isDark(r, c)) {
-        const x = ((c + quietZone) * cellSize).toFixed(2);
-        const y = ((r + quietZone) * cellSize).toFixed(2);
-        const w = (cellSize + 0.05).toFixed(2);
-        rects.push(`<rect x="${x}" y="${y}" width="${w}" height="${w}" fill="${color}" />`);
+        const x = (c + quietZone) * cellSize;
+        const y = (r + quietZone) * cellSize;
+        pathParts.push(`M${x},${y}h${cellSize}v${cellSize}h-${cellSize}z`);
       }
     }
   }
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-    <rect width="${size}" height="${size}" fill="${bgColor}" />
-    ${rects.join('')}
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${actualSize} ${actualSize}" width="100%" height="100%" shape-rendering="crispEdges">
+    <rect width="${actualSize}" height="${actualSize}" fill="${bgColor}" />
+    <path d="${pathParts.join(' ')}" fill="${color}" />
   </svg>`;
 }
 

@@ -134,12 +134,13 @@ export function generateQrLabelsHtml(products) {
     }
 
     .qr-wrapper {
-      width: 17.5mm;
-      height: 17.5mm;
+      width: 23mm;
+      height: 23mm;
       flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: #ffffff;
     }
 
     .qr-wrapper svg {
@@ -299,7 +300,7 @@ export function openQrLabelsWindow(products) {
         </div>
         
         <div class="flex items-center gap-1.5 flex-1 my-0.5">
-          <div class="w-[17.5mm] h-[17.5mm] flex-shrink-0 flex items-center justify-center">
+          <div class="w-[23mm] h-[23mm] flex-shrink-0 flex items-center justify-center bg-white">
             ${qrSvg}
           </div>
           <div class="flex-1 min-w-0 flex flex-col justify-center">
