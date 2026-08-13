@@ -1,4 +1,5 @@
 import { generateQrSvg, renderQrInDom } from './qrGenerator.js';
+import { openZebraPrintModal, downloadZpl, generateZplBatch } from './zebraPrint.js';
 
 /**
  * Generate HTML string for 50mm x 30mm Printable QR Code Labels
@@ -329,28 +330,24 @@ export function openQrLabelsWindow(products) {
         </div>
 
         <!-- Controls -->
-        <div class="flex flex-col sm:flex-row gap-2 justify-between items-center bg-surface-container p-2.5 rounded-lg border border-outline-variant/40">
-          <span class="text-xs font-bold text-primary flex items-center gap-1">
-            <span class="material-symbols-outlined text-green-600 text-[18px]">check_circle</span>
-            Etykiety w formacie 50x30mm
-          </span>
-          
-          <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-            <!-- Button 1: Direct System Print -->
-            <button id="btn-print-modal-direct" class="flex-1 sm:flex-initial bg-[#ff6b00] hover:bg-[#e66000] text-white text-xs font-bold px-3.5 py-2 rounded-lg flex items-center justify-center gap-1 shadow-md uppercase transition-transform active:scale-95">
-              <span class="material-symbols-outlined text-[18px]">print</span> DRUKUJ (SYSTEM)
+        <div class="flex flex-col gap-2 bg-surface-container p-3 rounded-lg border border-outline-variant/40">
+          <div class="flex flex-wrap gap-2">
+            <!-- Button 1: Zebra ZPL Direct Print -->
+            <button id="btn-zebra-print" class="flex-1 bg-[#ff6b00] hover:bg-[#e66000] text-white text-sm font-bold px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-lg uppercase transition-transform active:scale-95">
+              🦓 DRUKUJ ZEBRA (ZPL)
             </button>
 
-            <!-- Button 2: Open Printable Blob Sheet (Mobile Friendly) -->
-            <button id="btn-open-print-sheet" class="flex-1 sm:flex-initial bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1 shadow-md uppercase transition-transform active:scale-95">
-              <span class="material-symbols-outlined text-[18px]">open_in_new</span> ARKUSZ DRUKU
+            <!-- Button 2: Download ZPL -->
+            <button id="btn-download-zpl" class="flex-1 bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-bold px-3 py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-md uppercase transition-transform active:scale-95">
+              📥 POBIERZ .ZPL
             </button>
 
-            <!-- Button 3: Download HTML File -->
+            <!-- Button 3: HTML fallback -->
             <button id="btn-download-modal-file" class="bg-surface-container-high hover:bg-surface-container-highest text-primary text-xs font-bold px-3 py-2 rounded-lg flex items-center justify-center gap-1 border border-outline-variant uppercase">
-              <span class="material-symbols-outlined text-[18px]">download</span> POBIERZ PLIK
+              📄 HTML
             </button>
           </div>
+          <p class="text-[11px] text-on-surface-variant">🦓 ZPL = bezpośredni druk do drukarki Zebra przez Wi-Fi • Podaj IP drukarki po kliknięciu</p>
         </div>
 
         <!-- Preview Grid -->
@@ -386,16 +383,18 @@ export function openQrLabelsWindow(products) {
   closeBtn.addEventListener('click', closeModal);
   closeBottomBtn.addEventListener('click', closeModal);
 
-  downloadBtn.addEventListener('click', () => {
+  document.getElementById('btn-zebra-print').addEventListener('click', () => {
+    closeModal();
+    openZebraPrintModal(activeProducts);
+  });
+
+  document.getElementById('btn-download-zpl').addEventListener('click', () => {
+    const zpl = generateZplBatch(activeProducts);
+    downloadZpl(zpl, `Bluemake_Zebra_${activeProducts.length}etykiet.zpl`);
+  });
+
+  document.getElementById('btn-download-modal-file').addEventListener('click', () => {
     downloadQrLabelsHtml(activeProducts);
-  });
-
-  printBtn.addEventListener('click', () => {
-    printLabelsDirectly(activeProducts);
-  });
-
-  openSheetBtn.addEventListener('click', () => {
-    openPrintableBlobSheet(activeProducts);
   });
 }
 
