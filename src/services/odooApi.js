@@ -213,7 +213,11 @@ export async function getProducts() {
         location: `Strefa ${config.locationId}`,
         isLowStock: stock < 5,
         categoryId: catId,
-        categoryName: isRawMaterial ? 'Surowiec' : (isFinishedProduct ? 'Produkt' : catName)
+        categoryName: isRawMaterial ? 'Surowiec' : (isFinishedProduct ? 'Produkt' : catName),
+        isRawMaterial: isRawMaterial,
+        isFinishedProduct: isFinishedProduct,
+        saleOk: Boolean(p.sale_ok),
+        purchaseOk: Boolean(p.purchase_ok)
       };
     });
   } catch (err) {
