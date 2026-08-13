@@ -1,4 +1,5 @@
 import { createNewProduct, getCategories } from '../services/odooApi.js';
+import { openSingleQrLabelWindow } from '../utils/qrLabelReport.js';
 
 /**
  * Open Multi-Tab Create Product Modal (Pręt, Płaskownik, Płaskownik - Ścinki)
@@ -353,11 +354,38 @@ export async function openCreateProductModal(onCreatedCallback) {
 
     if (res.success) {
       banner.classList.add('bg-green-100', 'text-green-800');
-      banner.innerHTML = `<span class="material-symbols-outlined text-green-600">check_circle</span> Utworzono produkt ${sku} ze stanem ${initialQty} ${uomName}!`;
+      banner.innerHTML = `
+        <div class="flex flex-col sm:flex-row items-center justify-between w-full gap-2">
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-green-600 text-xl">check_circle</span>
+            <span>Utworzono <strong>${sku}</strong> (${initialQty} ${uomName})! ID Odoo: <strong>${res.productId || 'NOWY'}</strong></span>
+          </div>
+          <button type="button" id="btn-print-new-qr" class="bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold px-3 py-1.5 rounded flex items-center gap-1 shadow-sm uppercase flex-shrink-0">
+            <span class="material-symbols-outlined text-[15px]">qr_code_2</span> DRUKUJ QR
+          </button>
+        </div>
+      `;
+
+      const newProdObj = {
+        id: res.productId || Date.now(),
+        sku: sku,
+        name: name,
+        quantity: initialQty,
+        uom: uomName,
+        categoryName: 'Surowiec'
+      };
+
+      const printNewBtn = banner.querySelector('#btn-print-new-qr');
+      if (printNewBtn) {
+        printNewBtn.addEventListener('click', () => {
+          openSingleQrLabelWindow(newProdObj);
+        });
+      }
+
       setTimeout(() => {
         closeModal();
         if (onCreatedCallback) onCreatedCallback();
-      }, 1200);
+      }, 3500);
     } else {
       banner.classList.add('bg-red-100', 'text-red-800');
       banner.innerHTML = `<span class="material-symbols-outlined text-red-600">error</span> Błąd dodawania: ${res.error}`;
