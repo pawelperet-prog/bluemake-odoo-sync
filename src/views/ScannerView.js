@@ -134,13 +134,37 @@ export function renderScannerView(container, navigateTo) {
 
   try {
     html5QrcodeScanner = new Html5Qrcode("qr-reader");
+    
+    const qrboxFunction = (viewfinderWidth, viewfinderHeight) => {
+      const minDim = Math.min(viewfinderWidth, viewfinderHeight);
+      const boxSize = Math.floor(minDim * 0.75);
+      return { width: Math.max(220, boxSize), height: Math.max(220, boxSize) };
+    };
+
     html5QrcodeScanner.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: { width: 250, height: 250 } },
+      {
+        facingMode: "environment",
+        width: { min: 640, ideal: 1280, max: 1920 },
+        height: { min: 480, ideal: 720, max: 1080 }
+      },
+      {
+        fps: 15,
+        qrbox: qrboxFunction,
+        aspectRatio: 1.0,
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
+        }
+      },
       (decodedText) => handleScannedCode(decodedText),
       () => {}
     ).catch(err => {
-      console.warn('Camera stream error, enabling touch fallback:', err);
+      console.warn('HD camera stream fallback to default environment camera:', err);
+      html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => handleScannedCode(decodedText),
+        () => {}
+      ).catch(e => console.warn('Camera failed:', e));
     });
   } catch (err) {
     console.warn('Html5Qrcode init error:', err);
