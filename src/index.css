@@ -3,12 +3,16 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    font-size: 90%;
+  }
   body {
     font-family: 'Inter', sans-serif;
     background-color: #f7faf9;
     color: #181c1c;
     min-height: 100vh;
     -webkit-tap-highlight-color: transparent;
+    zoom: 0.90;
   }
 }
 

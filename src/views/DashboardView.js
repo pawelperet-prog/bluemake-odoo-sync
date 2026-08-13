@@ -2,6 +2,7 @@ import { getProducts, getCategories, checkApiStatus } from '../services/odooApi.
 import { openSettingsModal } from './SettingsModal.js';
 import { openCreateProductModal } from './CreateProductModal.js';
 import { openReportWindow } from '../utils/reportGenerator.js';
+import { openQrLabelsWindow } from '../utils/qrLabelReport.js';
 
 export function renderDashboardView(container, navigateTo) {
   let activeFilter = 'RAW'; // 'RAW' (Surowiec), 'FINISHED' (Produkt gotowy), 'ALL' (Wszystkie)
@@ -31,34 +32,40 @@ export function renderDashboardView(container, navigateTo) {
 
     <main class="flex-1 w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-stack-md flex flex-col gap-3 mt-14 mb-24">
       <!-- Search & Action Buttons Bar -->
-      <div class="flex flex-col sm:flex-row gap-2 w-full">
-        <div class="relative flex-1 h-touch-target-min">
+      <div class="flex flex-col sm:flex-row gap-2 w-full flex-wrap">
+        <div class="relative flex-1 h-touch-target-min min-w-[200px]">
           <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
           <input id="search-input" class="w-full h-full pl-12 pr-4 bg-surface-container rounded border-none font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:ring-2 focus:ring-primary focus:bg-surface" placeholder="Szukaj pręta / blachy (SKU lub Nazwa)" type="text"/>
         </div>
         
         <!-- Interactive Category Select Button -->
-        <button id="cat-selector-btn" class="h-touch-target-min bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-caps px-3.5 rounded flex items-center justify-center gap-1.5 transition-colors flex-shrink-0 font-bold border border-outline-variant">
+        <button id="cat-selector-btn" class="h-touch-target-min bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-caps px-3 rounded flex items-center justify-center gap-1 transition-colors flex-shrink-0 font-bold border border-outline-variant text-xs">
           <span class="material-symbols-outlined text-[18px]">filter_list</span>
           <span id="cat-btn-label">SUROWIEC (ID: 4)</span>
         </button>
 
         <!-- Valuation Subpage Button -->
-        <button id="btn-open-valuation" class="h-touch-target-min bg-emerald-700 hover:bg-emerald-800 text-white font-label-caps px-4 rounded flex items-center justify-center gap-1.5 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0">
+        <button id="btn-open-valuation" class="h-touch-target-min bg-emerald-700 hover:bg-emerald-800 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs">
           <span class="material-symbols-outlined text-[18px]">payments</span>
           WYCENA & WAGA
         </button>
 
         <!-- Printable Report Button -->
-        <button id="btn-print-report" class="h-touch-target-min bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-3.5 rounded flex items-center justify-center gap-1.5 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0">
+        <button id="btn-print-report" class="h-touch-target-min bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs">
           <span class="material-symbols-outlined text-[18px]">print</span>
           RAPORT HTML
         </button>
 
-        <!-- Add Rod Button -->
-        <button id="btn-add-product" class="h-touch-target-min bg-[#ff6b00] hover:bg-[#e66000] text-white font-label-caps px-3.5 rounded flex items-center justify-center gap-1.5 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0">
-          <span class="material-symbols-outlined text-[20px]">add_box</span>
-          DODAJ PRĘT
+        <!-- Printable QR Labels Button (50x30mm) -->
+        <button id="btn-qr-labels" class="h-touch-target-min bg-indigo-700 hover:bg-indigo-800 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Generuj etykiety QR w formacie 50x30mm">
+          <span class="material-symbols-outlined text-[18px]">qr_code_2</span>
+          KODY QR (50x30)
+        </button>
+
+        <!-- Add Product Button -->
+        <button id="btn-add-product" class="h-touch-target-min bg-[#ff6b00] hover:bg-[#e66000] text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs">
+          <span class="material-symbols-outlined text-[18px]">add_box</span>
+          DODAJ PRODUKT
         </button>
       </div>
 
@@ -315,6 +322,10 @@ export function renderDashboardView(container, navigateTo) {
 
   container.querySelector('#btn-print-report').addEventListener('click', () => {
     if (allProducts) openReportWindow(allProducts);
+  });
+
+  container.querySelector('#btn-qr-labels').addEventListener('click', () => {
+    if (allProducts) openQrLabelsWindow(allProducts);
   });
 
   container.querySelector('#btn-add-product').addEventListener('click', () => {

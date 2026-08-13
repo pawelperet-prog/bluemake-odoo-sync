@@ -11,7 +11,7 @@ export function renderProductView(container, navigateTo, product) {
   };
 
   let operationMode = 'CUT'; // 'CUT' (Ucięcie/Wydanie - odejmij od stanu) vs 'ADD' (Przyjęcie/Dodanie - dodaj do stanu)
-  let adjustmentAmount = 0.5; // Domyślna wartość ucięcia/dodania
+  let adjustmentAmount = 0.1; // Domyślna wartość ucięcia/dodania (0.1m / 1 szt)
 
   function calcFinalStock() {
     const orig = Number(currentProduct.quantity);
@@ -72,11 +72,11 @@ export function renderProductView(container, navigateTo, product) {
       <div class="grid grid-cols-2 gap-2 mt-2">
         <button id="mode-cut-btn" class="py-3 px-4 rounded font-label-caps font-bold flex items-center justify-center gap-2 transition-all bg-secondary text-on-secondary shadow-md">
           <span class="material-symbols-outlined">content_cut</span>
-          UCIĘCIE / WYDANIE (-m)
+          UCIĘCIE / WYDANIE (-${currentProduct.uom})
         </button>
         <button id="mode-add-btn" class="py-3 px-4 rounded font-label-caps font-bold flex items-center justify-center gap-2 transition-all bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest">
           <span class="material-symbols-outlined">add_circle</span>
-          PRZYJĘCIE / DOSTAWA (+m)
+          PRZYJĘCIE / DOSTAWA (+${currentProduct.uom})
         </button>
       </div>
 
@@ -90,44 +90,44 @@ export function renderProductView(container, navigateTo, product) {
 
           <!-- Main Input Controls -->
           <div class="flex items-center justify-center gap-3 w-full">
-            <!-- Minus Stepper -->
-            <button id="btn-minus" aria-label="Decrease value" class="w-14 h-14 rounded border-2 border-outline flex items-center justify-center text-outline hover:bg-surface-container hover:text-primary hover:border-primary active:bg-surface-container-high transition-colors flex-shrink-0">
+            <!-- Minus Stepper (-0.1) -->
+            <button id="btn-minus" title="-0.1" aria-label="Decrease value by 0.1" class="w-14 h-14 rounded border-2 border-outline flex items-center justify-center text-outline hover:bg-surface-container hover:text-primary hover:border-primary active:bg-surface-container-high transition-colors flex-shrink-0">
               <span class="material-symbols-outlined" style="font-size: 28px;">remove</span>
             </button>
 
-            <!-- Main Input Field (Direct Typing like 12.5) -->
+            <!-- Main Input Field (Direct Typing like 0.1, 0.5, 12.5) -->
             <div class="relative flex items-baseline justify-center">
               <input id="val-input" class="bg-surface-container/50 rounded font-numeric-display text-numeric-display text-primary text-center w-36 border border-outline-variant focus:ring-2 focus:ring-primary py-1 px-2 font-bold" step="0.1" min="0" type="number" value="${adjustmentAmount.toFixed(1)}"/>
               <span class="font-headline-md text-headline-md text-on-surface-variant ml-2">${currentProduct.uom}</span>
             </div>
 
-            <!-- Plus Stepper -->
-            <button id="btn-plus" aria-label="Increase value" class="w-14 h-14 rounded border-2 border-outline flex items-center justify-center text-outline hover:bg-surface-container hover:text-primary hover:border-primary active:bg-surface-container-high transition-colors flex-shrink-0">
+            <!-- Plus Stepper (+0.1) -->
+            <button id="btn-plus" title="+0.1" aria-label="Increase value by 0.1" class="w-14 h-14 rounded border-2 border-outline flex items-center justify-center text-outline hover:bg-surface-container hover:text-primary hover:border-primary active:bg-surface-container-high transition-colors flex-shrink-0">
               <span class="material-symbols-outlined" style="font-size: 28px;">add</span>
             </button>
           </div>
 
-          <!-- Quick Decimal Presets (np. 12.5m, Połówki .5m) -->
+          <!-- Quick Decimal Presets (np. +0.1m, +0.5m, +1.0m, Sztanga 6m, 12m) -->
           <div class="w-full flex flex-col items-center gap-2 border-t border-outline-variant/40 pt-3">
-            <span class="font-label-caps text-[11px] text-outline uppercase font-bold">Szybkie skróty / ułamki:</span>
+            <span class="font-label-caps text-[11px] text-outline uppercase font-bold">Szybkie skróty (zmiana co 0.1 / 0.5 / 1.0):</span>
             <div class="flex flex-wrap justify-center gap-2">
+              <button data-add="0.1" class="preset-btn bg-surface-container hover:bg-surface-container-high text-primary text-xs font-mono font-bold px-3 py-1.5 rounded border border-outline-variant">
+                +0.1${currentProduct.uom}
+              </button>
               <button data-add="0.5" class="preset-btn bg-surface-container hover:bg-surface-container-high text-primary text-xs font-mono font-bold px-3 py-1.5 rounded border border-outline-variant">
-                +0.5m
+                +0.5${currentProduct.uom}
               </button>
               <button data-add="1.0" class="preset-btn bg-surface-container hover:bg-surface-container-high text-primary text-xs font-mono font-bold px-3 py-1.5 rounded border border-outline-variant">
-                +1.0m
+                +1.0${currentProduct.uom}
               </button>
               <button data-set-half="true" class="preset-half-btn bg-orange-100 text-orange-900 border border-orange-300 text-xs font-mono font-bold px-3 py-1.5 rounded">
-                dodaj połówkę (.5m)
+                dodaj połówkę (.5)
               </button>
               <button data-set="6.0" class="preset-btn bg-surface-container hover:bg-surface-container-high text-primary text-xs font-mono font-bold px-3 py-1.5 rounded border border-outline-variant">
                 sztanga 6m
               </button>
               <button data-set="12.0" class="preset-btn bg-surface-container hover:bg-surface-container-high text-primary text-xs font-mono font-bold px-3 py-1.5 rounded border border-outline-variant">
                 sztanga 12m
-              </button>
-              <button data-set="12.5" class="preset-btn bg-surface-container hover:bg-surface-container-high text-primary text-xs font-mono font-bold px-3 py-1.5 rounded border border-outline-variant">
-                12.5m
               </button>
             </div>
           </div>
@@ -204,12 +204,12 @@ export function renderProductView(container, navigateTo, product) {
   });
 
   minusBtn.addEventListener('click', () => {
-    adjustmentAmount = Math.max(0, Number((adjustmentAmount - 0.5).toFixed(1)));
+    adjustmentAmount = Math.max(0, Number((adjustmentAmount - 0.1).toFixed(1)));
     updateUI();
   });
 
   plusBtn.addEventListener('click', () => {
-    adjustmentAmount = Number((adjustmentAmount + 0.5).toFixed(1));
+    adjustmentAmount = Number((adjustmentAmount + 0.1).toFixed(1));
     updateUI();
   });
 

@@ -1,0 +1,4310 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <title>Etykiety QR 50x30mm - Bluemake Odoo</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { background-color: #f1f5f9; padding: 20px; color: #0f172a; }
+    .no-print { max-width: 1100px; margin: 0 auto 20px; background: #fff; padding: 16px 24px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #cbd5e1; }
+    .no-print h1 { font-size: 18px; font-weight: 700; }
+    .no-print p { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .btn-group { display: flex; gap: 10px; }
+    button { cursor: pointer; padding: 8px 16px; border-radius: 6px; font-weight: 700; font-size: 13px; border: none; text-transform: uppercase; }
+    .btn-primary { background: #ff6b00; color: #fff; }
+    .btn-secondary { background: #1e293b; color: #fff; }
+    .labels-container { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 1300px; margin: 0 auto; }
+    
+    .qr-label-card { width: 50mm; height: 30mm; background: #fff; border: 1px dashed #cbd5e1; border-radius: 2mm; padding: 1.5mm 2mm; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.05); page-break-inside: avoid; break-inside: avoid; overflow: hidden; position: relative; }
+    .label-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5pt solid #e2e8f0; padding-bottom: 1px; }
+    .brand { font-size: 5pt; font-weight: 900; color: #ff6b00; letter-spacing: 0.5px; }
+    .sku-badge { font-family: monospace; font-size: 7.5pt; font-weight: 800; color: #0f172a; background: #f8fafc; padding: 0 2px; border-radius: 1px; border: 0.3pt solid #cbd5e1; }
+    .label-body { display: flex; align-items: center; gap: 2mm; flex: 1; margin: 1px 0; }
+    .qr-wrapper { width: 18mm; height: 18mm; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .qr-wrapper img, .qr-wrapper canvas { width: 100% !important; height: 100% !important; }
+    .info-wrapper { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1px; }
+    .product-name { font-size: 6pt; font-weight: 700; color: #0f172a; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-word; }
+    .product-meta { display: flex; gap: 3px; font-size: 5.5pt; color: #475569; margin-top: 1px; }
+    .meta-item { background: #f1f5f9; padding: 0.5px 2px; border-radius: 1px; }
+    .label-footer { display: flex; justify-content: space-between; font-size: 4.5pt; color: #94a3b8; border-top: 0.4pt solid #f1f5f9; padding-top: 1px; font-weight: 600; }
+
+    @media print {
+      .no-print { display: none !important; }
+      body { background: transparent !important; padding: 0 !important; margin: 0 !important; }
+      .labels-container { display: block !important; margin: 0 !important; max-width: none !important; }
+      .qr-label-card { border: none !important; box-shadow: none !important; border-radius: 0 !important; width: 50mm !important; height: 30mm !important; page-break-after: always !important; break-after: page !important; float: none !important; }
+      @page { size: 50mm 30mm; margin: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <div>
+      <h1>🏷️ Bluemake - Wykaz Kodów QR w formacie 50x30mm</h1>
+      <p>Wygenerowano etykiety dla 223 produktów z Odoo</p>
+    </div>
+    <div class="btn-group">
+      <button onclick="window.print()" class="btn-primary">🖨️ DRUKUJ ETYKIETY (50x30mm)</button>
+    </div>
+  </div>
+
+  <div class="labels-container">
+          <div class="qr-label-card" data-code="00228">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00228</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-111"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-VAC 0108000-005-01 - Podkladka uszczelniajaca">EC-VAC 0108000-005-01 - Podkladka uszczelniajaca</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 111</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 111</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00229">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00229</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-112"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-VAC 0108000-004-01 - Podkladka gniazdo">EC-VAC 0108000-004-01 - Podkladka gniazdo</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 112</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 112</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00328">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00328</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-409"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W_100-2-10 - Mocowanie linki">160W_100-2-10 - Mocowanie linki</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 409</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 409</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00357">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00357</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-113"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W 210-2-01 - Tuleja 1">160W 210-2-01 - Tuleja 1</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 113</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 113</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00358">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00358</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-114"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W 210-2-03 - Tuleja 2">160W 210-2-03 - Tuleja 2</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 114</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 114</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00359">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00359</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-412"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="00359 - 160W 210-2-04 - Żebro ramienia dolnego">00359 - 160W 210-2-04 - Żebro ramienia dolnego</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 412</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 412</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00361">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00361</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-424"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0201110-020-07 - Wspornik drążka reakcyjnego">120ECI_0201110-020-07 - Wspornik drążka reakcyjnego</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 424</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 424</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00362">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00362</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-387"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160S 220-5-01 - Krzywka EC Pomalowana">160S 220-5-01 - Krzywka EC Pomalowana</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 387</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 387</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00365">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00365</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-115"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W 300-3-04 - Wałek drążony">160W 300-3-04 - Wałek drążony</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 115</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 115</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00376">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00376</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-425"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W 310-3-08 - Ucho prądowe górne">160W 310-3-08 - Ucho prądowe górne</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 425</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 425</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00389">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00389</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-116"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W 600-3-02 - Poprzeczka">160W 600-3-02 - Poprzeczka</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 116</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 116</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00394">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00394</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-427"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W 310-3-08 - Ucho prądowe górne">160W 310-3-08 - Ucho prądowe górne</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 427</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 427</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00419">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00419</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-117"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W 900-2-06 - Pierścień (nakrętka)">160W 900-2-06 - Pierścień (nakrętka)</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 117</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 117</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00428">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00428</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-428"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W_910-3-01 - Blacha gieta">160W_910-3-01 - Blacha gieta</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 428</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 428</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00429">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00429</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-429"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W_910-3-01 - Blacha gieta">160W_910-3-01 - Blacha gieta</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 429</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 429</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00431">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00431</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-430"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W_910-3-01 - Blacha gieta">160W_910-3-01 - Blacha gieta</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 430</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 430</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00433">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00433</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-422"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T-01 100-2-13 - Wspornik zaworu ADD">160T-01 100-2-13 - Wspornik zaworu ADD</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 422</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 422</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00434">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00434</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-118"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W 200-3-06 - Księżyc systemu PPD + obróbka">160W 200-3-06 - Księżyc systemu PPD + obróbka</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 118</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 118</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00435">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00435</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-423"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T-01 100-2-13 - Wspornik zaworu ADD">160T-01 100-2-13 - Wspornik zaworu ADD</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 423</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 423</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00463">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00463</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-119"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T 210-5-01 - Rura główna ECT">160T 210-5-01 - Rura główna ECT</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 119</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 119</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00464">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00464</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-410"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T_210-4-02 - Wspornik stabilizatora ECT">160T_210-4-02 - Wspornik stabilizatora ECT</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 410</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 410</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00465">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00465</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-411"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T_210-4-02 - Wspornik stabilizatora ECT">160T_210-4-02 - Wspornik stabilizatora ECT</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 411</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 411</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00467">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00467</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-120"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T 310-4-01 - Rura wzdłużna gięta">160T 310-4-01 - Rura wzdłużna gięta</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 120</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 120</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00468">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00468</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-414"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T_310-4-05 - Blacha laczaca">160T_310-4-05 - Blacha laczaca</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 414</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 414</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00471">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00471</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-389"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T 310-4-03 (P) - Wspornik trójkątny ECT prawy">160T 310-4-03 (P) - Wspornik trójkątny ECT prawy</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 389</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 389</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00472">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00472</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-390"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T 310-4-03 (L) - Wspornik trójkątny ECT Lewy">160T 310-4-03 (L) - Wspornik trójkątny ECT Lewy</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 390</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 390</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00473">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00473</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-413"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T_310-4-04 - Dzwignia ECT">160T_310-4-04 - Dzwignia ECT</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 413</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 413</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00474">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00474</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-426"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W 310-3-10 - Wspornik domykający">160W 310-3-10 - Wspornik domykający</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 426</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 426</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00476">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00476</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-121"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T 500-5-01 - Rura stabilizująca 160ECT">160T 500-5-01 - Rura stabilizująca 160ECT</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 121</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 121</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00480">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00480</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-415"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T_310-4-05 - Blacha laczaca">160T_310-4-05 - Blacha laczaca</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 415</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 415</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00481">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00481</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-416"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T_640-4-01_a podstawa lotki">160T_640-4-01_a podstawa lotki</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 416</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 416</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00482">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00482</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-418"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T_640-4-03 - Winglet 2">160T_640-4-03 - Winglet 2</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 418</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 418</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00483">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00483</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-417"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T_640-4-01_a podstawa lotki">160T_640-4-01_a podstawa lotki</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 417</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 417</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00599">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00599</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-122"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="P400_257000-004-02 - Sworzeń">P400_257000-004-02 - Sworzeń</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 122</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 122</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00600">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00600</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-123"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="P400_257000-005-01 - Przycisk">P400_257000-005-01 - Przycisk</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 123</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 123</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00601">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00601</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-124"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="P400_257000-006-01 - Obudowa przycisku">P400_257000-006-01 - Obudowa przycisku</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 124</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 124</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="00602">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">00602</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-125"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="P400_257000-007-02 - Nakrętka przycisku">P400_257000-007-02 - Nakrętka przycisku</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 125</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 125</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01081">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01081</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-403"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0201100-001-07 - Mocowanie napędu">120ECI_0201100-001-07 - Mocowanie napędu</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 403</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 403</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01144">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01144</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-126"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="200EC_0203110-011-08 - Podkładka spawalnicza duża">200EC_0203110-011-08 - Podkładka spawalnicza duża</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 126</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 126</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01145">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01145</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-127"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="200EC_0203110-012-08 - Podkładka spawalnicza mała">200EC_0203110-012-08 - Podkładka spawalnicza mała</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 127</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 127</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01188">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01188</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-128"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="200EC_0200100-001-08 - Sworzeń długi">200EC_0200100-001-08 - Sworzeń długi</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 128</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 128</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01226">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01226</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-129"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="200EC_0209100-005-08 - Tuleja gwintowana (Korek napedu)">200EC_0209100-005-08 - Tuleja gwintowana (Korek napedu)</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 129</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 129</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01353">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01353</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-130"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="HF6 120000-005-02 - Tulejka montażowa">HF6 120000-005-02 - Tulejka montażowa</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 130</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 130</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01371">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01371</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-131"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="P500_257300-004-05 - Cięgno">P500_257300-004-05 - Cięgno</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 131</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 131</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01372">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01372</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-132"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="P500_257300-005-03 - Oś">P500_257300-005-03 - Oś</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 132</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 132</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01382">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01382</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-133"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="HF6 140000-001-02 - Oś A">HF6 140000-001-02 - Oś A</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 133</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 133</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01386">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01386</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-134"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="HF6140000-006-01 - Tulejka 1">HF6140000-006-01 - Tulejka 1</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 134</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 134</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01387">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01387</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-135"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="HF6 140000-007-01 - Tulejka 2">HF6 140000-007-01 - Tulejka 2</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 135</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 135</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01408">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01408</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-136"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="P500_257000-003-03 - Oś">P500_257000-003-03 - Oś</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 136</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 136</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01432">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01432</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-137"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC_WE-AAA-114000-002-02 - Wałek korby">EC_WE-AAA-114000-002-02 - Wałek korby</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 137</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 137</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01495">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01495</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-138"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0200100-004-07 - Tulejka">120ECI_0200100-004-07 - Tulejka</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 138</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 138</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01511">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01511</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-139"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0201100-001-07 - Mocowanie napędu">120ECI_0201100-001-07 - Mocowanie napędu</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 139</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 139</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01524">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01524</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-140"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0201110-010-07 - Profil">120ECI_0201110-010-07 - Profil</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 140</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 140</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01534">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01534</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-141"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0201110-020-07 - Wspornik drążka reakcyjnego">120ECI_0201110-020-07 - Wspornik drążka reakcyjnego</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 141</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 141</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01576">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01576</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-142"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0202110-004-07 - Mocowanie ramienia górnego">120ECI_0202110-004-07 - Mocowanie ramienia górnego</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 142</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 142</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01580">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01580</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-143"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0202110-008-07 - Blacha">120ECI_0202110-008-07 - Blacha</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 143</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 143</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01582">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01582</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-144"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI-0202110-010-07 - Wałek dolny">120ECI-0202110-010-07 - Wałek dolny</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 144</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 144</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01605">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01605</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-145"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0203110-004-07 - Ucho przegubu">120ECI_0203110-004-07 - Ucho przegubu</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 145</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 145</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01606">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01606</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-146"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0203110-006-07 - Blacha mocująca">120ECI_0203110-006-07 - Blacha mocująca</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 146</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 146</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01607">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01607</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-147"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0203110-007-07 - Blacha mocująca">120ECI_0203110-007-07 - Blacha mocująca</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 147</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 147</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01617">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01617</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-148"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0203130-001-07 - Rura drążka ślizgacza">120ECI_0203130-001-07 - Rura drążka ślizgacza</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 148</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 148</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01625">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01625</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-149"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0204200-001-07 - Rurka reakcyjna 120ECI">120ECI_0204200-001-07 - Rurka reakcyjna 120ECI</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 149</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 149</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01645">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01645</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-150"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0206110-001-07 - Trzpień prowadzący">120ECI_0206110-001-07 - Trzpień prowadzący</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 150</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 150</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01647">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01647</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-406"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0201100-001-07 - Mocowanie napędu">120ECI_0201100-001-07 - Mocowanie napędu</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 406</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 406</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01649">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01649</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-404"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0201100-001-07 - Mocowanie napędu">120ECI_0201100-001-07 - Mocowanie napędu</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 404</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 404</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01650">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01650</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-407"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0201100-001-07 - Mocowanie napędu">120ECI_0201100-001-07 - Mocowanie napędu</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 407</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 407</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="01651">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">01651</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-151"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0206110-007-07 - Ceownik">120ECI_0206110-007-07 - Ceownik</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 151</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 151</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="02185">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">02185</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-152"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0203110-005-07 - Ucho przegubu">120ECI_0203110-005-07 - Ucho przegubu</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 152</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 152</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="02568">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">02568</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-153"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC10_721100-003-02 - Oś głowicy">RC10_721100-003-02 - Oś głowicy</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 153</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 153</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="02570">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">02570</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-154"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC10_721000-007-01 - Oś sprężyna">RC10_721000-007-01 - Oś sprężyna</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 154</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 154</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="02666">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">02666</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-155"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC10_720000-003-02 - Wałek osi poziomej">RC10_720000-003-02 - Wałek osi poziomej</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 155</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 155</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="02794">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">02794</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-156"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="HF6140000-014-01 - Pręcik">HF6140000-014-01 - Pręcik</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 156</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 156</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="02795">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">02795</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-157"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="HF6_140000-015-01 - Krzywka (Poliamid)">HF6_140000-015-01 - Krzywka (Poliamid)</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 157</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 157</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="03502">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">03502</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-158"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="ec-we-36we-240000-001-03_A - Wałek">ec-we-36we-240000-001-03_A - Wałek</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 158</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 158</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="03879">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">03879</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-376"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_130000-013-04 - Izolacja poduszki">TCC30_130000-013-04 - Izolacja poduszki</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 376</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 376</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04358">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04358</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-159"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T-01 100-1-05 - Wspornik ramienia dolnego">160T-01 100-1-05 - Wspornik ramienia dolnego</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 159</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 159</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04362">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04362</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-160"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T-01 100-1-09 - Blacha">160T-01 100-1-09 - Blacha</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 160</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 160</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04366">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04366</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-421"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T-01 100-2-13 - Wspornik zaworu ADD">160T-01 100-2-13 - Wspornik zaworu ADD</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 421</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 421</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04373">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04373</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-437"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T-01 950-1-02 -  Ucho montażowe napędu">160T-01 950-1-02 -  Ucho montażowe napędu</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 437</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 437</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04383">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04383</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-420"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="04383">04383</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 420</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 420</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04385">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04385</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-419"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T-01 020-1-01 - Stelaż ADD 160T-01">160T-01 020-1-01 - Stelaż ADD 160T-01</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 419</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 419</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04425">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04425</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-161"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI 0301110-004-03 - Profil główny tylny">120ECI 0301110-004-03 - Profil główny tylny</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 161</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 161</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04446">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04446</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-162"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0302120-001-01 - Dźwignia siłownika elektrycznego">120ECI_0302120-001-01 - Dźwignia siłownika elektrycznego</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 162</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 162</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04475">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04475</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-163"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0309210-001-03 - Wałek">120ECI_0309210-001-03 - Wałek</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 163</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 163</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04553">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04553</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-164"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC10_769000-001-01 - Łącznik">RC10_769000-001-01 - Łącznik</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 164</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 164</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04623">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04623</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-165"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC10_767200-001-02 - Zakuwka pancerz 1">RC10_767200-001-02 - Zakuwka pancerz 1</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 165</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 165</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04625">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04625</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-166"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC10_767200-002-03 - Zakuwka linka 1">RC10_767200-002-03 - Zakuwka linka 1</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 166</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 166</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04626">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04626</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-212"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC10_767200-003-02_podkladka">RC10_767200-003-02_podkladka</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 212</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 212</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04627">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04627</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-167"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC10_767200-004-01 - Przepust">RC10_767200-004-01 - Przepust</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 167</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 167</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="04637">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">04637</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-405"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="120ECI_0201100-001-07 - Mocowanie napędu">120ECI_0201100-001-07 - Mocowanie napędu</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 405</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 405</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="06611">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">06611</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-168"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="HR-TW_120000-007-01 - Sworzeń">HR-TW_120000-007-01 - Sworzeń</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 168</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 168</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="06961">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">06961</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-169"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC10_760000-008-01 - Wspornik poliamidowy prawy">RC10_760000-008-01 - Wspornik poliamidowy prawy</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 169</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 169</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="06962">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">06962</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-170"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC10_760000-007-01 - Wspornik poliamidowy lewy">RC10_760000-007-01 - Wspornik poliamidowy lewy</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 170</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 170</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="07578">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">07578</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-374"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_100000-020-03 - Trzpień poduszki">TCC30_100000-020-03 - Trzpień poduszki</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 374</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 374</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="07611">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">07611</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-370"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_100000-001-04 - Wał podnoszenia">TCC30_100000-001-04 - Wał podnoszenia</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 370</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 370</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="07612">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">07612</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-375"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_130000-013-04 - Izolacja poduszki">TCC30_130000-013-04 - Izolacja poduszki</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 375</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 375</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="07614">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">07614</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-377"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_100000-003-03 - Izolator potencjometru 2">TCC30_100000-003-03 - Izolator potencjometru 2</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 377</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 377</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="07615">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">07615</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-378"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_100000-004-03 - Wałek potencjometru">TCC30_100000-004-03 - Wałek potencjometru</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 378</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 378</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="07617">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">07617</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-383"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_130000-014-03 - Wałek poduszki">TCC30_130000-014-03 - Wałek poduszki</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 383</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 383</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="07619">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">07619</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-368"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_130000-019-01 - Odbój">TCC30_130000-019-01 - Odbój</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 368</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 368</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="07622">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">07622</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-373"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_100000-009-04 - Szpilka specjalna M10">TCC30_100000-009-04 - Szpilka specjalna M10</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 373</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 373</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="07624">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">07624</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-379"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_100000-004-03 - Wałek potencjometru">TCC30_100000-004-03 - Wałek potencjometru</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 379</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 379</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="07627">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">07627</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-380"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_100000-014-04 - Wał długi">TCC30_100000-014-04 - Wał długi</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 380</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 380</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="07629">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">07629</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-381"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_100000-016-02 - Mocowanie turck">TCC30_100000-016-02 - Mocowanie turck</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 381</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 381</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="08027">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">08027</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-171"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="ST-BVG 160000-001-03 - Klamka">ST-BVG 160000-001-03 - Klamka</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 171</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 171</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="08028">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">08028</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-172"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="ST-BVG 160000-002-03 - Podpora">ST-BVG 160000-002-03 - Podpora</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 172</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 172</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="08294">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">08294</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-173"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160T-01 100-1-04 - Wspornik napędu">160T-01 100-1-04 - Wspornik napędu</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 173</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 173</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="08559">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">08559</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-174"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="ST-BVG_170000-002-01 - Tuleja">ST-BVG_170000-002-01 - Tuleja</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 174</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 174</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="08598">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">08598</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-175"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="ST-BVG 171000-001-01 - Adapter pod klucz">ST-BVG 171000-001-01 - Adapter pod klucz</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 175</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 175</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="08853">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">08853</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-176"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="ST-BVG 170000-003-01 - Adapter">ST-BVG 170000-003-01 - Adapter</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 176</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 176</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="09110">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">09110</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-177"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="ST-BVG 100000-003-02 - Sworzen">ST-BVG 100000-003-02 - Sworzen</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 177</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 177</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="09439">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">09439</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-178"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC10_767310-001-02 - Rura korby">RC10_767310-001-02 - Rura korby</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 178</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 178</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="09440">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">09440</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-179"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC10_767310-002-01 - Adapter szesciokatny">RC10_767310-002-01 - Adapter szesciokatny</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 179</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 179</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="09755">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">09755</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-180"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC_WE-AAA-120000-007-02 - Tuleja">EC_WE-AAA-120000-007-02 - Tuleja</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 180</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 180</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="09761">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">09761</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-181"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC_WE-AAA-120000-005-01 - Pręt gw. Regulacja">EC_WE-AAA-120000-005-01 - Pręt gw. Regulacja</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 181</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 181</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="09844">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">09844</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-182"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC20_140000-006-02 - Os glowna">RC20_140000-006-02 - Os glowna</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 182</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 182</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10212">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10212</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-183"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC_WE-AAA-211000-002-01 - Króciec">EC_WE-AAA-211000-002-01 - Króciec</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 183</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 183</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10265">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10265</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-184"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC20_140000-015-02 - Mocowanie grzania CP">RC20_140000-015-02 - Mocowanie grzania CP</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 184</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 184</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10362">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10362</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-185"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC_WE_111DEa_600000-005-01 - Przepust">EC_WE_111DEa_600000-005-01 - Przepust</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 185</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 185</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10363">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10363</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-186"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE_111DEa-200000-003-01 - Dystans maskujacy">EC-WE_111DEa-200000-003-01 - Dystans maskujacy</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 186</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 186</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10365">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10365</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-187"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE_36WE-111DEa-200000-002-01 - Tulejka dystansowa">EC-WE_36WE-111DEa-200000-002-01 - Tulejka dystansowa</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 187</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 187</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10374">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10374</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-188"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC_WE-36WE-111Dea-210000-002-01 - Tuleja spawana">EC_WE-36WE-111Dea-210000-002-01 - Tuleja spawana</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 188</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 188</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10394">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10394</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-189"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE_111Dea-240000-002-03 - Pin">EC-WE_111Dea-240000-002-03 - Pin</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 189</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 189</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10396">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10396</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-190"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE_111Dea-220000-002-03_A - Pin zacisku">EC-WE_111Dea-220000-002-03_A - Pin zacisku</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 190</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 190</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10405">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10405</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-191"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE_36WEd-111DEa-100000-001 - Adapter pióra 700mm">EC-WE_36WEd-111DEa-100000-001 - Adapter pióra 700mm</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 191</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 191</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10482">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10482</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-192"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC20_100000-014-02 - Odboj wezla glownego">RC20_100000-014-02 - Odboj wezla glownego</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 192</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 192</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10619">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10619</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-193"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC20_100000-013-01 - Tulejka fi6x20">RC20_100000-013-01 - Tulejka fi6x20</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 193</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 193</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10698">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10698</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-194"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE-31WEBc-600000-005-01 - Przepust">EC-WE-31WEBc-600000-005-01 - Przepust</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 194</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 194</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10769">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10769</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-195"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE-60WE-200000-005-01 - Podkladka gumowa">EC-WE-60WE-200000-005-01 - Podkladka gumowa</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 195</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 195</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10770">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10770</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-196"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE-60WE-200000-004-01 - Tuleja dystansowa">EC-WE-60WE-200000-004-01 - Tuleja dystansowa</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 196</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 196</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10774">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10774</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-197"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE-60WE-220000-001-01 - Korba silnika">EC-WE-60WE-220000-001-01 - Korba silnika</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 197</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 197</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10776">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10776</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-198"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE-60WE-240000-001-01 - Korba lewego ramienia">EC-WE-60WE-240000-001-01 - Korba lewego ramienia</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 198</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 198</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10777">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10777</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-199"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE-60WE-250000-001-01 - Wodzik lewy">EC-WE-60WE-250000-001-01 - Wodzik lewy</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 199</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 199</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10779">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10779</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-200"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE-60WE-260000-001-01 - Wodzik prawy">EC-WE-60WE-260000-001-01 - Wodzik prawy</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 200</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 200</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10780">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10780</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-201"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE-60WE-270000-003-01 - Korba prawego ramienia">EC-WE-60WE-270000-003-01 - Korba prawego ramienia</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 201</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 201</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10785">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10785</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-202"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE-60WE-310000-007-01 - Palak lewy krotki">EC-WE-60WE-310000-007-01 - Palak lewy krotki</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 202</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 202</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10786">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10786</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-203"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE-60WE-310000-008-01 - Palak lewy dlugi">EC-WE-60WE-310000-008-01 - Palak lewy dlugi</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 203</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 203</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10787">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10787</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-204"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE-60WE-410000-001-01 - Palak prawy krotki">EC-WE-60WE-410000-001-01 - Palak prawy krotki</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 204</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 204</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10788">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10788</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-205"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE-60WE-410000-002-01 - Palak prawy dlugi">EC-WE-60WE-410000-002-01 - Palak prawy dlugi</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 205</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 205</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10911">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10911</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-206"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="RC20_100000-018-01 - Podkladka">RC20_100000-018-01 - Podkladka</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 206</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 206</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10942">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10942</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-207"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE_EN57-230000-001-01 - Tuleja gwintowana">EC-WE_EN57-230000-001-01 - Tuleja gwintowana</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 207</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 207</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10944">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10944</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-208"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC_WE-EN57-240000-001-01 - Wałek">EC_WE-EN57-240000-001-01 - Wałek</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 208</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 208</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="10945">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">10945</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-209"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE_EN57-260000-001-01 - Rura wodzika">EC-WE_EN57-260000-001-01 - Rura wodzika</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 209</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 209</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11015">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11015</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-354"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160ECT-05_800-1-03 - Blok rozdzielczy 2">160ECT-05_800-1-03 - Blok rozdzielczy 2</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 354</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 354</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11016">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11016</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-433"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Blok rozdzielczy 3">Blok rozdzielczy 3</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 433</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 433</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11018">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11018</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-353"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160ECT-05_800-1-02 - Blok rozdzielczy 1">160ECT-05_800-1-02 - Blok rozdzielczy 1</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 353</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 353</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11022">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11022</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-356"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160ECT-05_800-1-05 -  Podpora regulatora">160ECT-05_800-1-05 -  Podpora regulatora</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 356</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 356</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11025">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11025</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-213"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160ECT-05_800-1-01_B">160ECT-05_800-1-01_B</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 213</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 213</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11045">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11045</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-384"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W_200-2-06_A  OCYNK Księżyc systemu OHD + obróbka">160W_200-2-06_A  OCYNK Księżyc systemu OHD + obróbka</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 384</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 384</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11117">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11117</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-372"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_130000-033-01 - Sworzen">TCC30_130000-033-01 - Sworzen</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 372</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 372</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11139">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11139</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-369"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_130000-036-01 - Podkladka wibroizolatora">TCC30_130000-036-01 - Podkladka wibroizolatora</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 369</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 369</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11238">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11238</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-382"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30_100000-016-02 - Mocowanie turck">TCC30_100000-016-02 - Mocowanie turck</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 382</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 382</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11256">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11256</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-402"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="PCU-01-000-03-02 - Blok rozdzielczy">PCU-01-000-03-02 - Blok rozdzielczy</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 402</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 402</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11257">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11257</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-355"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160ECT-05_800-1-04 - Blok rozdzielczy 3">160ECT-05_800-1-04 - Blok rozdzielczy 3</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 355</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 355</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11265">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11265</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-386"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30-02_140000-004-01 - Wspornik filtra">TCC30-02_140000-004-01 - Wspornik filtra</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 386</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 386</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11289">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11289</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-385"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="TCC30-02_110000-003-01 - Slizg">TCC30-02_110000-003-01 - Slizg</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 385</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 385</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11528">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11528</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-214"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-VAC_0103200-001-01 - Sruba zaslepienia misy">EC-VAC_0103200-001-01 - Sruba zaslepienia misy</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 214</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 214</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11538">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11538</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-366"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="PCU-02-000-01-01  - Blacha plyty sterowania">PCU-02-000-01-01  - Blacha plyty sterowania</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 366</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 366</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11539">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11539</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-365"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="PCU-02-000-03-01  - Blok rozdzielczy">PCU-02-000-03-01  - Blok rozdzielczy</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 365</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 365</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11542">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11542</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-388"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC_WE-111DEa_600000-005-02 - Przepust 111DEa">EC_WE-111DEa_600000-005-02 - Przepust 111DEa</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 388</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 388</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11615">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11615</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-396"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="ST-BVG_110000-006-01 - Blaszka pod prowadnik">ST-BVG_110000-006-01 - Blaszka pod prowadnik</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 396</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 396</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11616">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11616</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-397"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="ST-BVG_110000-005-02 - Blacha gwintowana">ST-BVG_110000-005-02 - Blacha gwintowana</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 397</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 397</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11617">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11617</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-395"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="ST-BVG_132000-010-01 - Uchwyt lewy">ST-BVG_132000-010-01 - Uchwyt lewy</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 395</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 395</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11618">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11618</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-394"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="ST-BVG_132000-011-01 - Uchwyt prawy">ST-BVG_132000-011-01 - Uchwyt prawy</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 394</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 394</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11619">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11619</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-393"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="ST-BVG_132000-012-01 - Pręt gwintowany krańcówki">ST-BVG_132000-012-01 - Pręt gwintowany krańcówki</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 393</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 393</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="11622">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">11622</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-398"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="ST-BVG_100000-008-02 - Wahadło">ST-BVG_100000-008-02 - Wahadło</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 398</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 398</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI14">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI14</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-505"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 14">Pręt okrągły 304 FI 14</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 505</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 505</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI15">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI15</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-512"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 15">Pręt okrągły 304 FI 15</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 512</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 512</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI16">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI16</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-504"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 16">Pręt okrągły 304 FI 16</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 504</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 504</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI20">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI20</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-513"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 20">Pręt okrągły 304 FI 20</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 513</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 513</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI24">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI24</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-515"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 24">Pręt okrągły 304 FI 24</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 515</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 515</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI25">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI25</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-517"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 25">Pręt okrągły 304 FI 25</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 517</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 517</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI28">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI28</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-506"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 28">Pręt okrągły 304 FI 28</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 506</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 506</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI30">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI30</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-514"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 30">Pręt okrągły 304 FI 30</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 514</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 514</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI35">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI35</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-516"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 35">Pręt okrągły 304 FI 35</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 516</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 516</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI40">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI40</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-507"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 40">Pręt okrągły 304 FI 40</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 507</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 507</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI50">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI50</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-508"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 50">Pręt okrągły 304 FI 50</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 508</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 508</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI55">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI55</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-509"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 55">Pręt okrągły 304 FI 55</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 509</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 509</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI60">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI60</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-510"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 60">Pręt okrągły 304 FI 60</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 510</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 510</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="304-FI8">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">304-FI8</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-511"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 304 FI 8">Pręt okrągły 304 FI 8</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 511</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 511</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="40HM-FI110">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">40HM-FI110</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-502"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 40HM FI 110">Pręt okrągły 40HM FI 110</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 502</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 502</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="40HM-FI140">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">40HM-FI140</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-501"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 40HM FI 140">Pręt okrągły 40HM FI 140</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 501</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 501</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="40HM-FI90">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">40HM-FI90</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-503"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 40HM FI 90">Pręt okrągły 40HM FI 90</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 503</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 503</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="40HMT-FI20">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">40HMT-FI20</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-491"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 40HMT FI 20">Pręt okrągły 40HMT FI 20</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 491</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 491</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="40HMT-FI25">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">40HMT-FI25</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-492"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 40HMT FI 25">Pręt okrągły 40HMT FI 25</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 492</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 492</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="40HMT-FI30">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">40HMT-FI30</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-493"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 40HMT FI 30">Pręt okrągły 40HMT FI 30</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 493</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 493</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="40HMT-FI35">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">40HMT-FI35</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-494"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 40HMT FI 35">Pręt okrągły 40HMT FI 35</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 494</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 494</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="40HMT-FI38">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">40HMT-FI38</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-495"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 40HMT FI 38">Pręt okrągły 40HMT FI 38</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 495</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 495</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="40HMT-FI40">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">40HMT-FI40</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-496"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 40HMT FI 40">Pręt okrągły 40HMT FI 40</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 496</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 496</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="40HMT-FI45">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">40HMT-FI45</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-497"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 40HMT FI 45">Pręt okrągły 40HMT FI 45</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 497</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 497</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="40HMT-FI50">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">40HMT-FI50</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-498"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 40HMT FI 50">Pręt okrągły 40HMT FI 50</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 498</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 498</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="40HMT-FI60">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">40HMT-FI60</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-499"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 40HMT FI 60">Pręt okrągły 40HMT FI 60</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 499</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 499</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="40HMT-FI65">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">40HMT-FI65</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-500"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły 40HMT FI 65">Pręt okrągły 40HMT FI 65</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 500</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 500</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="BL-1.4301-1.5MM">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">BL-1.4301-1.5MM</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-527"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Blacha 1.4301 2500x1250x1.5mm">Blacha 1.4301 2500x1250x1.5mm</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 527</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 527</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="BL-1.4301-2MM">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">BL-1.4301-2MM</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-528"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Blacha 1.4301 2500x1250x2mm">Blacha 1.4301 2500x1250x2mm</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 528</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 528</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="BL-1.4301-5MM">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">BL-1.4301-5MM</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-529"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Blacha 1.4301 2500x1250x5mm">Blacha 1.4301 2500x1250x5mm</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 529</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 529</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="BL-S355-1.5MM">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">BL-S355-1.5MM</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-524"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Blacha S355 2500x1250x1.5mm">Blacha S355 2500x1250x1.5mm</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 524</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 524</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="BL-S355-1MM">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">BL-S355-1MM</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-525"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Blacha S355 2500x1250x1mm">Blacha S355 2500x1250x1mm</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 525</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 525</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="BL-S355-2MM">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">BL-S355-2MM</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-523"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Blacha S355 2500x1250x2mm">Blacha S355 2500x1250x2mm</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 523</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 523</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="BL-S355-3MM">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">BL-S355-3MM</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-520"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Blacha S355 2500x1250x3mm">Blacha S355 2500x1250x3mm</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 520</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 520</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="BL-S355-4MM">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">BL-S355-4MM</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-526"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Blacha S355 2500x1250x4mm">Blacha S355 2500x1250x4mm</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 526</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 526</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="BL-S355-6MM">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">BL-S355-6MM</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-522"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Blacha S355 2500x1250x6mm">Blacha S355 2500x1250x6mm</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 522</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 522</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="BL-S355-8MM">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">BL-S355-8MM</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-521"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Blacha S355 2500x1250x8mm">Blacha S355 2500x1250x8mm</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 521</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 521</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="K0029">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">K0029</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-431"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="160W_910-3-01 - Blacha gieta">160W_910-3-01 - Blacha gieta</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 431</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 431</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="K0044">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">K0044</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-2"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Usługa malowania i obróbki Wspornik napędu RAL 7021">Usługa malowania i obróbki Wspornik napędu RAL 7021</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 2</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 2</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="K0063">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">K0063</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-211"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="EC-WE-36WE-320000-001-04 - Usługa obróbki Ramię (Odlew)">EC-WE-36WE-320000-001-04 - Usługa obróbki Ramię (Odlew)</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 211</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 211</span>
+          <span>Produkt</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="PMC16434/009">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">PMC16434/009</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-392"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="PMC16434/009">PMC16434/009</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 392</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 392</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI15">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI15</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-478"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły S355 FI 15">Pręt okrągły S355 FI 15</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 478</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 478</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI20">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI20</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-479"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły S355 FI 20">Pręt okrągły S355 FI 20</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 479</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 479</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI25">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI25</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-480"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły S355 FI 25">Pręt okrągły S355 FI 25</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 480</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 480</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI30">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI30</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-481"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły S355 FI 30">Pręt okrągły S355 FI 30</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 481</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 481</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI35">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI35</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-482"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły S355 FI 35">Pręt okrągły S355 FI 35</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 482</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 482</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI40">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI40</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-483"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły S355 FI 40">Pręt okrągły S355 FI 40</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 483</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 483</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI45">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI45</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-484"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły S355 FI 45">Pręt okrągły S355 FI 45</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 484</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 484</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI50">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI50</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-485"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły S355 FI 50">Pręt okrągły S355 FI 50</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 485</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 485</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI55">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI55</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-486"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły S355 FI 55">Pręt okrągły S355 FI 55</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 486</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 486</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI60">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI60</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-487"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły S355 FI 60">Pręt okrągły S355 FI 60</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 487</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 487</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI65-NEW">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI65-NEW</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-519"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt Okrągły S355 FI 65 (Dodany z Apki)">Pręt Okrągły S355 FI 65 (Dodany z Apki)</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 519</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 519</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI70">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI70</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-488"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły S355 FI 70">Pręt okrągły S355 FI 70</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 488</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 488</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI75">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI75</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-489"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły S355 FI 75">Pręt okrągły S355 FI 75</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 489</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 489</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI80">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI80</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-490"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt okrągły S355 FI 80">Pręt okrągły S355 FI 80</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 490</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 490</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="S355-FI99">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">S355-FI99</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-518"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="Pręt testowy S355 FI 99">Pręt testowy S355 FI 99</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 518</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 518</span>
+          <span>Surowiec</span>
+        </div>
+      </div>      <div class="qr-label-card" data-code="wypałka">
+        <div class="label-header">
+          <span class="brand">BLUEMAKE</span>
+          <span class="sku-badge">wypałka</span>
+        </div>
+        <div class="label-body">
+          <div class="qr-wrapper" id="qr-349"></div>
+          <div class="info-wrapper">
+            <div class="product-name" title="krązek fi 71x11x4">krązek fi 71x11x4</div>
+            <div class="product-meta">
+              <span class="meta-item">Strefa 5</span>
+              <span class="meta-item">ID: 349</span>
+            </div>
+          </div>
+        </div>
+        <div class="label-footer">
+          <span>Odoo ID: 349</span>
+          <span>Surowiec</span>
+        </div>
+      </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll('.qr-label-card').forEach(function(card) {
+        var code = card.getAttribute('data-code');
+        var wrapper = card.querySelector('.qr-wrapper');
+        if (code && wrapper) {
+          new QRCode(wrapper, {
+            text: code,
+            width: 120,
+            height: 120,
+            correctLevel : QRCode.CorrectLevel.M
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
