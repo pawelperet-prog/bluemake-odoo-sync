@@ -9,8 +9,6 @@ export function generateQrLabelsHtml(products, autoPrint = false) {
   const labelCardsHtml = activeProducts.map((p, i) => {
     const sku = (p.sku || '').replace(/"/g, '&quot;');
     const name = (p.name || 'Produkt').replace(/"/g, '&quot;');
-    const uom = p.uom || 'm';
-    const qty = Number(p.quantity || 0).toFixed(1);
 
     return `
       <div class="qr-label-card">
@@ -22,7 +20,6 @@ export function generateQrLabelsHtml(products, autoPrint = false) {
           <div class="prod-name">${name}</div>
           <div class="label-footer">
             <span>ID: ${p.id}</span>
-            <span>Stan: ${qty}${uom}</span>
           </div>
         </div>
       </div>
@@ -296,8 +293,6 @@ export function openQrLabelsWindow(products) {
   const labelCardsPreviewHtml = activeProducts.map(p => {
     const sku = (p.sku || '').replace(/"/g, '&quot;');
     const name = (p.name || 'Produkt').replace(/"/g, '&quot;');
-    const uom = p.uom || 'm';
-    const qty = Number(p.quantity || 0).toFixed(1);
 
     return `
       <div style="
@@ -321,9 +316,8 @@ export function openQrLabelsWindow(products) {
         <div style="flex:1;min-width:0;height:140px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;">
           <div style="font-family:monospace;font-size:13px;font-weight:900;color:#000000;background:#f1f5f9;padding:2px 4px;border:1px solid #000000;border-radius:2px;word-break:break-all;line-height:1.2;">${sku}</div>
           <div style="font-size:11px;font-weight:800;color:#000000;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${name}</div>
-          <div style="display:flex;justify-content:space-between;font-size:8.5px;font-weight:800;color:#000000;border-top:1px solid #000000;padding-top:2px;">
+          <div style="display:flex;justify-content:flex-start;font-size:9px;font-weight:800;color:#000000;border-top:1px solid #000000;padding-top:2px;">
             <span>ID: ${p.id}</span>
-            <span>Stan: ${qty}${uom}</span>
           </div>
         </div>
       </div>

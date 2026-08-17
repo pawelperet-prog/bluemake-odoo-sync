@@ -56,7 +56,9 @@ export async function openCreateProductModal(onCreatedCallback) {
             <div>
               <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Gatunek Stali *</label>
               <select id="steel-grade-select" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-bold text-primary">
-                <option value="S355" selected>S355</option>
+                <option value="304" selected>304 (Nierdzewna)</option>
+                <option value="316L">316L (Kwasoodporna)</option>
+                <option value="S355">S355</option>
                 <option value="S235">S235</option>
                 <option value="C45">C45</option>
                 <option value="42CRMO4">42CrMo4</option>
@@ -86,7 +88,7 @@ export async function openCreateProductModal(onCreatedCallback) {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Średnica FI [mm] *</label>
-                <input id="rod-diameter" type="number" step="1" min="1" placeholder="np. 20" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg" required />
+                <input id="rod-diameter" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg" required />
               </div>
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Długość w (ilościach) [m] *</label>
@@ -274,7 +276,7 @@ export async function openCreateProductModal(onCreatedCallback) {
 
   function getGrade() {
     if (steelGradeSelect.value === 'CUSTOM') {
-      return (customGradeInput.value.trim() || 'S355').toUpperCase();
+      return (customGradeInput.value.trim() || '304').toUpperCase();
     }
     return steelGradeSelect.value.toUpperCase();
   }
@@ -286,7 +288,7 @@ export async function openCreateProductModal(onCreatedCallback) {
     if (activeTab === 'rod') {
       const fi = rodDiameter.value ? rodDiameter.value.trim() : '';
       const sku = fi ? `${grade}-FI${fi}` : `${grade}-FI`;
-      const name = fi ? `Pręt okrągły ${grade} FI ${fi}` : `Pręt okrągły ${grade}`;
+      const name = fi ? `Pręt okrągły Gat.${grade} FI ${fi}` : `Pręt okrągły Gat.${grade}`;
       skuInput.value = sku;
       nameInput.value = name;
     } else if (activeTab === 'flat') {
@@ -294,7 +296,7 @@ export async function openCreateProductModal(onCreatedCallback) {
       const h = flatHeight.value ? flatHeight.value.trim() : '';
       const dim = (w && h) ? `${w}x${h}` : '';
       const sku = dim ? `${grade}-PL${dim}` : `${grade}-PL`;
-      const name = dim ? `Płaskownik ${grade} ${dim}` : `Płaskownik ${grade}`;
+      const name = dim ? `Płaskownik Gat.${grade} ${dim}` : `Płaskownik Gat.${grade}`;
       skuInput.value = sku;
       nameInput.value = name;
     } else if (activeTab === 'scrap') {
@@ -304,7 +306,7 @@ export async function openCreateProductModal(onCreatedCallback) {
       const dim = (w && h) ? `${w}x${h}` : '';
       const lenStr = l ? `-L${l}` : '';
       const sku = `${grade}-PL${dim}${lenStr}`;
-      const name = `Płaskownik (ścinki) ${grade} ${dim}${l ? ' L=' + l + 'mm' : ''}`;
+      const name = `Płaskownik (ścinki) Gat.${grade} ${dim}${l ? ' L=' + l + 'mm' : ''}`;
       skuInput.value = sku;
       nameInput.value = name;
     }
