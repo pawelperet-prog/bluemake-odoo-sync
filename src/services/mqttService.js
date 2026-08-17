@@ -6,14 +6,14 @@
 const LOCAL_STORAGE_MQTT_KEY = 'bluemake_mqtt_config';
 
 const DEFAULT_MQTT_CONFIG = {
-  enabled: false,
-  host: '',                   // e.g. 'broker.hivemq.com' or 'xxxx.s1.eu.hivemq.cloud' or 'mqtt.domowyasystent.online'
-  port: 8884,                 // 8884 (HiveMQ WSS), 8084, 8083 or 443
-  protocol: 'wss',            // 'wss' for secure WebSockets
-  path: '/mqtt',              // standard path
+  enabled: true,
+  host: 'mqtt.domowyasystent.online',
+  port: 443,
+  protocol: 'wss',
+  path: '',
   username: '',
   password: '',
-  topic: 'bluemake/printers/zebra' // Zebra subscribes to this topic
+  topic: 'bluemake/printers/zebra'
 };
 
 export function getMqttConfig() {
