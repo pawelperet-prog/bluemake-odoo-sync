@@ -40,9 +40,19 @@ export function generateProductZpl(product) {
     .replace(/\bFI\s*([0-9]+)/gi, 'Ø$1')
     .replace(/\bFI\b/gi, 'Ø');
 
-  // Split name to 2 lines max 22 chars each
-  const line1 = displayName.substring(0, 22);
-  const line2 = displayName.length > 22 ? displayName.substring(22, 44) : '';
+  // Split name to 2 lines
+  let line1 = displayName;
+  let line2 = '';
+  if (displayName.length > 16) {
+    const splitIdx = displayName.lastIndexOf(' ', 16);
+    if (splitIdx > 0) {
+      line1 = displayName.substring(0, splitIdx);
+      line2 = displayName.substring(splitIdx + 1);
+    } else {
+      line1 = displayName.substring(0, 16);
+      line2 = displayName.substring(16);
+    }
+  }
 
   return [
     '^XA',
@@ -50,26 +60,26 @@ export function generateProductZpl(product) {
     '^LL360',                       // Label length (30mm @ 300dpi)
     '^LH0,0',                       // Home position
     '^CI28',                        // UTF-8 character encoding
-    // Left: QR Code (~24mm x 24mm)
-    '^FO25,30',
-    '^BQN,2,8',                     // QR model 2, magnification 8
+    // Left: Big QR Code (~25mm x 25mm filling full left height)
+    '^FO15,20',
+    '^BQN,2,11',                    // QR model 2, magnification 11
     `^FDMM,A${sku}^FS`,             // QR data
-    // Right: SKU in border box
-    '^FO290,30',
-    '^GB290,65,3^FS',               // Box
-    '^FO305,48',
-    '^A0N,32,32',                   // Font 0, 32x32 dots
+    // Right: Large Bold SKU in border box
+    '^FO275,20',
+    '^GB310,80,4^FS',               // Box
+    '^FO285,40',
+    '^A0N,40,40',                   // Large Font
     `^FD${sku}^FS`,
-    // Right: Product Name
-    '^FO290,115',
-    '^A0N,28,28',
+    // Right: Product Name (Bold & High Contrast)
+    '^FO275,120',
+    '^A0N,36,36',
     `^FD${line1}^FS`,
-    ...(line2 ? [`^FO290,155`, `^A0N,28,28`, `^FD${line2}^FS`] : []),
+    ...(line2 ? ['^FO275,165', '^A0N,36,36', `^FD${line2}^FS`] : []),
     // Right: Bottom Divider Line & ID
-    '^FO290,290',
-    '^GB290,3,3^FS',
-    '^FO290,310',
-    '^A0N,24,24',
+    '^FO275,270',
+    '^GB310,3,3^FS',
+    '^FO275,290',
+    '^A0N,32,32',
     `^FDID: ${product.id}^FS`,
     '^XZ'
   ].join('\n');
