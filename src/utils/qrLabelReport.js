@@ -363,12 +363,12 @@ export function openQrLabelsWindow(products) {
         <!-- Print Action Section -->
         <div class="flex flex-col gap-2">
           ${isMqttActive ? `
-            <button id="btn-mqtt-print-now" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-sm shadow-lg uppercase transition-transform active:scale-98">
-              <span class="material-symbols-outlined text-xl">cloud_upload</span>
-              DRUKUJ PRZEZ CHMURĘ (ZEBRA MQTT)
+            <button id="btn-mqtt-print-now" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 text-sm shadow-lg uppercase transition-transform active:scale-98">
+              <span class="material-symbols-outlined text-xl">print</span>
+              🖨️ DRUKUJ NA ZEBRZE (CHMURA / CLOUDFLARE)
             </button>
             <div class="flex justify-between items-center text-[11px] text-gray-500 px-1">
-              <span>Temat: <b class="font-mono text-indigo-700">${mqttCfg.topic || 'bluemake/printers/zebra'}</b></span>
+              <span>Serwer: <b class="font-mono text-indigo-700">${mqttCfg.host || 'mqtt.domowyasystent.online'}</b></span>
               <button id="btn-direct-print-now" class="text-gray-600 hover:underline">Druk tradycyjny (przeglądarka) ↗</button>
             </div>
           ` : `
@@ -414,12 +414,12 @@ export function openQrLabelsWindow(products) {
   document.getElementById('close-qr-modal-btn').addEventListener('click', closeModal);
   document.getElementById('btn-close-modal-bottom').addEventListener('click', closeModal);
 
-  // MQTT Print Handler
+  // Print Handler
   const mqttBtn = document.getElementById('btn-mqtt-print-now');
   if (mqttBtn) {
     mqttBtn.addEventListener('click', async () => {
       mqttBtn.disabled = true;
-      mqttBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-lg">sync</span> WYSYŁANIE DO CHMURY...';
+      mqttBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-lg">sync</span> DRUKOWANIE NA ZEBRZE...';
       banner.className = 'hidden';
 
       try {
@@ -431,19 +431,19 @@ export function openQrLabelsWindow(products) {
         }
 
         banner.className = 'p-3 rounded-xl text-xs font-bold bg-emerald-100 border border-emerald-300 text-emerald-900 flex items-center gap-2';
-        banner.innerHTML = `<span class="material-symbols-outlined text-emerald-600">check_circle</span> Wysłano pomyślnie ${sentCount} ${sentCount === 1 ? 'etykietę' : 'etykiet'} do drukarki Zebra przez MQTT!`;
+        banner.innerHTML = `<span class="material-symbols-outlined text-emerald-600">check_circle</span> Wydrukowano pomyślnie ${sentCount} ${sentCount === 1 ? 'etykietę' : 'etykiet'} na drukarce Zebra!`;
         
         mqttBtn.className = 'w-full bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-sm';
-        mqttBtn.innerHTML = '<span class="material-symbols-outlined text-lg">check_circle</span> WYDRUK WYSŁANY DO ZEBRY!';
+        mqttBtn.innerHTML = '<span class="material-symbols-outlined text-lg">check_circle</span> ETYKIETY WYDRUKOWANE!';
 
         setTimeout(() => {
           closeModal();
-        }, 1500);
+        }, 1800);
       } catch (err) {
         mqttBtn.disabled = false;
-        mqttBtn.innerHTML = '<span class="material-symbols-outlined text-xl">cloud_upload</span> SPRÓBUJ PONOWNIE (MQTT)';
+        mqttBtn.innerHTML = '<span class="material-symbols-outlined text-xl">refresh</span> SPRÓBUJ PONOWNIE';
         banner.className = 'p-3 rounded-xl text-xs font-bold bg-rose-100 border border-rose-300 text-rose-900 flex items-center gap-2';
-        banner.innerHTML = `<span class="material-symbols-outlined text-rose-600">error</span> Błąd MQTT: ${err.message}`;
+        banner.innerHTML = `<span class="material-symbols-outlined text-rose-600">error</span> Błąd druku: ${err.message}`;
       }
     });
   }
