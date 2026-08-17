@@ -86,65 +86,42 @@ export function generateProductZpl(product) {
 }
 
 /**
- * Connect to MQTT broker via WebSockets and publish ZPL
+ * Send ZPL to Zebra via Zebra WebLink HTTP API (POST to /api/print)
+ * Much simpler and reliable than MQTT WebSockets through Cloudflare
  */
 export function sendZplViaMqtt(zpl) {
   const config = getMqttConfig();
   if (!config.host) {
-    return Promise.reject(new Error('Brak skonfigurowanego adresu brokera MQTT (wejdź w Ustawienia ⚙️).'));
+    return Promise.reject(new Error('Brak skonfigurowanego adresu serwera (wejdź w Ustawienia ⚙️).'));
   }
 
-  return new Promise((resolve, reject) => {
-    if (!window.mqtt) {
-      return reject(new Error('Biblioteka MQTT nie została załadowana. Sprawdź połączenie z internetem.'));
-    }
+  // Build WebLink API URL from configured host
+  const host = config.host.replace(/^https?:\/\//, '').replace(/^wss?:\/\//, '').replace(/\/.*$/, '');
+  const apiUrl = `https://${host}/api/print`;
 
-    const host = config.host.replace(/^https?:\/\//, '').replace(/^wss?:\/\//, '').replace(/\/.*$/, '');
-    const url = `${config.protocol}://${host}:${config.port}${config.path || '/mqtt'}`;
-
-    const options = {
-      clientId: 'bluemake_app_' + Math.random().toString(16).substring(2, 8),
-      connectTimeout: 7000,
-      clean: true
-    };
-
-    if (config.username) options.username = config.username;
-    if (config.password) options.password = config.password;
-
-    let client = null;
-    let timeoutId = setTimeout(() => {
-      if (client) try { client.end(true); } catch (e) {}
-      reject(new Error('Przekroczono limit czasu połączenia z brokerem MQTT (' + host + ')'));
-    }, 8000);
-
-    try {
-      client = window.mqtt.connect(url, options);
-
-      client.on('connect', () => {
-        clearTimeout(timeoutId);
-        const topic = config.topic || 'bluemake/printers/zebra';
-        
-        client.publish(topic, zpl, { qos: 1 }, (err) => {
-          client.end();
-          if (err) {
-            reject(new Error('Błąd publikacji MQTT: ' + err.message));
-          } else {
-            resolve({ success: true, topic });
-          }
-        });
-      });
-
-      client.on('error', (err) => {
-        clearTimeout(timeoutId);
-        if (client) try { client.end(true); } catch (e) {}
-        reject(new Error('Błąd MQTT: ' + (err.message || 'Nieudane połączenie')));
-      });
-    } catch (e) {
-      clearTimeout(timeoutId);
-      reject(e);
-    }
-  });
+  return fetch(apiUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/zpl' },
+    body: zpl
+  })
+    .then(res => {
+      if (!res.ok) throw new Error(`Błąd serwera WebLink: HTTP ${res.status}`);
+      return res.json();
+    })
+    .then(data => {
+      if (data.success) {
+        return { success: true, sentCount: data.sentCount, queueLength: data.queueLength };
+      }
+      throw new Error(data.error || 'Nieznany błąd serwera WebLink');
+    })
+    .catch(err => {
+      if (err.name === 'TypeError') {
+        throw new Error(`Nie można połączyć się z serwerem WebLink (${host}). Sprawdź połączenie.`);
+      }
+      throw err;
+    });
 }
+
 
 /**
  * 1-Click Print Helper via MQTT Cloud
