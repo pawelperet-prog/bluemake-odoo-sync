@@ -8,7 +8,11 @@ export function generateQrLabelsHtml(products, autoPrint = false) {
 
   const labelCardsHtml = activeProducts.map((p, i) => {
     const sku = (p.sku || '').replace(/"/g, '&quot;');
-    const name = (p.name || 'Produkt').replace(/"/g, '&quot;');
+    const rawName = p.name || 'Produkt';
+    const displayName = rawName
+      .replace(/\bFI\s*([0-9]+)/gi, 'Ø$1')
+      .replace(/\bFI\b/gi, 'Ø')
+      .replace(/"/g, '&quot;');
 
     return `
       <div class="qr-label-card">
@@ -17,7 +21,7 @@ export function generateQrLabelsHtml(products, autoPrint = false) {
         </div>
         <div class="text-column">
           <div class="sku-badge">${sku}</div>
-          <div class="prod-name">${name}</div>
+          <div class="prod-name">${displayName}</div>
           <div class="label-footer">
             <span>ID: ${p.id}</span>
           </div>
@@ -117,8 +121,8 @@ export function generateQrLabelsHtml(products, autoPrint = false) {
     }
 
     .qr-column {
-      width: 26mm;
-      height: 26mm;
+      width: 25mm;
+      height: 25mm;
       flex-shrink: 0;
       display: flex;
       align-items: center;
@@ -130,10 +134,10 @@ export function generateQrLabelsHtml(products, autoPrint = false) {
     .qr-column .qr-target,
     .qr-column img,
     .qr-column canvas {
-      width: 26mm !important;
-      height: 26mm !important;
-      max-width: 26mm !important;
-      max-height: 26mm !important;
+      width: 25mm !important;
+      height: 25mm !important;
+      max-width: 25mm !important;
+      max-height: 25mm !important;
       display: block !important;
       image-rendering: pixelated !important;
     }
@@ -141,7 +145,7 @@ export function generateQrLabelsHtml(products, autoPrint = false) {
     .text-column {
       flex: 1;
       min-width: 0;
-      height: 26mm;
+      height: 25mm;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -149,23 +153,29 @@ export function generateQrLabelsHtml(products, autoPrint = false) {
     }
 
     .sku-badge {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 10pt;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8pt;
       font-weight: 900;
       color: #000000;
       background: #f8fafc;
-      padding: 1px 3px;
+      padding: 1.5px 3px;
       border: 1px solid #000000;
-      border-radius: 1px;
+      border-radius: 2px;
       line-height: 1.1;
-      word-break: break-all;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+      display: block;
+      width: 100%;
+      letter-spacing: -0.2px;
     }
 
     .prod-name {
-      font-size: 8pt;
+      font-size: 7.5pt;
       font-weight: 800;
       color: #000000;
-      line-height: 1.15;
+      line-height: 1.2;
       max-height: 14mm;
       overflow: hidden;
       word-break: break-word;
@@ -177,11 +187,11 @@ export function generateQrLabelsHtml(products, autoPrint = false) {
     .label-footer {
       display: flex;
       justify-content: space-between;
-      font-size: 5.5pt;
-      font-weight: 800;
+      font-size: 6.5pt;
+      font-weight: 900;
       color: #000000;
       border-top: 1px solid #000000;
-      padding-top: 1px;
+      padding-top: 1.5px;
     }
 
     @media print {
@@ -292,7 +302,11 @@ export function openQrLabelsWindow(products) {
 
   const labelCardsPreviewHtml = activeProducts.map(p => {
     const sku = (p.sku || '').replace(/"/g, '&quot;');
-    const name = (p.name || 'Produkt').replace(/"/g, '&quot;');
+    const rawName = p.name || 'Produkt';
+    const displayName = rawName
+      .replace(/\bFI\s*([0-9]+)/gi, 'Ø$1')
+      .replace(/\bFI\b/gi, 'Ø')
+      .replace(/"/g, '&quot;');
 
     return `
       <div style="
@@ -314,9 +328,9 @@ export function openQrLabelsWindow(products) {
           <div data-qr="${sku}" style="width:140px;height:140px;"></div>
         </div>
         <div style="flex:1;min-width:0;height:140px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;">
-          <div style="font-family:monospace;font-size:13px;font-weight:900;color:#000000;background:#f1f5f9;padding:2px 4px;border:1px solid #000000;border-radius:2px;word-break:break-all;line-height:1.2;">${sku}</div>
-          <div style="font-size:11px;font-weight:800;color:#000000;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${name}</div>
-          <div style="display:flex;justify-content:flex-start;font-size:9px;font-weight:800;color:#000000;border-top:1px solid #000000;padding-top:2px;">
+          <div style="font-family:Arial, sans-serif;font-size:11px;font-weight:900;color:#000000;background:#f1f5f9;padding:3px 5px;border:1px solid #000000;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;letter-spacing:-0.2px;">${sku}</div>
+          <div style="font-size:11.5px;font-weight:800;color:#000000;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${displayName}</div>
+          <div style="display:flex;justify-content:flex-start;font-size:9.5px;font-weight:900;color:#000000;border-top:1px solid #000000;padding-top:2px;">
             <span>ID: ${p.id}</span>
           </div>
         </div>

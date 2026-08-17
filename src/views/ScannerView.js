@@ -114,12 +114,30 @@ export function renderScannerView(container, navigateTo) {
     }
 
     const products = await getProducts();
-    const matched = products ? products.find(p => 
-      (p.sku && p.sku.toUpperCase() === codeClean) || 
-      (p.barcode && p.barcode.toUpperCase() === codeClean) || 
-      (p.default_code && String(p.default_code).toUpperCase() === codeClean) || 
-      p.id.toString() === codeClean
-    ) : null;
+
+    function normalizeCode(str) {
+      if (!str) return '';
+      return String(str)
+        .toUpperCase()
+        .replace(/[Ø⌀]/g, 'FI')
+        .replace(/[\s\-_]/g, '');
+    }
+
+    const normScanned = normalizeCode(codeClean);
+
+    const matched = products ? products.find(p => {
+      if (p.sku && p.sku.toUpperCase() === codeClean) return true;
+      if (p.barcode && p.barcode.toUpperCase() === codeClean) return true;
+      if (p.default_code && String(p.default_code).toUpperCase() === codeClean) return true;
+      if (p.id.toString() === codeClean) return true;
+
+      // Normalized fallback (matches FI vs Ø, hyphen vs underscore)
+      if (p.sku && normalizeCode(p.sku) === normScanned) return true;
+      if (p.barcode && normalizeCode(p.barcode) === normScanned) return true;
+      if (p.default_code && normalizeCode(p.default_code) === normScanned) return true;
+
+      return false;
+    }) : null;
     
     setTimeout(() => {
       if (matched) {
