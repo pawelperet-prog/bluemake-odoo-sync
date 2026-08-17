@@ -1,6 +1,6 @@
 {
   "appId": "com.odoo.industrial.sync",
-  "appName": "Odoo Industrial Sync",
+  "appName": "Bluemake",
   "webDir": "dist",
   "server": {
     "androidScheme": "https",

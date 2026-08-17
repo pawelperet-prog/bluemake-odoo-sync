@@ -202,12 +202,15 @@ export async function getProducts() {
       const isFinishedProduct = catId === 5 || (Boolean(p.sale_ok && !p.purchase_ok));
 
       const codeVal = p.barcode || p.default_code || `SKU-${p.id}`;
+      const cleanName = (p.name || 'Produkt')
+        .replace(/\bFI\s*([0-9]+)/gi, 'Ø$1')
+        .replace(/\bFI\b/gi, 'Ø');
 
       return {
         id: p.id,
         sku: codeVal,
         barcode: codeVal,
-        name: p.name || 'Produkt',
+        name: cleanName,
         quantity: typeof stock === 'number' ? stock : 0,
         uom: uomName.toLowerCase().includes('unit') ? 'szt' : (uomName.toLowerCase().includes('m') ? 'm' : uomName),
         location: `Strefa ${config.locationId}`,

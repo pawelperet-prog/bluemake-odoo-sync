@@ -87,7 +87,7 @@ export async function openCreateProductModal(onCreatedCallback) {
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Średnica FI [mm] *</label>
+                <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Średnica Ø [mm] *</label>
                 <input id="rod-diameter" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg" required />
               </div>
               <div>
@@ -288,7 +288,7 @@ export async function openCreateProductModal(onCreatedCallback) {
     if (activeTab === 'rod') {
       const fi = rodDiameter.value ? rodDiameter.value.trim() : '';
       const sku = fi ? `${grade}-FI${fi}` : `${grade}-FI`;
-      const name = fi ? `Pręt okrągły Gat.${grade} FI ${fi}` : `Pręt okrągły Gat.${grade}`;
+      const name = fi ? `Pręt okrągły Gat.${grade} Ø${fi}` : `Pręt okrągły Gat.${grade}`;
       skuInput.value = sku;
       nameInput.value = name;
     } else if (activeTab === 'flat') {
