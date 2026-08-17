@@ -1,4 +1,5 @@
 import { renderQrInDom } from './qrGenerator.js';
+import { getMqttConfig, generateProductZpl, sendZplViaMqtt } from '../services/mqttService.js';
 
 /**
  * Generate full standalone HTML document for 50mm x 30mm Printable QR Code Labels
@@ -338,6 +339,9 @@ export function openQrLabelsWindow(products) {
     `;
   }).join('');
 
+  const mqttCfg = getMqttConfig();
+  const isMqttActive = Boolean(mqttCfg.enabled && mqttCfg.host);
+
   const modalHtml = `
     <div id="qr-modal-backdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[150] flex items-center justify-center p-3">
       <div class="bg-white rounded-2xl p-4 max-w-xl w-full shadow-2xl flex flex-col gap-3 max-h-[92vh] overflow-y-auto">
@@ -356,17 +360,31 @@ export function openQrLabelsWindow(products) {
           </button>
         </div>
 
-        <!-- Single Clean Print Button -->
+        <!-- Print Action Section -->
         <div class="flex flex-col gap-2">
-          <button id="btn-direct-print-now" class="w-full bg-[#ff6b00] hover:bg-[#e66000] text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 text-base shadow-lg uppercase transition-transform active:scale-98">
-            <span class="material-symbols-outlined text-2xl">print</span>
-            DRUKUJ (${activeProducts.length} szt. 50x30mm)
-          </button>
-          <div class="flex justify-between items-center text-[11px] text-gray-500 px-1">
-            <span>Format: 50mm x 30mm</span>
-            <button id="btn-open-in-tab" class="text-indigo-600 hover:underline font-bold">Otwórz pełny arkusz ↗</button>
-          </div>
+          ${isMqttActive ? `
+            <button id="btn-mqtt-print-now" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-sm shadow-lg uppercase transition-transform active:scale-98">
+              <span class="material-symbols-outlined text-xl">cloud_upload</span>
+              DRUKUJ PRZEZ CHMURĘ (ZEBRA MQTT)
+            </button>
+            <div class="flex justify-between items-center text-[11px] text-gray-500 px-1">
+              <span>Temat: <b class="font-mono text-indigo-700">${mqttCfg.topic || 'bluemake/printers/zebra'}</b></span>
+              <button id="btn-direct-print-now" class="text-gray-600 hover:underline">Druk tradycyjny (przeglądarka) ↗</button>
+            </div>
+          ` : `
+            <button id="btn-direct-print-now" class="w-full bg-[#ff6b00] hover:bg-[#e66000] text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 text-base shadow-lg uppercase transition-transform active:scale-98">
+              <span class="material-symbols-outlined text-2xl">print</span>
+              DRUKUJ (${activeProducts.length} szt. 50x30mm)
+            </button>
+            <div class="flex justify-between items-center text-[11px] text-gray-500 px-1">
+              <span>Format: 50mm x 30mm</span>
+              <button id="btn-open-in-tab" class="text-indigo-600 hover:underline font-bold">Otwórz pełny arkusz ↗</button>
+            </div>
+          `}
         </div>
+
+        <!-- MQTT / Print Status Toast Banner -->
+        <div id="qr-print-status-banner" class="hidden p-3 rounded-xl text-xs font-bold"></div>
 
         <!-- Preview Grid -->
         <div class="flex flex-wrap gap-3 justify-center p-3 bg-slate-100 rounded-xl max-h-[50vh] overflow-y-auto border border-slate-200">
@@ -387,6 +405,7 @@ export function openQrLabelsWindow(products) {
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 
   const backdrop = document.getElementById('qr-modal-backdrop');
+  const banner = document.getElementById('qr-print-status-banner');
 
   // Render QR codes in preview
   renderQrInDom(backdrop);
@@ -395,15 +414,55 @@ export function openQrLabelsWindow(products) {
   document.getElementById('close-qr-modal-btn').addEventListener('click', closeModal);
   document.getElementById('btn-close-modal-bottom').addEventListener('click', closeModal);
 
+  // MQTT Print Handler
+  const mqttBtn = document.getElementById('btn-mqtt-print-now');
+  if (mqttBtn) {
+    mqttBtn.addEventListener('click', async () => {
+      mqttBtn.disabled = true;
+      mqttBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-lg">sync</span> WYSYŁANIE DO CHMURY...';
+      banner.className = 'hidden';
+
+      try {
+        let sentCount = 0;
+        for (const p of activeProducts) {
+          const zpl = generateProductZpl(p);
+          await sendZplViaMqtt(zpl);
+          sentCount++;
+        }
+
+        banner.className = 'p-3 rounded-xl text-xs font-bold bg-emerald-100 border border-emerald-300 text-emerald-900 flex items-center gap-2';
+        banner.innerHTML = `<span class="material-symbols-outlined text-emerald-600">check_circle</span> Wysłano pomyślnie ${sentCount} ${sentCount === 1 ? 'etykietę' : 'etykiet'} do drukarki Zebra przez MQTT!`;
+        
+        mqttBtn.className = 'w-full bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-sm';
+        mqttBtn.innerHTML = '<span class="material-symbols-outlined text-lg">check_circle</span> WYDRUK WYSŁANY DO ZEBRY!';
+
+        setTimeout(() => {
+          closeModal();
+        }, 1500);
+      } catch (err) {
+        mqttBtn.disabled = false;
+        mqttBtn.innerHTML = '<span class="material-symbols-outlined text-xl">cloud_upload</span> SPRÓBUJ PONOWNIE (MQTT)';
+        banner.className = 'p-3 rounded-xl text-xs font-bold bg-rose-100 border border-rose-300 text-rose-900 flex items-center gap-2';
+        banner.innerHTML = `<span class="material-symbols-outlined text-rose-600">error</span> Błąd MQTT: ${err.message}`;
+      }
+    });
+  }
+
   // 1-Click Print: Creates print frame and triggers native window.print()
-  document.getElementById('btn-direct-print-now').addEventListener('click', () => {
-    printLabelsDirectly(activeProducts);
-  });
+  const directBtn = document.getElementById('btn-direct-print-now');
+  if (directBtn) {
+    directBtn.addEventListener('click', () => {
+      printLabelsDirectly(activeProducts);
+    });
+  }
 
   // Open Full Sheet in New Tab (useful for saving or inspecting)
-  document.getElementById('btn-open-in-tab').addEventListener('click', () => {
-    openPrintableBlobSheet(activeProducts);
-  });
+  const tabBtn = document.getElementById('btn-open-in-tab');
+  if (tabBtn) {
+    tabBtn.addEventListener('click', () => {
+      openPrintableBlobSheet(activeProducts);
+    });
+  }
 }
 
 /**
