@@ -46,30 +46,30 @@ export function generateProductZpl(product) {
 
   return [
     '^XA',
-    '^PW400',                       // Print width (50mm @ 203dpi)
-    '^LL240',                       // Label length (30mm @ 203dpi)
+    '^PW600',                       // Print width (50mm @ 300dpi)
+    '^LL360',                       // Label length (30mm @ 300dpi)
     '^LH0,0',                       // Home position
     '^CI28',                        // UTF-8 character encoding
     // Left: QR Code (~24mm x 24mm)
-    '^FO15,20',
-    '^BQN,2,5',                     // QR model 2, magnification 5
+    '^FO25,30',
+    '^BQN,2,8',                     // QR model 2, magnification 8
     `^FDMM,A${sku}^FS`,             // QR data
     // Right: SKU in border box
-    '^FO190,20',
-    '^GB195,45,2^FS',               // Box
-    '^FO195,32',
-    '^A0N,20,20',                   // Font 0, 20x20 dots
+    '^FO290,30',
+    '^GB290,65,3^FS',               // Box
+    '^FO305,48',
+    '^A0N,32,32',                   // Font 0, 32x32 dots
     `^FD${sku}^FS`,
     // Right: Product Name
-    '^FO190,75',
-    '^A0N,18,18',
+    '^FO290,115',
+    '^A0N,28,28',
     `^FD${line1}^FS`,
-    ...(line2 ? [`^FO190,98`, `^A0N,18,18`, `^FD${line2}^FS`] : []),
+    ...(line2 ? [`^FO290,155`, `^A0N,28,28`, `^FD${line2}^FS`] : []),
     // Right: Bottom Divider Line & ID
-    '^FO190,195',
-    '^GB195,2,2^FS',
-    '^FO190,206',
-    '^A0N,16,16',
+    '^FO290,290',
+    '^GB290,3,3^FS',
+    '^FO290,310',
+    '^A0N,24,24',
     `^FDID: ${product.id}^FS`,
     '^XZ'
   ].join('\n');
