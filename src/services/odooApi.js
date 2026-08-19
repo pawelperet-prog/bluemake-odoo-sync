@@ -596,12 +596,12 @@ export async function sendLowStockAlert({
     .join(' ');
 
   const channelPostHtml = `
-<p>🚨 <strong>PILNY ALERT MAGAZYNOWY (Bluemake)</strong></p>
-<p>📦 <strong>Produkt:</strong> ${name} (<code>${sku}</code>)</p>
-<p>📊 <strong>Aktualny stan na magazynie:</strong> <strong>${qtyStr}</strong> (${locationStr})</p>
-<p>👤 <strong>Zgłaszający operator:</strong> ${opName} • <strong>Data:</strong> ${dateStr}</p>
-${customNote ? `<p>📝 <strong>Notatka:</strong> <em>${customNote}</em></p>` : ''}
-<p>🔔 <strong>Powiadomiono:</strong> ${recipientMentions || '@Mateusz Klimkowski @Paweł Peret'}</p>
+🚨 <strong>PILNY ALERT MAGAZYNOWY (Bluemake)</strong><br/>
+📦 <strong>Produkt:</strong> ${name} (<code>${sku}</code>)<br/>
+📊 <strong>Aktualny stan:</strong> <strong>${qtyStr}</strong> (${locationStr})<br/>
+👤 <strong>Zgłaszający operator:</strong> ${opName} • <strong>Data:</strong> ${dateStr}<br/>
+${customNote ? `📝 <strong>Notatka:</strong> <em>${customNote}</em><br/>` : ''}
+🔔 <strong>Powiadomiono:</strong> ${recipientMentions || '@Mateusz Klimkowski @Paweł Peret'}
   `.trim();
 
   let sentChannelsCount = 0;
