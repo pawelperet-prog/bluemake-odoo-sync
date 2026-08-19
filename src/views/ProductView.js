@@ -143,15 +143,11 @@ export function renderProductView(container, navigateTo, product) {
               </div>
             </div>
 
-            <!-- Action buttons for drawing -->
-            <div id="pdf-actions" class="grid grid-cols-2 gap-2 mt-1 hidden">
-              <button id="btn-view-pdf" class="py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all uppercase">
-                <span class="material-symbols-outlined text-[18px]">visibility</span>
-                <span>PODGLĄD / DRUKUJ</span>
-              </button>
-              <button id="btn-download-pdf" class="py-2.5 px-3 bg-surface-container-high hover:bg-surface-container-highest text-primary font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 border border-outline-variant active:scale-95 transition-all uppercase">
-                <span class="material-symbols-outlined text-[18px]">download</span>
-                <span>POBIERZ PDF</span>
+            <!-- Action button for safe in-app drawing preview -->
+            <div id="pdf-actions" class="mt-1 hidden">
+              <button id="btn-view-pdf" class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all uppercase">
+                <span class="material-symbols-outlined text-[20px]">visibility</span>
+                <span>PODGLĄD RYSUNKU (BEZ POBIERANIA)</span>
               </button>
             </div>
           </div>
@@ -268,6 +264,7 @@ export function renderProductView(container, navigateTo, product) {
           <div class="flex items-center gap-2 min-w-0">
             <span class="material-symbols-outlined text-red-600">picture_as_pdf</span>
             <span id="modal-pdf-title" class="font-bold text-primary text-sm truncate">Rysunek techniczny</span>
+            <span class="hidden sm:inline-block bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold px-2 py-0.5 rounded">POUFNE • TYLKO DO WGLĄDU</span>
           </div>
           <div class="flex items-center gap-2">
             <button id="btn-modal-print-pdf" class="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow active:scale-95">
@@ -440,28 +437,7 @@ export function renderProductView(container, navigateTo, product) {
           alert('Nie udało się otworzyć rysunku PDF: ' + e.message);
         } finally {
           btnViewPdf.disabled = false;
-          btnViewPdf.innerHTML = `<span class="material-symbols-outlined text-[18px]">visibility</span><span>PODGLĄD / DRUKUJ</span>`;
-        }
-      });
-    }
-
-    if (btnDownloadPdf) {
-      btnDownloadPdf.addEventListener('click', async () => {
-        btnDownloadPdf.disabled = true;
-        btnDownloadPdf.innerHTML = `<span class="material-symbols-outlined animate-spin text-[18px]">sync</span><span>POBIERANIE...</span>`;
-        try {
-          const url = await loadPdfBlobUrl();
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = activePdfAttachment.name;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        } catch (e) {
-          alert('Błąd pobierania pliku: ' + e.message);
-        } finally {
-          btnDownloadPdf.disabled = false;
-          btnDownloadPdf.innerHTML = `<span class="material-symbols-outlined text-[18px]">download</span><span>POBIERZ PDF</span>`;
+          btnViewPdf.innerHTML = `<span class="material-symbols-outlined text-[20px]">visibility</span><span>PODGLĄD RYSUNKU (BEZ POBIERANIA)</span>`;
         }
       });
     }
