@@ -2,10 +2,10 @@
  * Operator Authentication, Role-Based Access Control & Audit Log Service
  */
 
-const LOCAL_STORAGE_USERS_KEY = 'bluemake_users_credentials_v2';
-const LOCAL_STORAGE_OPERATOR_KEY = 'bluemake_active_operator_v2';
-const LOCAL_STORAGE_LOGGED_IN_KEY = 'bluemake_is_logged_in_v2';
-const LOCAL_STORAGE_AUDIT_LOGS_KEY = 'bluemake_audit_logs_v2';
+const LOCAL_STORAGE_USERS_KEY = 'bluemake_users_credentials_v3';
+const LOCAL_STORAGE_OPERATOR_KEY = 'bluemake_active_operator_v3';
+const LOCAL_STORAGE_LOGGED_IN_KEY = 'bluemake_is_logged_in_v3';
+const LOCAL_STORAGE_AUDIT_LOGS_KEY = 'bluemake_audit_logs_v3';
 
 // 4 Initial Operators with PIN 1234
 export const INITIAL_USERS = [
@@ -20,7 +20,9 @@ export function getUsers() {
     const saved = localStorage.getItem(LOCAL_STORAGE_USERS_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length === 4 && parsed.some(u => u.name === 'Mateusz') && parsed.some(u => u.name === 'Szymon')) {
+        return parsed;
+      }
     }
   } catch (e) {
     console.error('Error loading users:', e);
