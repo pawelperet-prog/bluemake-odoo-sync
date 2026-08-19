@@ -4,7 +4,7 @@ import { openCreateProductModal } from './CreateProductModal.js';
 import { openReportWindow } from '../utils/reportGenerator.js';
 import { openQrLabelsWindow, openSingleQrLabelWindow } from '../utils/qrLabelReport.js';
 import { openLowStockAlertModal } from './LowStockModal.js';
-import { getCurrentOperator, openLoginModal } from '../services/authService.js';
+import { getCurrentOperator, logoutOperator } from '../services/authService.js';
 
 export function renderDashboardView(container, navigateTo) {
   let activeFilter = 'RAW'; // 'RAW' (Surowiec), 'FINISHED' (Produkt gotowy), 'LOW' (Niski stan < 5m), 'ALL' (Wszystkie)
@@ -433,9 +433,10 @@ export function renderDashboardView(container, navigateTo) {
   });
 
   container.querySelector('#hdr-operator-btn').addEventListener('click', () => {
-    openLoginModal(() => {
-      renderDashboardView(container, navigateTo);
-    });
+    if (confirm(`Zalogowano jako: ${activeOp ? activeOp.name : 'Operator'}. Czy chcesz zmienić operatora / wylogować się?`)) {
+      logoutOperator();
+      navigateTo('login');
+    }
   });
 
   container.querySelector('#header-settings').addEventListener('click', () => {

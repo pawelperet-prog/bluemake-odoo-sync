@@ -6,8 +6,8 @@ import { printCustomerLabelsHtml } from '../utils/customerLabelGenerator.js';
 export function renderOrderImportView(container, navigateTo) {
   let currentOrder = {
     id: `ORD_${Date.now()}`,
-    orderRef: `ZAM-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}`,
-    customerName: 'EC Engineering Sp. z o.o.',
+    orderRef: '',
+    customerName: '',
     orderDate: new Date().toISOString().split('T')[0],
     deliveryDate: new Date().toISOString().split('T')[0],
     items: [],
@@ -100,15 +100,10 @@ export function renderOrderImportView(container, navigateTo) {
             `}
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="flex flex-col gap-1">
-              <label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Nr Zamówienia Klienta:</label>
+              <label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Nr Zamówienia / Ref:</label>
               <input id="input-order-ref" type="text" value="${currentOrder.orderRef || ''}" placeholder="np. ZZ-330/10/2025/EC lub 24/08/2026" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-primary focus:ring-2 focus:ring-primary outline-none font-mono" />
-            </div>
-
-            <div class="flex flex-col gap-1">
-              <label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Klient (Nabywca):</label>
-              <input id="input-customer-name" type="text" value="${currentOrder.customerName || ''}" placeholder="np. EC Engineering Sp. z o.o." class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-primary focus:ring-2 focus:ring-primary outline-none" />
             </div>
 
             <div class="flex flex-col gap-1">

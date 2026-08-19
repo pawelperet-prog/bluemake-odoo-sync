@@ -3,6 +3,7 @@
  */
 
 const LOCAL_STORAGE_OPERATOR_KEY = 'bluemake_active_operator';
+const LOCAL_STORAGE_LOGGED_IN_KEY = 'bluemake_is_logged_in';
 
 // Pre-configured default operators
 export const DEFAULT_OPERATORS = [
@@ -11,13 +12,21 @@ export const DEFAULT_OPERATORS = [
   { id: 3, name: 'Operator Cięcia', role: 'Operator', pin: '1111', avatar: 'precision_manufacturing' }
 ];
 
+export function isUserLoggedIn() {
+  return localStorage.getItem(LOCAL_STORAGE_LOGGED_IN_KEY) === 'true';
+}
+
+export function setLoggedIn(operator) {
+  localStorage.setItem(LOCAL_STORAGE_LOGGED_IN_KEY, 'true');
+  saveCurrentOperator(operator);
+}
+
 export function getCurrentOperator() {
   try {
     const saved = localStorage.getItem(LOCAL_STORAGE_OPERATOR_KEY);
     if (saved) return JSON.parse(saved);
   } catch (e) {}
-  // Default fallback if not logged in
-  return { id: 1, name: 'Paweł Peret', role: 'Administrator', pin: '1234', avatar: 'admin_panel_settings' };
+  return DEFAULT_OPERATORS[0];
 }
 
 export function saveCurrentOperator(operator) {
@@ -25,6 +34,7 @@ export function saveCurrentOperator(operator) {
 }
 
 export function logoutOperator() {
+  localStorage.removeItem(LOCAL_STORAGE_LOGGED_IN_KEY);
   localStorage.removeItem(LOCAL_STORAGE_OPERATOR_KEY);
 }
 

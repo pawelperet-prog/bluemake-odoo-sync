@@ -5,12 +5,24 @@ import { renderProductView } from './views/ProductView.js';
 import { renderHistoryView } from './views/HistoryView.js';
 import { renderValuationView } from './views/ValuationView.js';
 import { renderOrderImportView } from './views/OrderImportView.js';
+import { renderLoginView } from './views/LoginView.js';
+import { isUserLoggedIn } from './services/authService.js';
 
 const app = document.getElementById('app');
 
 function navigateTo(route, params = null) {
+  // Jeśli użytkownik nie jest zalogowany i nie jest na ekranie logowania, przekieruj do login
+  if (!isUserLoggedIn() && route !== 'login') {
+    app.innerHTML = '';
+    renderLoginView(app, navigateTo);
+    return;
+  }
+
   app.innerHTML = '';
   switch (route) {
+    case 'login':
+      renderLoginView(app, navigateTo);
+      break;
     case 'dashboard':
       renderDashboardView(app, navigateTo);
       break;
@@ -35,4 +47,8 @@ function navigateTo(route, params = null) {
 }
 
 // Initial route
-navigateTo('dashboard');
+if (!isUserLoggedIn()) {
+  navigateTo('login');
+} else {
+  navigateTo('dashboard');
+}
