@@ -56,6 +56,7 @@ export function generateProductZpl(product) {
 
   return [
     '^XA',
+    '^MNY',                         // Wymuszenie czujnika przerwy (Gap/Notch tracking)
     '^PW600',                       // Print width (50mm @ 300dpi)
     '^LL360',                       // Label length (30mm @ 300dpi)
     '^LH0,0',                       // Home position

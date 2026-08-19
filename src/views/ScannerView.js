@@ -4,22 +4,32 @@ import { getProducts } from '../services/odooApi.js';
 export function renderScannerView(container, navigateTo) {
   container.innerHTML = `
     <!-- TopAppBar -->
-    <header class="flex justify-between items-center px-margin-mobile h-touch-target-min w-full bg-surface z-50 sticky top-0 border-b border-outline-variant/30">
-      <div id="nav-back" class="flex items-center gap-stack-sm text-on-surface-variant active:scale-95 transition-transform duration-100 hover:bg-surface-container-high rounded p-1 cursor-pointer">
-        <span class="material-symbols-outlined">arrow_back</span>
-      </div>
+    <header class="flex justify-between items-center px-4 h-14 w-full bg-surface z-50 sticky top-0 border-b border-outline-variant/30 shadow-sm">
+      <button id="nav-back" class="flex items-center gap-1.5 text-primary font-bold text-sm bg-surface-container-high hover:bg-surface-container-highest active:scale-95 transition-all rounded-lg px-3 py-1.5 cursor-pointer">
+        <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+        <span>WRÓĆ</span>
+      </button>
       <div class="font-headline-md text-headline-md font-bold text-primary truncate px-2">
-        Bluemake
+        Skaner Kodów QR
       </div>
-      <div id="hdr-history" class="flex items-center gap-stack-sm text-on-surface-variant active:scale-95 transition-transform duration-100 hover:bg-surface-container-high rounded p-1 cursor-pointer">
-        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">cloud_done</span>
-      </div>
+      <button id="btn-close-scanner-top" class="flex items-center gap-1 text-rose-600 font-bold text-xs bg-rose-50 border border-rose-200 hover:bg-rose-100 active:scale-95 transition-all rounded-lg px-2.5 py-1.5 cursor-pointer">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+        <span>ZAMKNIJ</span>
+      </button>
     </header>
 
     <!-- Main Scanner Canvas -->
-    <main class="flex-1 relative bg-tertiary overflow-hidden flex flex-col">
+    <main class="flex-1 relative bg-tertiary overflow-hidden flex flex-col pb-20">
       <!-- Camera Container -->
       <div id="qr-reader" class="absolute inset-0 w-full h-full object-cover"></div>
+
+      <!-- Floating Direct Exit Button (Always visible on top of camera) -->
+      <div class="absolute top-4 left-4 z-40 pointer-events-auto">
+        <button id="btn-floating-exit" class="flex items-center gap-1.5 bg-black/75 backdrop-blur-md border border-white/30 text-white font-bold text-xs px-3.5 py-2 rounded-full shadow-2xl active:scale-95 transition-all hover:bg-black">
+          <span class="material-symbols-outlined text-rose-400 text-[18px]">close</span>
+          <span>ANULUJ SKANOWANIE</span>
+        </button>
+      </div>
 
       <!-- Semi-transparent overlay to focus on the scanner frame -->
       <div class="absolute inset-0 flex flex-col pointer-events-none z-10">
@@ -46,29 +56,37 @@ export function renderScannerView(container, navigateTo) {
         </div>
         <!-- Bottom block -->
         <div class="flex-1 bg-tertiary/70 backdrop-blur-[2px] relative flex flex-col items-center">
-          <div class="mt-stack-lg px-margin-mobile text-center">
-            <p class="font-headline-md text-headline-md text-surface-container-lowest bg-tertiary/50 px-4 py-2 rounded-lg inline-block shadow-lg border border-surface-container-lowest/10">
-              Zeskanuj kod QR z pręta
+          <div class="mt-4 px-margin-mobile text-center">
+            <p class="font-headline-md text-headline-md text-surface-container-lowest bg-tertiary/60 px-4 py-1.5 rounded-lg inline-block shadow-lg border border-surface-container-lowest/10 text-sm">
+              Zeskanuj kod QR z detalu / pręta
             </p>
           </div>
 
           <!-- Manual Code Input Fallback -->
-          <div class="mt-4 w-full max-w-xs px-4 pointer-events-auto flex gap-2">
-            <input id="manual-sku-input" type="text" placeholder="Wpisz SKU ręcznie (np. S355-FI20)" class="w-full bg-surface-container-lowest/90 text-on-surface px-3 py-2 rounded text-body-md font-mono focus:ring-2 focus:ring-secondary uppercase"/>
-            <button id="manual-sku-btn" class="bg-secondary text-on-secondary px-4 py-2 rounded font-bold hover:bg-secondary-container">OK</button>
+          <div class="mt-3 w-full max-w-xs px-4 pointer-events-auto flex gap-2">
+            <input id="manual-sku-input" type="text" placeholder="Wpisz SKU lub ID ręcznie..." class="w-full bg-surface-container-lowest/90 text-on-surface px-3 py-2 rounded text-body-md font-mono focus:ring-2 focus:ring-secondary uppercase shadow"/>
+            <button id="manual-sku-btn" class="bg-secondary text-on-secondary px-4 py-2 rounded font-bold hover:bg-secondary-container shadow">OK</button>
+          </div>
+
+          <!-- Extra Big Back Button at Bottom of Overlay -->
+          <div class="mt-3 pointer-events-auto pb-4">
+            <button id="btn-bottom-exit" class="text-xs text-white/80 hover:text-white underline flex items-center gap-1 font-bold py-1 px-3">
+              <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+              <span>Wróć do listy materiałów</span>
+            </button>
           </div>
         </div>
       </div>
 
       <!-- Flashlight / Actions -->
-      <div class="absolute top-stack-md right-margin-mobile flex flex-col gap-stack-md z-20">
-        <button id="toggle-torch" class="w-touch-target-min h-touch-target-min rounded-full bg-surface-container-lowest/10 backdrop-blur-md border border-surface-container-lowest/30 flex items-center justify-center text-surface-container-lowest hover:bg-surface-container-lowest/20 active:scale-95 transition-all">
-          <span class="material-symbols-outlined">flashlight_on</span>
+      <div class="absolute top-4 right-4 flex flex-col gap-stack-md z-40">
+        <button id="toggle-torch" class="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-black/80 active:scale-95 transition-all shadow-lg">
+          <span class="material-symbols-outlined text-[20px]">flashlight_on</span>
         </button>
       </div>
 
       <!-- Scan Success Indicator -->
-      <div class="absolute inset-0 bg-surface-container-lowest/90 z-30 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300" id="scan-success">
+      <div class="absolute inset-0 bg-surface-container-lowest/90 z-50 flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300" id="scan-success">
         <div class="w-16 h-16 rounded-full bg-[#4CAF50] flex items-center justify-center mb-stack-md">
           <span class="material-symbols-outlined text-surface-container-lowest !text-4xl fill">check</span>
         </div>
@@ -78,18 +96,18 @@ export function renderScannerView(container, navigateTo) {
     </main>
 
     <!-- BottomNavBar -->
-    <nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 bg-surface px-margin-mobile pb-2 md:hidden" style="box-shadow: 0 -1px 10px rgba(0,0,0,0.05);">
+    <nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 bg-surface px-margin-mobile border-t border-outline-variant/30 md:hidden pointer-events-auto shadow-lg">
       <button id="nav-dashboard" class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-highest rounded-xl active:scale-90 transition-all duration-150 h-full w-full max-w-[80px]">
-        <span class="material-symbols-outlined mb-1">dashboard</span>
-        <span class="font-label-caps text-label-caps truncate">Dashboard</span>
+        <span class="material-symbols-outlined mb-0.5 text-[22px]">dashboard</span>
+        <span class="font-label-caps text-[10px] truncate font-bold">Pulpit</span>
       </button>
       <button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-1 active:scale-90 transition-all duration-150 h-full w-full max-w-[80px]">
-        <span class="material-symbols-outlined mb-1 fill">barcode_scanner</span>
-        <span class="font-label-caps text-label-caps truncate">Scanner</span>
+        <span class="material-symbols-outlined mb-0.5 text-[22px] fill">barcode_scanner</span>
+        <span class="font-label-caps text-[10px] truncate font-bold">Skaner</span>
       </button>
       <button id="nav-history" class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-highest rounded-xl active:scale-90 transition-all duration-150 h-full w-full max-w-[80px]">
-        <span class="material-symbols-outlined mb-1">history</span>
-        <span class="font-label-caps text-label-caps truncate">History</span>
+        <span class="material-symbols-outlined mb-0.5 text-[22px]">history</span>
+        <span class="font-label-caps text-[10px] truncate font-bold">Historia</span>
       </button>
     </nav>
   `;
@@ -204,16 +222,19 @@ export function renderScannerView(container, navigateTo) {
   manualBtn.addEventListener('click', submitManual);
   manualInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') submitManual(); });
 
-  container.querySelector('#nav-back').addEventListener('click', () => {
-    if (html5QrcodeScanner) html5QrcodeScanner.stop().catch(() => {});
-    navigateTo('dashboard');
-  });
-  container.querySelector('#nav-dashboard').addEventListener('click', () => {
-    if (html5QrcodeScanner) html5QrcodeScanner.stop().catch(() => {});
-    navigateTo('dashboard');
-  });
-  container.querySelector('#nav-history').addEventListener('click', () => {
-    if (html5QrcodeScanner) html5QrcodeScanner.stop().catch(() => {});
-    navigateTo('history');
-  });
+  const safeExit = (target = 'dashboard') => {
+    if (html5QrcodeScanner) {
+      try {
+        html5QrcodeScanner.stop().catch(() => {});
+      } catch (e) {}
+    }
+    navigateTo(target);
+  };
+
+  container.querySelector('#nav-back')?.addEventListener('click', () => safeExit('dashboard'));
+  container.querySelector('#btn-close-scanner-top')?.addEventListener('click', () => safeExit('dashboard'));
+  container.querySelector('#btn-floating-exit')?.addEventListener('click', () => safeExit('dashboard'));
+  container.querySelector('#btn-bottom-exit')?.addEventListener('click', () => safeExit('dashboard'));
+  container.querySelector('#nav-dashboard')?.addEventListener('click', () => safeExit('dashboard'));
+  container.querySelector('#nav-history')?.addEventListener('click', () => safeExit('history'));
 }

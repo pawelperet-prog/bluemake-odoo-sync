@@ -171,7 +171,7 @@ export async function getProducts() {
   try {
     const productDomain = [['active', '=', true]];
     const products = await callOdooRpc('product.product', 'search_read', [productDomain], {
-      fields: ['id', 'name', 'default_code', 'barcode', 'uom_id', 'categ_id', 'sale_ok', 'purchase_ok'],
+      fields: ['id', 'name', 'default_code', 'barcode', 'uom_id', 'categ_id', 'sale_ok', 'purchase_ok', 'product_tmpl_id', 'description'],
       limit: 500
     });
 
@@ -206,8 +206,11 @@ export async function getProducts() {
         .replace(/\bFI\s*([0-9]+)/gi, 'Ø$1')
         .replace(/\bFI\b/gi, 'Ø');
 
+      const tmplId = Array.isArray(p.product_tmpl_id) ? p.product_tmpl_id[0] : p.product_tmpl_id;
+
       return {
         id: p.id,
+        templateId: tmplId || p.id,
         sku: codeVal,
         barcode: codeVal,
         name: cleanName,
@@ -220,11 +223,93 @@ export async function getProducts() {
         isRawMaterial: isRawMaterial,
         isFinishedProduct: isFinishedProduct,
         saleOk: Boolean(p.sale_ok),
-        purchaseOk: Boolean(p.purchase_ok)
+        purchaseOk: Boolean(p.purchase_ok),
+        description: p.description || ''
       };
     });
   } catch (err) {
     console.error('getProducts Error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Pobierz załączniki PDF przypisane do danego produktu / szablonu w Odoo
+ */
+export async function getProductAttachments(productId, templateId, sku) {
+  try {
+    const resIds = [Number(productId)];
+    if (templateId && templateId !== productId) resIds.push(Number(templateId));
+
+    const domain = [
+      ['res_model', 'in', ['product.template', 'product.product']],
+      ['res_id', 'in', resIds],
+      '|',
+      ['mimetype', 'ilike', 'pdf'],
+      ['name', 'ilike', '.pdf']
+    ];
+
+    const attachments = await callOdooRpc('ir.attachment', 'search_read', [domain], {
+      fields: ['id', 'name', 'res_model', 'res_id', 'file_size', 'mimetype', 'write_date']
+    });
+
+    if (Array.isArray(attachments) && attachments.length > 0) {
+      return attachments;
+    }
+
+    // Fallback: szukaj po nazwie SKU jeśli nie znaleziono po relacji
+    if (sku && String(sku).trim().length > 2) {
+      const cleanSku = String(sku).trim();
+      const byName = await callOdooRpc('ir.attachment', 'search_read', [[
+        ['name', 'ilike', cleanSku],
+        '|',
+        ['mimetype', 'ilike', 'pdf'],
+        ['name', 'ilike', '.pdf']
+      ]], {
+        fields: ['id', 'name', 'res_model', 'res_id', 'file_size', 'mimetype', 'write_date'],
+        limit: 5
+      });
+      if (Array.isArray(byName) && byName.length > 0) {
+        return byName;
+      }
+    }
+
+    return [];
+  } catch (err) {
+    console.warn('Błąd pobierania załączników PDF dla produktu:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Pobierz zawartość binarną (base64) danego załącznika PDF z Odoo
+ */
+export async function getAttachmentData(attachmentId) {
+  try {
+    const res = await callOdooRpc('ir.attachment', 'read', [[Number(attachmentId)], ['id', 'name', 'datas', 'mimetype', 'file_size']]);
+    if (Array.isArray(res) && res.length > 0) {
+      return res[0];
+    }
+    throw new Error('Nie odnaleziono danych załącznika w Odoo');
+  } catch (err) {
+    console.error('Błąd pobierania zawartości załącznika:', err);
+    throw err;
+  }
+}
+
+/**
+ * Zaktualizuj notatkę / opis technologiczny produktu w Odoo
+ */
+export async function updateProductDescription(productId, templateId, description) {
+  try {
+    if (templateId) {
+      await callOdooRpc('product.template', 'write', [[Number(templateId)], { description: description }]);
+    } else {
+      await callOdooRpc('product.product', 'write', [[Number(productId)], { description: description }]);
+    }
+    return true;
+  } catch (err) {
+    console.error('Błąd aktualizacji opisu produktu:', err);
     throw err;
   }
 }
