@@ -27,6 +27,10 @@ export function renderDashboardView(container, navigateTo) {
           <span class="material-symbols-outlined text-[16px]">account_circle</span>
           <span>${activeOp ? activeOp.name : 'Zaloguj'}</span>
         </button>
+        <button id="hdr-orders" title="Import i Wysyłka Zamówień" class="hidden sm:flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
+          <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+          <span>ZAMÓWIENIA</span>
+        </button>
         <button id="hdr-valuation" title="Podstrona Wyceny i Raportu Magazynu" class="hidden sm:flex items-center gap-1 bg-primary text-on-primary font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
           <span class="material-symbols-outlined text-[16px]">payments</span>
           <span>WYCENA</span>
@@ -51,6 +55,12 @@ export function renderDashboardView(container, navigateTo) {
         <button id="cat-selector-btn" class="h-touch-target-min bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-caps px-3 rounded flex items-center justify-center gap-1 transition-colors flex-shrink-0 font-bold border border-outline-variant text-xs">
           <span class="material-symbols-outlined text-[18px]">filter_list</span>
           <span id="cat-btn-label">SUROWIEC (ID: 4)</span>
+        </button>
+        
+        <!-- Orders Subpage Button -->
+        <button id="btn-open-orders" class="h-touch-target-min bg-indigo-600 hover:bg-indigo-700 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Moduł Importu Zamówień PDF i Etykiet Wysyłkowych">
+          <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+          ZAMÓWIENIA
         </button>
 
         <!-- Valuation Subpage Button -->
@@ -114,21 +124,25 @@ export function renderDashboardView(container, navigateTo) {
 
     <!-- BottomNavBar (Mobile Only) -->
     <nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 bg-surface px-margin-mobile border-t-2 border-primary md:hidden">
-      <div class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-3 py-1 cursor-pointer transition-all duration-150 active:scale-90">
+      <div class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-2.5 py-1 cursor-pointer transition-all duration-150 active:scale-90">
         <span class="material-symbols-outlined mb-1">dashboard</span>
-        <span class="font-label-caps text-label-caps">Dashboard</span>
+        <span class="font-label-caps text-[10px]">Magazyn</span>
       </div>
-      <div id="nav-val" class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
+      <div id="nav-orders" class="flex flex-col items-center justify-center text-on-surface-variant px-2.5 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
+        <span class="material-symbols-outlined mb-1 text-indigo-600">receipt_long</span>
+        <span class="font-label-caps text-[10px]">Zamówienia</span>
+      </div>
+      <div id="nav-val" class="flex flex-col items-center justify-center text-on-surface-variant px-2.5 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
         <span class="material-symbols-outlined mb-1">payments</span>
-        <span class="font-label-caps text-label-caps">Wycena</span>
+        <span class="font-label-caps text-[10px]">Wycena</span>
       </div>
-      <div id="nav-scanner" class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
+      <div id="nav-scanner" class="flex flex-col items-center justify-center text-on-surface-variant px-2.5 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
         <span class="material-symbols-outlined mb-1">barcode_scanner</span>
-        <span class="font-label-caps text-label-caps">Scanner</span>
+        <span class="font-label-caps text-[10px]">Skaner</span>
       </div>
-      <div id="nav-history" class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
+      <div id="nav-history" class="flex flex-col items-center justify-center text-on-surface-variant px-2.5 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
         <span class="material-symbols-outlined mb-1">history</span>
-        <span class="font-label-caps text-label-caps">History</span>
+        <span class="font-label-caps text-[10px]">Historia</span>
       </div>
     </nav>
 
@@ -397,6 +411,10 @@ export function renderDashboardView(container, navigateTo) {
   container.querySelector('#close-cat-modal').addEventListener('click', () => {
     container.querySelector('#cat-modal').classList.add('hidden');
   });
+
+  container.querySelector('#btn-open-orders')?.addEventListener('click', () => navigateTo('orders'));
+  container.querySelector('#hdr-orders')?.addEventListener('click', () => navigateTo('orders'));
+  container.querySelector('#nav-orders')?.addEventListener('click', () => navigateTo('orders'));
 
   container.querySelector('#btn-open-valuation').addEventListener('click', () => navigateTo('valuation'));
   container.querySelector('#hdr-valuation').addEventListener('click', () => navigateTo('valuation'));

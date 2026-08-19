@@ -4,6 +4,7 @@ import { renderScannerView } from './views/ScannerView.js';
 import { renderProductView } from './views/ProductView.js';
 import { renderHistoryView } from './views/HistoryView.js';
 import { renderValuationView } from './views/ValuationView.js';
+import { renderOrderImportView } from './views/OrderImportView.js';
 
 const app = document.getElementById('app');
 
@@ -24,6 +25,9 @@ function navigateTo(route, params = null) {
       break;
     case 'valuation':
       renderValuationView(app, navigateTo);
+      break;
+    case 'orders':
+      renderOrderImportView(app, navigateTo);
       break;
     default:
       renderDashboardView(app, navigateTo);

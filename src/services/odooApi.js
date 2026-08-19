@@ -91,7 +91,7 @@ async function callOdooCommon(method, args = []) {
   return data.result;
 }
 
-async function callOdooRpc(model, method, args = [], kwargs = {}) {
+export async function callOdooRpc(model, method, args = [], kwargs = {}) {
   const config = getOdooConfig();
   const payload = {
     jsonrpc: "2.0",
