@@ -260,7 +260,7 @@ export function renderProductView(container, navigateTo, product) {
     </main>
 
     <!-- PDF Canvas In-App Modal (100% Czysty Canvas bez pasków przeglądarki i pobierania) -->
-    <div id="pdf-viewer-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex flex-col p-1 sm:p-3 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div id="pdf-viewer-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 p-1 sm:p-3 hidden flex-col justify-center items-center">
       <div class="bg-surface-container-lowest rounded-xl shadow-2xl border-2 border-primary w-full h-full flex flex-col mx-auto overflow-hidden">
         <!-- Modal Header Controls -->
         <div class="flex flex-wrap justify-between items-center px-4 py-2.5 bg-surface-container border-b border-outline-variant gap-2">
@@ -481,6 +481,20 @@ export function renderProductView(container, navigateTo, product) {
       }
     }
 
+    const showPdfModal = () => {
+      pdfModal.classList.remove('hidden');
+      pdfModal.classList.add('flex');
+    };
+
+    const hidePdfModal = () => {
+      pdfModal.classList.add('hidden');
+      pdfModal.classList.remove('flex');
+      if (canvasEl) {
+        const ctx = canvasEl.getContext('2d');
+        ctx?.clearRect(0, 0, canvasEl.width, canvasEl.height);
+      }
+    };
+
     if (btnViewPdf) {
       btnViewPdf.addEventListener('click', async () => {
         btnViewPdf.disabled = true;
@@ -490,9 +504,8 @@ export function renderProductView(container, navigateTo, product) {
           modalTitle.textContent = activePdfAttachment.name;
           currentScale = 1.0;
           currentRotation = 0;
-          pdfModal.classList.remove('opacity-0', 'pointer-events-none');
-          pdfModal.classList.add('opacity-100');
-          setTimeout(() => renderCanvasPage(), 50);
+          showPdfModal();
+          setTimeout(() => renderCanvasPage(), 60);
         } catch (e) {
           alert('Nie udało się otworzyć rysunku PDF: ' + e.message);
         } finally {
@@ -531,14 +544,12 @@ export function renderProductView(container, navigateTo, product) {
     }
 
     if (btnCloseModal) {
-      btnCloseModal.addEventListener('click', () => {
-        pdfModal.classList.add('opacity-0', 'pointer-events-none');
-        if (canvasEl) {
-          const ctx = canvasEl.getContext('2d');
-          ctx?.clearRect(0, 0, canvasEl.width, canvasEl.height);
-        }
-      });
+      btnCloseModal.addEventListener('click', hidePdfModal);
     }
+
+    pdfModal.addEventListener('click', (e) => {
+      if (e.target === pdfModal) hidePdfModal();
+    });
 
     // Save Raw Spec Note
     const btnSaveNote = container.querySelector('#btn-save-note');
