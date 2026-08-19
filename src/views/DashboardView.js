@@ -13,6 +13,7 @@ export function renderDashboardView(container, navigateTo) {
   let allProducts = null;
 
   const activeOp = getCurrentOperator();
+  const isOpAdmin = activeOp && (activeOp.role === 'ADMIN' || activeOp.role === 'Administrator');
 
   container.innerHTML = `
     <!-- TopAppBar -->
@@ -24,17 +25,20 @@ export function renderDashboardView(container, navigateTo) {
       <div class="flex items-center gap-2">
         <!-- Operator Pill -->
         <button id="hdr-operator-btn" title="Konto Operatora (Zmień / Logowanie)" class="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 font-label-caps px-2.5 py-1 rounded-full text-xs font-bold transition-all active:scale-95">
-          <span class="material-symbols-outlined text-[16px]">account_circle</span>
+          <span class="material-symbols-outlined text-[16px]">${isOpAdmin ? 'admin_panel_settings' : 'account_circle'}</span>
           <span>${activeOp ? activeOp.name : 'Zaloguj'}</span>
+          <span class="text-[9px] px-1 rounded ${isOpAdmin ? 'bg-amber-200 text-amber-900' : 'bg-gray-200 text-gray-800'} font-bold">${isOpAdmin ? 'ADMIN' : 'MAGAZYN'}</span>
         </button>
-        <button id="hdr-orders" title="Import i Wysyłka Zamówień" class="hidden sm:flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
-          <span class="material-symbols-outlined text-[16px]">receipt_long</span>
-          <span>ZAMÓWIENIA</span>
-        </button>
-        <button id="hdr-valuation" title="Podstrona Wyceny i Raportu Magazynu" class="hidden sm:flex items-center gap-1 bg-primary text-on-primary font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
-          <span class="material-symbols-outlined text-[16px]">payments</span>
-          <span>WYCENA</span>
-        </button>
+        ${isOpAdmin ? `
+          <button id="hdr-orders" title="Import i Wysyłka Zamówień" class="hidden sm:flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
+            <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+            <span>ZAMÓWIENIA</span>
+          </button>
+          <button id="hdr-valuation" title="Podstrona Wyceny i Raportu Magazynu" class="hidden sm:flex items-center gap-1 bg-primary text-on-primary font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
+            <span class="material-symbols-outlined text-[16px]">payments</span>
+            <span>WYCENA</span>
+          </button>
+        ` : ''}
         <div id="conn-pill" class="flex items-center gap-1.5 bg-surface-container rounded-full px-3 py-1 cursor-pointer">
           <div id="conn-dot" class="w-2 h-2 rounded-full bg-gray-400"></div>
           <span id="conn-label" class="font-label-caps text-label-caps text-on-surface-variant">Sprawdzanie...</span>
@@ -57,17 +61,19 @@ export function renderDashboardView(container, navigateTo) {
           <span id="cat-btn-label">SUROWIEC (ID: 4)</span>
         </button>
         
-        <!-- Orders Subpage Button -->
-        <button id="btn-open-orders" class="h-touch-target-min bg-indigo-600 hover:bg-indigo-700 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Moduł Importu Zamówień PDF i Etykiet Wysyłkowych">
-          <span class="material-symbols-outlined text-[18px]">receipt_long</span>
-          ZAMÓWIENIA
-        </button>
+        ${isOpAdmin ? `
+          <!-- Orders Subpage Button -->
+          <button id="btn-open-orders" class="h-touch-target-min bg-indigo-600 hover:bg-indigo-700 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Moduł Importu Zamówień PDF i Etykiet Wysyłkowych">
+            <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+            ZAMÓWIENIA
+          </button>
 
-        <!-- Valuation Subpage Button -->
-        <button id="btn-open-valuation" class="h-touch-target-min bg-emerald-700 hover:bg-emerald-800 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs">
-          <span class="material-symbols-outlined text-[18px]">payments</span>
-          WYCENA & WAGA
-        </button>
+          <!-- Valuation Subpage Button -->
+          <button id="btn-open-valuation" class="h-touch-target-min bg-emerald-700 hover:bg-emerald-800 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs">
+            <span class="material-symbols-outlined text-[18px]">payments</span>
+            WYCENA & WAGA
+          </button>
+        ` : ''}
 
         <!-- Printable Report Button -->
         <button id="btn-print-report" class="h-touch-target-min bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs">
@@ -128,14 +134,16 @@ export function renderDashboardView(container, navigateTo) {
         <span class="material-symbols-outlined mb-1">dashboard</span>
         <span class="font-label-caps text-[10px]">Magazyn</span>
       </div>
-      <div id="nav-orders" class="flex flex-col items-center justify-center text-on-surface-variant px-2.5 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
-        <span class="material-symbols-outlined mb-1 text-indigo-600">receipt_long</span>
-        <span class="font-label-caps text-[10px]">Zamówienia</span>
-      </div>
-      <div id="nav-val" class="flex flex-col items-center justify-center text-on-surface-variant px-2.5 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
-        <span class="material-symbols-outlined mb-1">payments</span>
-        <span class="font-label-caps text-[10px]">Wycena</span>
-      </div>
+      ${isOpAdmin ? `
+        <div id="nav-orders" class="flex flex-col items-center justify-center text-on-surface-variant px-2.5 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
+          <span class="material-symbols-outlined mb-1 text-indigo-600">receipt_long</span>
+          <span class="font-label-caps text-[10px]">Zamówienia</span>
+        </div>
+        <div id="nav-val" class="flex flex-col items-center justify-center text-on-surface-variant px-2.5 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
+          <span class="material-symbols-outlined mb-1">payments</span>
+          <span class="font-label-caps text-[10px]">Wycena</span>
+        </div>
+      ` : ''}
       <div id="nav-scanner" class="flex flex-col items-center justify-center text-on-surface-variant px-2.5 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
         <span class="material-symbols-outlined mb-1">barcode_scanner</span>
         <span class="font-label-caps text-[10px]">Skaner</span>

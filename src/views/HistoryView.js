@@ -1,9 +1,10 @@
 import { checkApiStatus, getHistory, syncPendingItems } from '../services/odooApi.js';
 import { openSettingsModal } from './SettingsModal.js';
-import { getCurrentOperator, openLoginModal } from '../services/authService.js';
+import { getCurrentOperator, logoutOperator, getAuditLogs, isAdmin } from '../services/authService.js';
 
 export function renderHistoryView(container, navigateTo) {
   const currentOp = getCurrentOperator();
+  const isOpAdmin = isAdmin(currentOp);
 
   container.innerHTML = `
     <!-- TopAppBar -->
@@ -14,8 +15,9 @@ export function renderHistoryView(container, navigateTo) {
       </div>
       <div class="flex items-center gap-2">
         <button id="btn-switch-op" class="flex items-center gap-1.5 bg-surface-container hover:bg-surface-container-high text-primary px-3 py-1.5 rounded-full border border-outline-variant text-xs font-bold transition-all active:scale-95">
-          <span class="material-symbols-outlined text-[16px]">account_circle</span>
+          <span class="material-symbols-outlined text-[16px]">${isOpAdmin ? 'admin_panel_settings' : 'account_circle'}</span>
           <span>${currentOp ? currentOp.name : 'Zaloguj'}</span>
+          <span class="text-[9px] px-1 rounded ${isOpAdmin ? 'bg-amber-200 text-amber-900' : 'bg-gray-200 text-gray-800'} font-bold">${isOpAdmin ? 'ADMIN' : 'MAGAZYN'}</span>
         </button>
         <span id="hdr-settings" class="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container-high rounded-full p-2">settings_remote</span>
       </div>
@@ -46,8 +48,12 @@ export function renderHistoryView(container, navigateTo) {
 
       <!-- History List -->
       <section class="flex flex-col gap-stack-md">
-        <h3 class="font-headline-md text-headline-md text-on-surface border-b border-outline-variant pb-2">Ostatnie Aktywności i Audyt Zmian</h3>
-        <div id="history-items-list" class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col">
+        <div class="flex justify-between items-center border-b border-outline-variant pb-2">
+          <h3 class="font-headline-md text-headline-md text-on-surface">Pełna Historia Aktywności & Audyt Operatorów</h3>
+          <span class="text-xs text-on-surface-variant font-bold">${isOpAdmin ? '👑 Widok Administratora' : '📦 Widok Magazyniera'}</span>
+        </div>
+        
+        <div id="history-items-list" class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col divide-y divide-outline-variant/50">
           <!-- Populated dynamically -->
         </div>
       </section>
@@ -90,50 +96,79 @@ export function renderHistoryView(container, navigateTo) {
 
   function renderHistoryItems() {
     const history = getHistory();
+    const auditLogs = getAuditLogs();
     const listEl = container.querySelector('#history-items-list');
 
-    if (!history || history.length === 0) {
+    if ((!history || history.length === 0) && (!auditLogs || auditLogs.length === 0)) {
       listEl.innerHTML = `
-        <div class="p-stack-md text-center text-on-surface-variant">Brak zarejestrowanych operacji</div>
+        <div class="p-stack-md text-center text-on-surface-variant">Brak zarejestrowanych operacji w bazie.</div>
       `;
       return;
     }
 
-    listEl.innerHTML = history.map(item => `
-      <div class="p-stack-md border-b border-outline-variant/60 hover:bg-surface-container-low flex flex-col gap-stack-sm transition-colors">
-        <div class="flex flex-col md:flex-row gap-stack-md justify-between items-start md:items-center">
-          <div class="flex items-start gap-4">
-            <div class="bg-surface-container p-3 rounded-full flex-shrink-0">
-              <span class="material-symbols-outlined text-on-surface-variant">cut</span>
+    // Combine audit logs and history items
+    const combined = [
+      ...auditLogs.map(a => ({
+        type: 'AUDIT',
+        title: `${a.action}: ${a.details}`,
+        details: `Operator: <strong>${a.operator}</strong>`,
+        time: a.dateFormatted || 'Niedawno',
+        operator: a.operator,
+        status: 'AUDIT_LOG',
+        rawTime: a.id
+      })),
+      ...history.map(h => ({
+        type: 'SYNC',
+        title: h.title,
+        details: h.details,
+        time: h.time,
+        operator: h.operator,
+        status: h.status,
+        error: h.error,
+        rawTime: h.id
+      }))
+    ].sort((a, b) => b.rawTime - a.rawTime);
+
+    listEl.innerHTML = combined.map(item => `
+      <div class="p-3.5 hover:bg-surface-container-low flex flex-col gap-1.5 transition-colors">
+        <div class="flex flex-col md:flex-row gap-2 justify-between items-start md:items-center">
+          <div class="flex items-start gap-3">
+            <div class="p-2 rounded-xl flex-shrink-0 ${item.type === 'AUDIT' ? 'bg-indigo-100 text-indigo-800' : 'bg-surface-container text-primary'}">
+              <span class="material-symbols-outlined text-[20px]">
+                ${item.type === 'AUDIT' ? 'verified_user' : 'inventory_2'}
+              </span>
             </div>
             <div>
-              <div class="font-body-lg text-body-lg text-primary font-bold">${item.title}</div>
-              <div class="font-body-md text-body-md text-on-surface-variant mt-1">${item.details}</div>
-              <div class="flex items-center gap-2 mt-2">
-                <span class="font-label-caps text-label-caps text-outline">${item.time}</span>
-                <span class="text-outline">•</span>
-                <span class="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded border border-primary/20">
+              <div class="text-sm font-bold text-primary">${item.title}</div>
+              <div class="text-xs text-on-surface-variant mt-0.5">${item.details}</div>
+              <div class="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
+                <span class="font-mono text-[11px]">${item.time}</span>
+                <span>•</span>
+                <span class="inline-flex items-center gap-1 bg-primary/10 text-primary font-bold px-2 py-0.5 rounded text-[11px] border border-primary/20">
                   <span class="material-symbols-outlined text-[13px]">person</span>
                   <span>${item.operator || 'Paweł Peret'}</span>
                 </span>
               </div>
             </div>
           </div>
-          <div class="flex items-center gap-2 ${
+          
+          <div class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-bold self-start md:self-auto ${
             item.status === 'SYNCHRONIZED' 
-              ? 'bg-green-100 text-green-800 border-green-300' 
+              ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
+              : item.status === 'AUDIT_LOG'
+              ? 'bg-indigo-50 text-indigo-900 border border-indigo-200'
               : item.status === 'PENDING'
-              ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
-              : 'bg-red-100 text-red-800 border-red-300'
-          } border px-3 py-1 rounded-full font-label-caps text-label-caps self-start md:self-auto font-bold">
-            <span class="material-symbols-outlined text-[16px] ${item.status === 'PENDING' ? 'animate-spin' : ''}">
-              ${item.status === 'SYNCHRONIZED' ? 'check_circle' : item.status === 'PENDING' ? 'sync' : 'error'}
+              ? 'bg-amber-100 text-amber-900 border border-amber-300'
+              : 'bg-rose-100 text-rose-900 border border-rose-300'
+          }">
+            <span class="material-symbols-outlined text-[14px]">
+              ${item.status === 'SYNCHRONIZED' ? 'check_circle' : item.status === 'AUDIT_LOG' ? 'fingerprint' : 'sync'}
             </span>
-            ${item.status}
+            <span>${item.status === 'AUDIT_LOG' ? 'LOG SYSTEMOWY' : item.status}</span>
           </div>
         </div>
         ${item.error ? `
-          <div class="ml-14 text-xs font-mono bg-red-50 text-red-700 border border-red-200 p-2 rounded flex items-center gap-1">
+          <div class="ml-11 text-xs font-mono bg-rose-50 text-rose-800 border border-rose-200 p-2 rounded flex items-center gap-1">
             <span class="material-symbols-outlined text-[14px]">warning</span>
             <span>Błąd synchronizacji: ${item.error}</span>
           </div>
@@ -143,9 +178,10 @@ export function renderHistoryView(container, navigateTo) {
   }
 
   container.querySelector('#btn-switch-op').addEventListener('click', () => {
-    openLoginModal(() => {
-      renderHistoryView(container, navigateTo);
-    });
+    if (confirm(`Wylogować operatora ${currentOp?.name}?`)) {
+      logoutOperator();
+      navigateTo('login');
+    }
   });
 
   const syncBtn = container.querySelector('#btn-sync-now');

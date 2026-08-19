@@ -5,8 +5,7 @@ import { renderProductView } from './views/ProductView.js';
 import { renderHistoryView } from './views/HistoryView.js';
 import { renderValuationView } from './views/ValuationView.js';
 import { renderOrderImportView } from './views/OrderImportView.js';
-import { renderLoginView } from './views/LoginView.js';
-import { isUserLoggedIn } from './services/authService.js';
+import { isUserLoggedIn, isAdmin, getCurrentOperator } from './services/authService.js';
 
 const app = document.getElementById('app');
 
@@ -16,6 +15,12 @@ function navigateTo(route, params = null) {
     app.innerHTML = '';
     renderLoginView(app, navigateTo);
     return;
+  }
+
+  // Zabezpieczenie: Zamówienia i Wyceny tylko dla Adminów (Paweł, Mateusz)
+  if ((route === 'orders' || route === 'valuation') && !isAdmin()) {
+    alert(`⛔ Brak uprawnień: Moduł "${route === 'orders' ? 'Zamówienia' : 'Wycena'}" jest dostępny wyłącznie dla Administratorów.`);
+    route = 'dashboard';
   }
 
   app.innerHTML = '';
