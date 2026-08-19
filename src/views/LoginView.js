@@ -1,7 +1,7 @@
-import { getUsers, changeUserPin, setLoggedIn } from '../services/authService.js';
+import { getUsers, changeUserPin, setLoggedIn, getLockoutStatus, recordFailedPinAttempt } from '../services/authService.js';
 
 /**
- * Dedicated Fullscreen Login View with 4 Users, PIN pad & First-Login PIN Change Flow
+ * Login View with 4 Users, PIN Keypad, Brute-Force Lockout & Mandatory First-Time PIN Change
  */
 export function renderLoginView(container, navigateTo) {
   let users = getUsers();
@@ -14,10 +14,21 @@ export function renderLoginView(container, navigateTo) {
   let newPinTemp = '';
   let confirmPinTemp = '';
 
+  let countdownInterval = null;
+
+  function clearTimer() {
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+  }
+
   function render() {
+    clearTimer();
     users = getUsers();
-    // Refresh selected operator data
     selectedOperator = users.find(u => u.id === selectedOperator.id) || users[0];
+
+    const lockout = getLockoutStatus(selectedOperator.id);
 
     container.innerHTML = `
       <div class="min-h-screen w-full bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 select-none">
@@ -44,8 +55,10 @@ export function renderLoginView(container, navigateTo) {
                 ${users.map(op => {
                   const isSelected = selectedOperator.id === op.id;
                   const isAdmin = op.role === 'ADMIN';
+                  const opLockout = getLockoutStatus(op.id);
                   return `
-                    <button type="button" class="btn-select-op flex flex-col items-center p-2.5 rounded-2xl border transition-all ${isSelected ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-600/30 scale-105' : 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:bg-slate-800 hover:border-slate-600'}" data-op-id="${op.id}">
+                    <button type="button" class="btn-select-op flex flex-col items-center p-2.5 rounded-2xl border transition-all relative ${isSelected ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-600/30 scale-105' : 'bg-slate-800/80 border-slate-700/80 text-slate-300 hover:bg-slate-800 hover:border-slate-600'}" data-op-id="${op.id}">
+                      ${opLockout.isLocked ? `<span class="absolute -top-1 -right-1 bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">LOCKED</span>` : ''}
                       <span class="material-symbols-outlined text-2xl mb-1">${op.avatar}</span>
                       <span class="text-xs font-black truncate max-w-full text-center">${op.name}</span>
                       <span class="text-[9px] font-bold ${isAdmin ? 'text-amber-300' : 'text-slate-400'}">${isAdmin ? '👑 ADMIN' : '📦 OPR'}</span>
@@ -55,50 +68,72 @@ export function renderLoginView(container, navigateTo) {
               </div>
             </div>
 
-            <!-- PIN Code Display -->
-            <div class="w-full flex flex-col items-center gap-2">
-              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Wprowadź PIN dla: <strong class="text-blue-400">${selectedOperator.name}</strong>
-              </label>
-              
-              <div class="flex items-center gap-3 my-1">
-                ${[0, 1, 2, 3].map(i => {
-                  const filled = currentPin.length > i;
-                  return `
-                    <div class="w-4 h-4 rounded-full border-2 transition-all duration-150 ${filled ? 'bg-blue-500 border-blue-400 scale-125 shadow-md shadow-blue-500/50' : 'bg-slate-800 border-slate-700'}"></div>
-                  `;
-                }).join('')}
+            <!-- Lockout Banner OR PIN Code Display -->
+            ${lockout.isLocked ? `
+              <div class="w-full bg-rose-950/80 border-2 border-rose-600 rounded-2xl p-4 flex flex-col items-center gap-2 text-center shadow-lg animate-pulse">
+                <div class="w-10 h-10 rounded-full bg-rose-600/30 text-rose-400 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-2xl">lock_clock</span>
+                </div>
+                <div>
+                  <h3 class="font-black text-rose-200 text-sm">BLOKADA ANTYWŁAMANIOWA!</h3>
+                  <p class="text-xs text-rose-300 mt-0.5">Zbyt wiele błędnych prób kodu PIN.</p>
+                </div>
+                <div class="bg-rose-900/60 border border-rose-700/80 px-3 py-1.5 rounded-xl text-rose-100 font-mono font-black text-sm">
+                  Odblokowanie za: <span id="lockout-countdown" class="text-white text-base">${formatSeconds(lockout.remainingSeconds)}</span>
+                </div>
+              </div>
+            ` : `
+              <div class="w-full flex flex-col items-center gap-2">
+                <div class="flex justify-between items-center w-full px-2">
+                  <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    PIN dla: <strong class="text-blue-400">${selectedOperator.name}</strong>
+                  </span>
+                  ${lockout.failedAttempts > 0 ? `
+                    <span class="text-[11px] font-bold text-amber-400 bg-amber-950/50 px-2 py-0.5 rounded border border-amber-800">
+                      Błędne próby: ${lockout.failedAttempts}/3
+                    </span>
+                  ` : ''}
+                </div>
+                
+                <div class="flex items-center gap-3 my-1">
+                  ${[0, 1, 2, 3].map(i => {
+                    const filled = currentPin.length > i;
+                    return `
+                      <div class="w-4 h-4 rounded-full border-2 transition-all duration-150 ${filled ? 'bg-blue-500 border-blue-400 scale-125 shadow-md shadow-blue-500/50' : 'bg-slate-800 border-slate-700'}"></div>
+                    `;
+                  }).join('')}
+                </div>
+
+                ${errorMessage ? `
+                  <div class="text-xs font-bold text-rose-400 bg-rose-950/60 border border-rose-800/60 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-base">error</span>
+                    <span>${errorMessage}</span>
+                  </div>
+                ` : `
+                  <div class="text-[11px] text-slate-500">PIN startowy: <strong>1234</strong></div>
+                `}
               </div>
 
-              ${errorMessage ? `
-                <div class="text-xs font-bold text-rose-400 bg-rose-950/60 border border-rose-800/60 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-                  <span class="material-symbols-outlined text-base">error</span>
-                  <span>${errorMessage}</span>
-                </div>
-              ` : `
-                <div class="text-[11px] text-slate-500">Domyślny PIN startowy: <strong>1234</strong></div>
-              `}
-            </div>
-
-            <!-- Touch Keypad -->
-            <div class="grid grid-cols-3 gap-2.5 w-full max-w-[280px]">
-              ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => `
-                <button type="button" class="btn-keypad h-13 rounded-2xl bg-slate-800 hover:bg-slate-700 active:bg-blue-600 text-white font-bold text-xl transition-all active:scale-95 shadow-sm flex items-center justify-center p-3" data-num="${num}">
-                  ${num}
+              <!-- Touch Numeric Keypad -->
+              <div class="grid grid-cols-3 gap-2.5 w-full max-w-[280px]">
+                ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => `
+                  <button type="button" class="btn-keypad h-13 rounded-2xl bg-slate-800 hover:bg-slate-700 active:bg-blue-600 text-white font-bold text-xl transition-all active:scale-95 shadow-sm flex items-center justify-center p-3" data-num="${num}">
+                    ${num}
+                  </button>
+                `).join('')}
+                <button type="button" id="btn-clear-pin" class="h-13 rounded-2xl bg-slate-800/60 hover:bg-slate-700 text-slate-400 hover:text-white font-bold text-sm transition-all active:scale-95 flex items-center justify-center p-3">
+                  C
                 </button>
-              `).join('')}
-              <button type="button" id="btn-clear-pin" class="h-13 rounded-2xl bg-slate-800/60 hover:bg-slate-700 text-slate-400 hover:text-white font-bold text-sm transition-all active:scale-95 flex items-center justify-center p-3">
-                C
-              </button>
-              <button type="button" class="btn-keypad h-13 rounded-2xl bg-slate-800 hover:bg-slate-700 active:bg-blue-600 text-white font-bold text-xl transition-all active:scale-95 shadow-sm flex items-center justify-center p-3" data-num="0">
-                0
-              </button>
-              <button type="button" id="btn-backspace-pin" class="h-13 rounded-2xl bg-slate-800/60 hover:bg-slate-700 text-slate-400 hover:text-white font-bold transition-all active:scale-95 flex items-center justify-center p-3">
-                <span class="material-symbols-outlined text-2xl">backspace</span>
-              </button>
-            </div>
+                <button type="button" class="btn-keypad h-13 rounded-2xl bg-slate-800 hover:bg-slate-700 active:bg-blue-600 text-white font-bold text-xl transition-all active:scale-95 shadow-sm flex items-center justify-center p-3" data-num="0">
+                  0
+                </button>
+                <button type="button" id="btn-backspace-pin" class="h-13 rounded-2xl bg-slate-800/60 hover:bg-slate-700 text-slate-400 hover:text-white font-bold transition-all active:scale-95 flex items-center justify-center p-3">
+                  <span class="material-symbols-outlined text-2xl">backspace</span>
+                </button>
+              </div>
+            `}
           ` : `
-            <!-- First Login: Mandatory PIN Change Screen -->
+            <!-- Mandatory First Login PIN Change Screen -->
             <div class="w-full flex flex-col items-center gap-4 text-center">
               <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center">
                 <span class="material-symbols-outlined text-3xl">key</span>
@@ -111,7 +146,7 @@ export function renderLoginView(container, navigateTo) {
                 </p>
               </div>
 
-              <!-- PIN Dots for new PIN -->
+              <!-- PIN Dots -->
               <div class="flex items-center gap-3 my-1">
                 ${[0, 1, 2, 3].map(i => {
                   const activePin = viewMode === 'FORCE_CHANGE_PIN' ? newPinTemp : confirmPinTemp;
@@ -151,7 +186,7 @@ export function renderLoginView(container, navigateTo) {
 
           <!-- Footer info -->
           <div class="text-[10px] text-slate-500 text-center">
-            Bezpieczny węzeł Odoo 19 • Paweł, Mateusz (Admin) • Szymon, Patryk (Magazyn)
+            Bezpieczny węzeł Odoo 19 • Automatyczna ochrona przed zgadywaniem PIN
           </div>
 
         </div>
@@ -159,11 +194,33 @@ export function renderLoginView(container, navigateTo) {
     `;
 
     bindEvents();
+    startLockoutTimerIfNeeded();
+  }
+
+  function formatSeconds(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m > 0 ? m + 'm ' : ''}${s < 10 ? '0' + s : s}s`;
+  }
+
+  function startLockoutTimerIfNeeded() {
+    const lockout = getLockoutStatus(selectedOperator.id);
+    if (lockout.isLocked) {
+      countdownInterval = setInterval(() => {
+        const curLock = getLockoutStatus(selectedOperator.id);
+        const countdownEl = container.querySelector('#lockout-countdown');
+        if (curLock.isLocked && countdownEl) {
+          countdownEl.textContent = formatSeconds(curLock.remainingSeconds);
+        } else {
+          clearTimer();
+          render();
+        }
+      }, 1000);
+    }
   }
 
   function handleLoginSuccess() {
     if (!selectedOperator.hasChangedPin || selectedOperator.pin === '1234') {
-      // Force PIN change
       viewMode = 'FORCE_CHANGE_PIN';
       newPinTemp = '';
       confirmPinTemp = '';
@@ -182,8 +239,13 @@ export function renderLoginView(container, navigateTo) {
         errorMessage = '';
         handleLoginSuccess();
       } else {
-        errorMessage = 'Nieprawidłowy kod PIN!';
+        const result = recordFailedPinAttempt(selectedOperator);
         currentPin = '';
+        if (result.isLocked) {
+          errorMessage = `⛔ Zablokowano logowanie na ${result.remainingSeconds}s!`;
+        } else {
+          errorMessage = `Nieprawidłowy PIN! (Próba ${result.failedAttempts}/3)`;
+        }
         render();
       }
     }
@@ -206,7 +268,6 @@ export function renderLoginView(container, navigateTo) {
     } else if (viewMode === 'FORCE_CONFIRM_PIN') {
       if (confirmPinTemp.length === 4) {
         if (confirmPinTemp === newPinTemp) {
-          // Success! Save permanently
           changeUserPin(selectedOperator.id, newPinTemp);
           alert(`🎉 PIN dla ${selectedOperator.name} został pomyślnie zmieniony i zapisany!`);
           setLoggedIn(selectedOperator);
@@ -223,7 +284,6 @@ export function renderLoginView(container, navigateTo) {
   }
 
   function bindEvents() {
-    // Operator Selection
     container.querySelectorAll('.btn-select-op').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const opId = Number(e.currentTarget.getAttribute('data-op-id'));
@@ -237,7 +297,6 @@ export function renderLoginView(container, navigateTo) {
       });
     });
 
-    // Login Keypad
     container.querySelectorAll('.btn-keypad').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const val = e.currentTarget.getAttribute('data-num');
