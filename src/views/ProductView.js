@@ -1,6 +1,9 @@
+import * as pdfjsLib from 'pdfjs-dist';
 import { applyStockAdjustment, getProductAttachments, getAttachmentData, updateProductDescription, RAW_LOCATIONS, PRODUCT_LOCATIONS } from '../services/odooApi.js';
 import { openSingleQrLabelWindow } from '../utils/qrLabelReport.js';
 import { openLowStockAlertModal } from './LowStockModal.js';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 export function renderProductView(container, navigateTo, product) {
   const currentProduct = product || {
@@ -256,26 +259,39 @@ export function renderProductView(container, navigateTo, product) {
       </section>
     </main>
 
-    <!-- PDF Viewer In-App Modal (Czysty podgląd bez pobierania i druku) -->
-    <div id="pdf-viewer-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex flex-col p-2 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-200">
-      <div class="bg-surface-container-lowest rounded-xl shadow-2xl border-2 border-primary max-w-5xl w-full h-full flex flex-col mx-auto overflow-hidden">
-        <!-- Modal Header -->
-        <div class="flex justify-between items-center px-4 py-3 bg-surface-container border-b border-outline-variant">
+    <!-- PDF Canvas In-App Modal (100% Czysty Canvas bez pasków przeglądarki i pobierania) -->
+    <div id="pdf-viewer-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex flex-col p-1 sm:p-3 opacity-0 pointer-events-none transition-opacity duration-200">
+      <div class="bg-surface-container-lowest rounded-xl shadow-2xl border-2 border-primary w-full h-full flex flex-col mx-auto overflow-hidden">
+        <!-- Modal Header Controls -->
+        <div class="flex flex-wrap justify-between items-center px-4 py-2.5 bg-surface-container border-b border-outline-variant gap-2">
           <div class="flex items-center gap-2 min-w-0">
-            <span class="material-symbols-outlined text-red-600 text-[22px]">picture_as_pdf</span>
+            <span class="material-symbols-outlined text-indigo-600 text-[22px]">draw</span>
             <span id="modal-pdf-title" class="font-bold text-primary text-sm truncate">Rysunek techniczny</span>
-            <span class="hidden sm:inline-block bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold px-2 py-0.5 rounded">POUFNE • TYLKO DO WGLĄDU</span>
+            <span class="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0">POUFNE • TYLKO DO WGLĄDU</span>
           </div>
-          <div class="flex items-center gap-2">
-            <button id="btn-close-pdf-modal" class="flex items-center gap-1 bg-surface-container-high hover:bg-surface-container-highest px-3 py-1.5 rounded-lg text-primary font-bold text-xs active:scale-95 transition-all shadow-sm">
+          <div class="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+            <!-- Zoom & Rotate Controls -->
+            <button id="btn-pdf-zoom-out" class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-center text-primary font-bold active:scale-95 transition-all shadow-sm" title="Pomniejsz (-)">
+              <span class="material-symbols-outlined text-[18px]">remove</span>
+            </button>
+            <button id="btn-pdf-zoom-fit" class="px-2.5 h-8 rounded-lg bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-center text-primary font-bold text-xs active:scale-95 transition-all shadow-sm" title="Dopasuj do ekranu">
+              DOPASUJ
+            </button>
+            <button id="btn-pdf-zoom-in" class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-center text-primary font-bold active:scale-95 transition-all shadow-sm" title="Powiększ (+)">
+              <span class="material-symbols-outlined text-[18px]">add</span>
+            </button>
+            <button id="btn-pdf-rotate" class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-center text-primary font-bold active:scale-95 transition-all shadow-sm ml-1" title="Obróć o 90°">
+              <span class="material-symbols-outlined text-[18px]">rotate_right</span>
+            </button>
+            <button id="btn-close-pdf-modal" class="flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 px-3 h-8 rounded-lg font-bold text-xs active:scale-95 transition-all shadow-sm ml-2">
               <span class="material-symbols-outlined text-[18px]">close</span>
               <span>ZAMKNIJ</span>
             </button>
           </div>
         </div>
-        <!-- Modal Iframe Container (Ukryty pasek pobierania i nawigacji) -->
-        <div class="flex-1 bg-neutral-900 relative">
-          <iframe id="pdf-iframe" class="w-full h-full border-0" src="about:blank"></iframe>
+        <!-- Pure Canvas Render Surface (Bez żadnych pasków Chroma) -->
+        <div id="pdf-canvas-container" class="flex-1 bg-neutral-900 overflow-auto flex items-center justify-center p-2 sm:p-4 select-none relative">
+          <canvas id="pdf-canvas" class="shadow-2xl rounded max-w-none transition-transform"></canvas>
         </div>
       </div>
     </div>
@@ -406,31 +422,77 @@ export function renderProductView(container, navigateTo, product) {
       pdfStatusBadge.textContent = 'Błąd pobierania';
     });
 
-    async function loadPdfBlobUrl() {
-      if (activeBlobUrl) return activeBlobUrl;
+    let currentPdfDoc = null;
+    let currentScale = 1.0;
+    let currentRotation = 0;
+    let cachedPdfBytes = null;
+
+    const canvasEl = container.querySelector('#pdf-canvas');
+    const canvasContainer = container.querySelector('#pdf-canvas-container');
+    const btnZoomIn = container.querySelector('#btn-pdf-zoom-in');
+    const btnZoomOut = container.querySelector('#btn-pdf-zoom-out');
+    const btnZoomFit = container.querySelector('#btn-pdf-zoom-fit');
+    const btnRotate = container.querySelector('#btn-pdf-rotate');
+
+    async function loadPdfDoc() {
+      if (currentPdfDoc) return currentPdfDoc;
       const attData = await getAttachmentData(activePdfAttachment.id);
       const byteCharacters = atob(attData.datas);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: 'application/pdf' });
-      activeBlobUrl = URL.createObjectURL(blob);
-      return activeBlobUrl;
+      cachedPdfBytes = new Uint8Array(byteNumbers);
+      const loadingTask = pdfjsLib.getDocument({ data: cachedPdfBytes });
+      currentPdfDoc = await loadingTask.promise;
+      return currentPdfDoc;
+    }
+
+    async function renderCanvasPage() {
+      if (!currentPdfDoc || !canvasEl || !canvasContainer) return;
+      try {
+        const page = await currentPdfDoc.getPage(1);
+        const unscaledViewport = page.getViewport({ scale: 1.0, rotation: currentRotation });
+        
+        const containerW = Math.max(300, canvasContainer.clientWidth - 24);
+        const containerH = Math.max(300, canvasContainer.clientHeight - 24);
+        
+        const fitScale = Math.min(containerW / unscaledViewport.width, containerH / unscaledViewport.height);
+        const renderScale = (fitScale > 0 ? fitScale : 1.0) * currentScale;
+        const dpr = window.devicePixelRatio || 1.5;
+
+        const viewport = page.getViewport({ scale: renderScale * dpr, rotation: currentRotation });
+        
+        canvasEl.width = viewport.width;
+        canvasEl.height = viewport.height;
+        canvasEl.style.width = `${viewport.width / dpr}px`;
+        canvasEl.style.height = `${viewport.height / dpr}px`;
+
+        const ctx = canvasEl.getContext('2d');
+        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+        const renderContext = {
+          canvasContext: ctx,
+          viewport: viewport
+        };
+        await page.render(renderContext).promise;
+      } catch (err) {
+        console.warn('Canvas render error:', err);
+      }
     }
 
     if (btnViewPdf) {
       btnViewPdf.addEventListener('click', async () => {
         btnViewPdf.disabled = true;
-        btnViewPdf.innerHTML = `<span class="material-symbols-outlined animate-spin text-[18px]">sync</span><span>ŁADOWANIE...</span>`;
+        btnViewPdf.innerHTML = `<span class="material-symbols-outlined animate-spin text-[18px]">sync</span><span>ŁADOWANIE RYSUNKU...</span>`;
         try {
-          const url = await loadPdfBlobUrl();
+          await loadPdfDoc();
           modalTitle.textContent = activePdfAttachment.name;
-          // Ukryj pasek narzędzi (toolbar=0), ukryj miniaturki po lewej (navpanes=0) i dopasuj cały rysunek (view=Fit)
-          pdfIframe.src = `${url}#toolbar=0&navpanes=0&scrollbar=1&view=Fit`;
+          currentScale = 1.0;
+          currentRotation = 0;
           pdfModal.classList.remove('opacity-0', 'pointer-events-none');
           pdfModal.classList.add('opacity-100');
+          setTimeout(() => renderCanvasPage(), 50);
         } catch (e) {
           alert('Nie udało się otworzyć rysunku PDF: ' + e.message);
         } finally {
@@ -440,23 +502,40 @@ export function renderProductView(container, navigateTo, product) {
       });
     }
 
-    if (btnCloseModal) {
-      btnCloseModal.addEventListener('click', () => {
-        pdfModal.classList.add('opacity-0', 'pointer-events-none');
-        pdfIframe.src = 'about:blank';
+    if (btnZoomIn) {
+      btnZoomIn.addEventListener('click', () => {
+        currentScale = Math.min(4.0, currentScale + 0.25);
+        renderCanvasPage();
       });
     }
 
-    if (btnModalPrint) {
-      btnModalPrint.addEventListener('click', () => {
-        try {
-          if (pdfIframe.contentWindow) {
-            pdfIframe.contentWindow.print();
-          } else {
-            window.open(activeBlobUrl, '_blank');
-          }
-        } catch (e) {
-          window.open(activeBlobUrl, '_blank');
+    if (btnZoomOut) {
+      btnZoomOut.addEventListener('click', () => {
+        currentScale = Math.max(0.5, currentScale - 0.25);
+        renderCanvasPage();
+      });
+    }
+
+    if (btnZoomFit) {
+      btnZoomFit.addEventListener('click', () => {
+        currentScale = 1.0;
+        renderCanvasPage();
+      });
+    }
+
+    if (btnRotate) {
+      btnRotate.addEventListener('click', () => {
+        currentRotation = (currentRotation + 90) % 360;
+        renderCanvasPage();
+      });
+    }
+
+    if (btnCloseModal) {
+      btnCloseModal.addEventListener('click', () => {
+        pdfModal.classList.add('opacity-0', 'pointer-events-none');
+        if (canvasEl) {
+          const ctx = canvasEl.getContext('2d');
+          ctx?.clearRect(0, 0, canvasEl.width, canvasEl.height);
         }
       });
     }
