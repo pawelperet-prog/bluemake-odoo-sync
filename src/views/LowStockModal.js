@@ -51,7 +51,7 @@ export function openLowStockAlertModal(product, onSentCallback = null) {
           <p class="font-bold text-sm text-gray-900 leading-tight">${currentProduct.name}</p>
           <div class="flex justify-between text-xs text-gray-500 pt-1 border-t border-rose-200/60">
             <span>Odoo ID: ${currentProduct.id}</span>
-            <span>Lokalizacja: Strefa 5</span>
+            <span>Lokalizacja: ${currentProduct.location || 'Magazyn'}</span>
           </div>
         </div>
 
@@ -153,6 +153,7 @@ export function openLowStockAlertModal(product, onSentCallback = null) {
       name: currentProduct.name,
       currentQuantity: currentProduct.quantity,
       uom: currentProduct.uom || 'm',
+      location: currentProduct.location,
       operatorName: operator ? operator.name : 'Operator Magazynu',
       channelIds: checkedChannels.length > 0 ? checkedChannels : [9],
       recipientPartnerIds: checkedRecipients,

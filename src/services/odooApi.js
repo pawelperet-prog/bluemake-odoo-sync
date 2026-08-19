@@ -578,6 +578,7 @@ export async function sendLowStockAlert({
   currentQuantity, 
   uom = 'm', 
   operatorName, 
+  location,
   channelIds = [9, 11],
   recipientPartnerIds = [8, 6], 
   customNote = '' 
@@ -586,61 +587,64 @@ export async function sendLowStockAlert({
   const operator = getCurrentOperator();
   const opName = operatorName || (operator ? operator.name : 'Operator Magazynu');
   const qtyStr = `${Number(currentQuantity).toFixed(1)} ${uom}`;
-  
+  const dateStr = new Date().toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' });
+  const locationStr = location || `Strefa ${config.locationId}`;
+
   const recipientMentions = ODOO_MANAGERS
     .filter(m => recipientPartnerIds.includes(m.partnerId))
     .map(m => `@${m.name}`)
     .join(' ');
 
   const channelPostHtml = `
-    <div style="font-family: Arial, sans-serif; padding: 10px 14px; border-left: 5px solid #dc2626; background: #fef2f2; border-radius: 6px; margin: 4px 0;">
-      <div style="font-size: 15px; font-weight: bold; color: #991b1b; margin-bottom: 6px;">
-        🚨 PILNY ALERT: Niski stan surowca (&lt; 5.0m)
-      </div>
-      <div style="font-size: 14px; color: #111827; margin: 3px 0;">
-        <b>Produkt:</b> ${name} (<code>${sku}</code>)
-      </div>
-      <div style="font-size: 14px; color: #111827; margin: 3px 0;">
-        <b>Aktualny stan na magazynie:</b> <span style="font-size: 16px; font-weight: 900; color: #b91c1c; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">${qtyStr}</span> (Strefa ${config.locationId})
-      </div>
-      <div style="font-size: 13px; color: #374151; margin: 3px 0;">
-        <b>Zgłaszający operator:</b> ${opName} • <b>Data:</b> ${new Date().toLocaleString('pl-PL')}
-      </div>
-      ${customNote ? `<div style="margin: 8px 0 4px 0; padding: 8px 10px; background: #ffffff; border: 1px solid #fecdd3; border-radius: 4px; font-size: 13px; color: #991b1b;"><b>Notatka:</b> ${customNote}</div>` : ''}
-      <div style="margin-top: 8px; font-size: 13px; font-weight: bold; color: #1e40af;">
-        Powiadomiono: ${recipientMentions || '@Mateusz Klimkowski @Paweł Peret'}
-      </div>
-    </div>
-  `;
+<p>🚨 <strong>PILNY ALERT MAGAZYNOWY (Bluemake)</strong></p>
+<p>📦 <strong>Produkt:</strong> ${name} (<code>${sku}</code>)</p>
+<p>📊 <strong>Aktualny stan na magazynie:</strong> <strong>${qtyStr}</strong> (${locationStr})</p>
+<p>👤 <strong>Zgłaszający operator:</strong> ${opName} • <strong>Data:</strong> ${dateStr}</p>
+${customNote ? `<p>📝 <strong>Notatka:</strong> <em>${customNote}</em></p>` : ''}
+<p>🔔 <strong>Powiadomiono:</strong> ${recipientMentions || '@Mateusz Klimkowski @Paweł Peret'}</p>
+  `.trim();
 
   let sentChannelsCount = 0;
   const errors = [];
 
-  // 1. Post to Odoo Discuss Channels (e.g. #Materiał, #Wszystko)
+  // 1. Post to Odoo Discuss Channels via mail.message (preserve clean HTML)
   for (const cId of (channelIds || [9])) {
     try {
-      await callOdooRpc('discuss.channel', 'message_post', [cId], {
+      await callOdooRpc('mail.message', 'create', [{
+        model: 'discuss.channel',
+        res_id: Number(cId),
         body: channelPostHtml,
         message_type: 'comment',
-        subtype_xmlid: 'mail.mt_comment',
+        subtype_id: 1,
         partner_ids: recipientPartnerIds
-      });
+      }]);
       sentChannelsCount++;
     } catch (err) {
       console.warn(`Błąd wysyłania do kanału ID ${cId}:`, err);
-      errors.push(`Kanał ${cId}: ${err.message}`);
+      try {
+        // Fallback to channel message_post
+        await callOdooRpc('discuss.channel', 'message_post', [cId], {
+          body: channelPostHtml,
+          message_type: 'comment'
+        });
+        sentChannelsCount++;
+      } catch (e) {
+        errors.push(`Kanał ${cId}: ${e.message}`);
+      }
     }
   }
 
   // 2. Also log to product chatter if productId provided
   if (productId) {
     try {
-      await callOdooRpc('product.product', 'message_post', [productId], {
+      await callOdooRpc('mail.message', 'create', [{
+        model: 'product.product',
+        res_id: Number(productId),
         body: channelPostHtml,
         message_type: 'comment',
-        subtype_xmlid: 'mail.mt_comment',
+        subtype_id: 1,
         partner_ids: recipientPartnerIds
-      });
+      }]);
     } catch (err) {
       console.warn('Błąd zapisu w chatterze produktu:', err);
     }
