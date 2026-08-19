@@ -256,27 +256,24 @@ export function renderProductView(container, navigateTo, product) {
       </section>
     </main>
 
-    <!-- PDF Viewer In-App Modal -->
-    <div id="pdf-viewer-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex flex-col p-2 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-200">
-      <div class="bg-surface-container-lowest rounded-xl shadow-2xl border-2 border-primary max-w-4xl w-full h-full flex flex-col mx-auto overflow-hidden">
+    <!-- PDF Viewer In-App Modal (Czysty podgląd bez pobierania i druku) -->
+    <div id="pdf-viewer-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex flex-col p-2 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+      <div class="bg-surface-container-lowest rounded-xl shadow-2xl border-2 border-primary max-w-5xl w-full h-full flex flex-col mx-auto overflow-hidden">
         <!-- Modal Header -->
         <div class="flex justify-between items-center px-4 py-3 bg-surface-container border-b border-outline-variant">
           <div class="flex items-center gap-2 min-w-0">
-            <span class="material-symbols-outlined text-red-600">picture_as_pdf</span>
+            <span class="material-symbols-outlined text-red-600 text-[22px]">picture_as_pdf</span>
             <span id="modal-pdf-title" class="font-bold text-primary text-sm truncate">Rysunek techniczny</span>
             <span class="hidden sm:inline-block bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold px-2 py-0.5 rounded">POUFNE • TYLKO DO WGLĄDU</span>
           </div>
           <div class="flex items-center gap-2">
-            <button id="btn-modal-print-pdf" class="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow active:scale-95">
-              <span class="material-symbols-outlined text-[16px]">print</span>
-              <span>DRUKUJ</span>
-            </button>
-            <button id="btn-close-pdf-modal" class="w-8 h-8 rounded-full bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-center text-primary font-bold">
-              <span class="material-symbols-outlined text-[20px]">close</span>
+            <button id="btn-close-pdf-modal" class="flex items-center gap-1 bg-surface-container-high hover:bg-surface-container-highest px-3 py-1.5 rounded-lg text-primary font-bold text-xs active:scale-95 transition-all shadow-sm">
+              <span class="material-symbols-outlined text-[18px]">close</span>
+              <span>ZAMKNIJ</span>
             </button>
           </div>
         </div>
-        <!-- Modal Iframe Container -->
+        <!-- Modal Iframe Container (Ukryty pasek pobierania i nawigacji) -->
         <div class="flex-1 bg-neutral-900 relative">
           <iframe id="pdf-iframe" class="w-full h-full border-0" src="about:blank"></iframe>
         </div>
@@ -430,7 +427,8 @@ export function renderProductView(container, navigateTo, product) {
         try {
           const url = await loadPdfBlobUrl();
           modalTitle.textContent = activePdfAttachment.name;
-          pdfIframe.src = url;
+          // Ukryj pasek narzędzi (toolbar=0), ukryj miniaturki po lewej (navpanes=0) i dopasuj cały rysunek (view=Fit)
+          pdfIframe.src = `${url}#toolbar=0&navpanes=0&scrollbar=1&view=Fit`;
           pdfModal.classList.remove('opacity-0', 'pointer-events-none');
           pdfModal.classList.add('opacity-100');
         } catch (e) {
