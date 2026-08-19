@@ -5,6 +5,7 @@ import { renderProductView } from './views/ProductView.js';
 import { renderHistoryView } from './views/HistoryView.js';
 import { renderValuationView } from './views/ValuationView.js';
 import { renderOrderImportView } from './views/OrderImportView.js';
+import { renderLoginView } from './views/LoginView.js';
 import { isUserLoggedIn, isAdmin, getCurrentOperator } from './services/authService.js';
 
 const app = document.getElementById('app');
