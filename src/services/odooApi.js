@@ -163,8 +163,40 @@ export async function getCategories() {
   }
 }
 
+export const RAW_LOCATIONS = [
+  { id: 16, name: 'Regał 1' },
+  { id: 17, name: 'Regał 2' },
+  { id: 18, name: 'Regał 3' },
+  { id: 19, name: 'Regał 4' },
+  { id: 20, name: 'Regał 5' },
+  { id: 21, name: 'Pole odkładcze' },
+  { id: 5,  name: 'Strefa składowania (Główna)' }
+];
+
+export const PRODUCT_LOCATIONS = [
+  { id: 22, name: '01 - Magazyn' },
+  { id: 23, name: '02 - Regał wysokiego składowania' },
+  { id: 21, name: 'Pole odkładcze' },
+  { id: 5,  name: 'Strefa składowania (Główna)' }
+];
+
 /**
- * Fetch products from Odoo 19 (Location ID = 5)
+ * Pobierz wszystkie aktywne lokalizacje magazynowe z Odoo
+ */
+export async function getStockLocations() {
+  try {
+    const locs = await callOdooRpc('stock.location', 'search_read', [[['usage', '=', 'internal']]], {
+      fields: ['id', 'name', 'complete_name', 'location_id']
+    });
+    return locs || [];
+  } catch (e) {
+    console.warn('Nie udało się pobrać lokalizacji z Odoo:', e.message);
+    return [...RAW_LOCATIONS, ...PRODUCT_LOCATIONS];
+  }
+}
+
+/**
+ * Fetch products from Odoo 19 with real shelf/rack locations
  */
 export async function getProducts() {
   const config = getOdooConfig();
@@ -177,18 +209,36 @@ export async function getProducts() {
 
     let quants = [];
     try {
-      quants = await callOdooRpc('stock.quant', 'search_read', [[['location_id', '=', Number(config.locationId)]]], {
+      quants = await callOdooRpc('stock.quant', 'search_read', [[['location_id.usage', '=', 'internal']]], {
         fields: ['id', 'product_id', 'quantity', 'inventory_quantity', 'location_id']
       });
     } catch (e) {
-      console.warn('Nie udało się pobrać quants z Odoo:', e.message);
+      console.warn('Pobieranie quants po usage=internal nieudane, próba po ID:', e.message);
+      try {
+        quants = await callOdooRpc('stock.quant', 'search_read', [[]], {
+          fields: ['id', 'product_id', 'quantity', 'inventory_quantity', 'location_id']
+        });
+      } catch (err) {}
     }
 
+    // Mapa stanów i lokalizacji
     const quantMap = {};
+    const locMap = {};
+    const locIdMap = {};
+
     if (Array.isArray(quants)) {
       quants.forEach(q => {
         const pId = Array.isArray(q.product_id) ? q.product_id[0] : q.product_id;
-        if (pId) quantMap[pId] = q.quantity;
+        const locName = Array.isArray(q.location_id) ? q.location_id[1] : ('Lokacja ' + q.location_id);
+        const locId = Array.isArray(q.location_id) ? q.location_id[0] : q.location_id;
+
+        if (pId) {
+          quantMap[pId] = (quantMap[pId] || 0) + (typeof q.quantity === 'number' ? q.quantity : 0);
+          if (!locMap[pId] || q.quantity > 0) {
+            locMap[pId] = locName.replace(/^WH\//, '');
+            locIdMap[pId] = locId;
+          }
+        }
       });
     }
 
@@ -200,6 +250,9 @@ export async function getProducts() {
       
       const isRawMaterial = catId === 4 || (Boolean(p.sale_ok && p.purchase_ok));
       const isFinishedProduct = catId === 5 || (Boolean(p.sale_ok && !p.purchase_ok));
+
+      const defaultLocName = isFinishedProduct ? '01 - Magazyn' : 'Regał 1';
+      const defaultLocId = isFinishedProduct ? 22 : 16;
 
       const codeVal = p.barcode || p.default_code || `SKU-${p.id}`;
       const cleanName = (p.name || 'Produkt')
@@ -216,7 +269,8 @@ export async function getProducts() {
         name: cleanName,
         quantity: typeof stock === 'number' ? stock : 0,
         uom: uomName.toLowerCase().includes('unit') ? 'szt' : (uomName.toLowerCase().includes('m') ? 'm' : uomName),
-        location: `Strefa ${config.locationId}`,
+        location: locMap[p.id] || defaultLocName,
+        locationId: locIdMap[p.id] || defaultLocId,
         isLowStock: stock < 5,
         categoryId: catId,
         categoryName: isRawMaterial ? 'Surowiec' : (isFinishedProduct ? 'Produkt' : catName),
@@ -354,18 +408,20 @@ export async function createNewProduct({ name, sku, initialQuantity = 0, categor
   }
 }
 
-export async function applyStockAdjustment(productId, newQuantity, sku, oldQuantity) {
+export async function applyStockAdjustment(productId, newQuantity, sku, oldQuantity, targetLocationId = null) {
   const config = getOdooConfig();
   const diff = Number((newQuantity - oldQuantity).toFixed(2));
   const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const dateStr = 'Dziś, ' + timestamp;
 
+  const targetLoc = Number(targetLocationId || config.locationId || 5);
+
   const operator = getCurrentOperator();
   const historyItem = {
     id: Date.now(),
     sku: sku,
-    title: `Korekta ${sku}: ${diff > 0 ? '+' : ''}${diff}m`,
-    details: `Nowy stan: ${newQuantity}m`,
+    title: `Korekta ${sku}: ${diff > 0 ? '+' : ''}${diff}`,
+    details: `Nowy stan: ${newQuantity} (Lokalizacja ID #${targetLoc})`,
     time: dateStr,
     operator: operator ? operator.name : 'Nieznany Operator',
     operatorRole: operator ? operator.role : 'Operator',
@@ -373,16 +429,16 @@ export async function applyStockAdjustment(productId, newQuantity, sku, oldQuant
     error: null,
     productId,
     newQuantity,
-    oldQuantity
+    oldQuantity,
+    locationId: targetLoc
   };
 
   saveHistoryItem(historyItem);
 
   try {
     let quantId = null;
-    const targetLoc = Number(config.locationId);
 
-    const searchRes = await callOdooRpc('stock.quant', 'search_read', [[['product_id', '=', productId], ['location_id', '=', targetLoc]]], {
+    const searchRes = await callOdooRpc('stock.quant', 'search_read', [[['product_id', '=', Number(productId)], ['location_id', '=', targetLoc]]], {
       fields: ['id', 'quantity', 'inventory_quantity']
     });
 
@@ -391,7 +447,7 @@ export async function applyStockAdjustment(productId, newQuantity, sku, oldQuant
       await callOdooRpc('stock.quant', 'write', [[quantId], { inventory_quantity: newQuantity }]);
     } else {
       quantId = await callOdooRpc('stock.quant', 'create', [{
-        product_id: productId,
+        product_id: Number(productId),
         location_id: targetLoc,
         inventory_quantity: newQuantity
       }]);

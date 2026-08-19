@@ -1,4 +1,4 @@
-import { applyStockAdjustment, getProductAttachments, getAttachmentData, updateProductDescription } from '../services/odooApi.js';
+import { applyStockAdjustment, getProductAttachments, getAttachmentData, updateProductDescription, RAW_LOCATIONS, PRODUCT_LOCATIONS } from '../services/odooApi.js';
 import { openSingleQrLabelWindow } from '../utils/qrLabelReport.js';
 import { openLowStockAlertModal } from './LowStockModal.js';
 
@@ -98,10 +98,11 @@ export function renderProductView(container, navigateTo, product) {
             <span class="font-label-caps text-label-caps text-on-surface-variant mt-1">LOKACJA</span>
             <div class="flex items-center gap-2">
               <select id="location-select" class="bg-surface-container-high text-primary font-bold text-xs rounded-lg px-2.5 py-1.5 border border-outline-variant focus:ring-2 focus:ring-primary">
-                <option value="01 - Magazyn" ${currentProduct.location?.includes('01') ? 'selected' : ''}>01 - Magazyn</option>
-                <option value="02 - Regał wysokiego składowania" ${currentProduct.location?.includes('02') ? 'selected' : ''}>02 - Regał wysokiego składowania</option>
-                <option value="03 - W trakcie przyjęcia / Plac" ${currentProduct.location?.includes('03') ? 'selected' : ''}>03 - W trakcie przyjęcia / Plac</option>
-                <option value="Strefa 5" ${!currentProduct.location?.includes('01') && !currentProduct.location?.includes('02') ? 'selected' : ''}>Strefa 5 (Domyślna)</option>
+                ${(isFinishedGood ? PRODUCT_LOCATIONS : RAW_LOCATIONS).map(loc => `
+                  <option value="${loc.id}" ${currentProduct.locationId === loc.id || (currentProduct.location && currentProduct.location.includes(loc.name)) ? 'selected' : ''}>
+                    ${loc.name}
+                  </option>
+                `).join('')}
               </select>
             </div>
             
@@ -534,13 +535,15 @@ export function renderProductView(container, navigateTo, product) {
     `;
 
     const finalStockVal = calcFinalStock();
-    const selectedLocation = container.querySelector('#location-select')?.value || currentProduct.location;
+    const locSelect = container.querySelector('#location-select');
+    const selectedLocationId = locSelect ? Number(locSelect.value) : (currentProduct.locationId || 5);
+    const selectedLocationName = locSelect ? locSelect.options[locSelect.selectedIndex]?.text : currentProduct.location;
 
-    await applyStockAdjustment(currentProduct.id, finalStockVal, currentProduct.sku, currentProduct.quantity);
+    await applyStockAdjustment(currentProduct.id, finalStockVal, currentProduct.sku, currentProduct.quantity, selectedLocationId);
 
     const toast = container.querySelector('#toast-modal');
     const toastDesc = container.querySelector('#toast-desc');
-    toastDesc.textContent = `Zapisano nowy stan (${finalStockVal} ${currentProduct.uom}) w Odoo 19 (${selectedLocation}).`;
+    toastDesc.textContent = `Zapisano nowy stan (${finalStockVal} ${currentProduct.uom}) w Odoo 19 (${selectedLocationName}).`;
 
     toast.classList.remove('opacity-0', 'pointer-events-none');
     toast.classList.add('opacity-100');
