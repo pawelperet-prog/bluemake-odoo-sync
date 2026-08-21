@@ -2,6 +2,8 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { applyStockAdjustment, getProductAttachments, getAttachmentData, updateProductDescription, RAW_LOCATIONS, PRODUCT_LOCATIONS } from '../services/odooApi.js';
 import { openSingleQrLabelWindow } from '../utils/qrLabelReport.js';
 import { openLowStockAlertModal } from './LowStockModal.js';
+import { getJawsByProductSku, getJawsById } from '../services/jawStorageService.js';
+import { printJawLabelHtml } from '../utils/jawLabelGenerator.js';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -153,6 +155,78 @@ export function renderProductView(container, navigateTo, product) {
                 <span>PODGLĄD RYSUNKU (BEZ POBIERANIA)</span>
               </button>
             </div>
+          </div>
+        </section>
+      ` : ''}
+
+      <!-- CNC Soft Jaws Section (Dla Detali / Wyrobów Gotowych) -->
+      ${isFinishedGood ? `
+        <section class="bg-surface-container-lowest border-2 border-blue-200 rounded-xl overflow-hidden shadow-sm">
+          <div class="bg-blue-50/80 px-4 py-2.5 border-b border-blue-100 flex justify-between items-center">
+            <div class="flex items-center gap-2 text-blue-950 font-bold text-xs uppercase tracking-wider">
+              <span class="material-symbols-outlined text-blue-600 text-[20px]">precision_manufacturing</span>
+              <span>Oprzyrządowanie & Szczęki Miękkie (SZ-${currentProduct.sku || ''})</span>
+            </div>
+            ${matchingJaws && matchingJaws.length > 0 ? `
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
+                GOTOWE (${matchingJaws.length})
+              </span>
+            ` : `
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700">
+                BRAK W BAZIE
+              </span>
+            `}
+          </div>
+
+          <div class="p-4 flex flex-col gap-3">
+            ${matchingJaws && matchingJaws.length > 0 ? `
+              <div class="flex flex-col gap-2.5">
+                ${matchingJaws.map(jaw => `
+                  <div class="bg-surface-container-low border border-outline-variant/60 rounded-xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                      ${jaw.photo ? `
+                        <img src="${jaw.photo}" alt="${jaw.id}" class="w-14 h-14 rounded-lg object-cover border border-outline-variant shadow-sm flex-shrink-0 cursor-pointer" onclick="window.open('${jaw.photo}', '_blank')" />
+                      ` : `
+                        <div class="w-14 h-14 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0">
+                          <span class="material-symbols-outlined text-2xl">hardware</span>
+                        </div>
+                      `}
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <span class="font-mono font-black text-sm text-blue-600">${jaw.id}</span>
+                          <span class="text-[10px] font-bold px-2 py-0.2 rounded-full ${jaw.status === 'READY' ? 'bg-emerald-100 text-emerald-800' : jaw.status === 'IN_USE' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}">
+                            ${jaw.status === 'READY' ? '🟢 Gotowe' : jaw.status === 'IN_USE' ? '🔵 W maszynie' : '🟡 Do zrobienia'}
+                          </span>
+                        </div>
+                        <div class="text-xs font-bold text-primary mt-0.5">${jaw.operation || 'OP1'} • ${jaw.viseType || 'Imadło'}</div>
+                        <div class="text-[11px] text-amber-800 font-bold flex items-center gap-1 mt-0.5">
+                          <span class="material-symbols-outlined text-[13px]">shelves</span>
+                          <span>Lokalizacja: ${jaw.location || 'Szafa warsztatowa'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 w-full sm:w-auto justify-end">
+                      <button type="button" class="btn-print-prod-jaw bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1" data-jaw-id="${jaw.id}">
+                        <span class="material-symbols-outlined text-[15px]">qr_code_2</span>
+                        <span>ETYKIETA</span>
+                      </button>
+                      <button type="button" class="btn-open-jaws-hub bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1" data-jaw-id="${jaw.id}">
+                        <span>SZCZEGÓŁY</span>
+                      </button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : `
+              <div class="text-center py-2 flex flex-col items-center gap-1.5">
+                <p class="text-xs text-on-surface-variant">Do tego detalu nie przypisano jeszcze dedykowanych szczęk miękkich.</p>
+                <button type="button" id="btn-assign-new-jaws" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md active:scale-95 transition-all mt-1">
+                  <span class="material-symbols-outlined text-[16px]">add_circle</span>
+                  <span>PRZYPISZ SZCZĘKI (SZ-${currentProduct.sku})</span>
+                </button>
+              </div>
+            `}
           </div>
         </section>
       ` : ''}
@@ -582,12 +656,25 @@ export function renderProductView(container, navigateTo, product) {
     });
   }
 
-  const alertTriggerBtn = container.querySelector('#btn-trigger-low-stock-alert');
-  if (alertTriggerBtn) {
-    alertTriggerBtn.addEventListener('click', () => {
-      openLowStockAlertModal(currentProduct);
+  // Soft Jaws Card Event Listeners
+  container.querySelectorAll('.btn-print-prod-jaw').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const jawId = btn.getAttribute('data-jaw-id');
+      const jaw = getJawsById(jawId);
+      if (jaw) printJawLabelHtml(jaw);
     });
-  }
+  });
+
+  container.querySelectorAll('.btn-open-jaws-hub').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const jawId = btn.getAttribute('data-jaw-id');
+      navigateTo('jaws', jawId);
+    });
+  });
+
+  container.querySelector('#btn-assign-new-jaws')?.addEventListener('click', () => {
+    navigateTo('jaws', `SZ-${currentProduct.sku}`);
+  });
 
   backBtn.addEventListener('click', () => navigateTo('dashboard'));
 

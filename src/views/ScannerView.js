@@ -131,6 +131,15 @@ export function renderScannerView(container, navigateTo) {
       }
     }
 
+    // Check if scanned code is a Soft Jaw QR Code (SZ-[SKU], e.g. SZ-00329)
+    if (codeClean.startsWith('SZ-') || codeClean.startsWith('SZ_')) {
+      const jawCode = codeClean.replace('_', '-');
+      setTimeout(() => {
+        navigateTo('jaws', jawCode);
+      }, 1000);
+      return;
+    }
+
     const products = await getProducts();
 
     function normalizeCode(str) {

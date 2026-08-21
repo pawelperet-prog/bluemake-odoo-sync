@@ -5,6 +5,7 @@ import { renderProductView } from './views/ProductView.js';
 import { renderHistoryView } from './views/HistoryView.js';
 import { renderValuationView } from './views/ValuationView.js';
 import { renderOrderImportView } from './views/OrderImportView.js';
+import { renderSoftJawsView } from './views/SoftJawsView.js';
 import { renderLoginView } from './views/LoginView.js';
 import { isUserLoggedIn, isAdmin, getCurrentOperator } from './services/authService.js';
 
@@ -46,6 +47,9 @@ function navigateTo(route, params = null) {
       break;
     case 'orders':
       renderOrderImportView(app, navigateTo);
+      break;
+    case 'jaws':
+      renderSoftJawsView(app, navigateTo, params);
       break;
     default:
       renderDashboardView(app, navigateTo);

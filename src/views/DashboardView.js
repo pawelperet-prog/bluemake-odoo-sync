@@ -29,6 +29,11 @@ export function renderDashboardView(container, navigateTo) {
           <span>${activeOp ? activeOp.name : 'Zaloguj'}</span>
           <span class="text-[9px] px-1 rounded ${isOpAdmin ? 'bg-amber-200 text-amber-900' : 'bg-gray-200 text-gray-800'} font-bold">${isOpAdmin ? 'ADMIN' : 'MAGAZYN'}</span>
         </button>
+        <!-- Szczęki CNC Button -->
+        <button id="hdr-jaws" title="Baza Szczęk Miękkich CNC (SZ-[SKU])" class="hidden sm:flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
+          <span class="material-symbols-outlined text-[16px]">precision_manufacturing</span>
+          <span>SZCZĘKI CNC</span>
+        </button>
         ${isOpAdmin ? `
           <button id="hdr-orders" title="Import i Wysyłka Zamówień" class="hidden sm:flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
             <span class="material-symbols-outlined text-[16px]">receipt_long</span>
@@ -59,6 +64,12 @@ export function renderDashboardView(container, navigateTo) {
         <button id="cat-selector-btn" class="h-touch-target-min bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-caps px-3 rounded flex items-center justify-center gap-1 transition-colors flex-shrink-0 font-bold border border-outline-variant text-xs">
           <span class="material-symbols-outlined text-[18px]">filter_list</span>
           <span id="cat-btn-label">SUROWIEC (ID: 4)</span>
+        </button>
+
+        <!-- Soft Jaws Button -->
+        <button id="btn-open-jaws" class="h-touch-target-min bg-blue-600 hover:bg-blue-700 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Baza Szczęk Miękkich CNC (SZ-[SKU])">
+          <span class="material-symbols-outlined text-[18px]">precision_manufacturing</span>
+          SZCZĘKI CNC
         </button>
         
         ${isOpAdmin ? `
@@ -420,13 +431,16 @@ export function renderDashboardView(container, navigateTo) {
     container.querySelector('#cat-modal').classList.add('hidden');
   });
 
+  container.querySelector('#btn-open-jaws')?.addEventListener('click', () => navigateTo('jaws'));
+  container.querySelector('#hdr-jaws')?.addEventListener('click', () => navigateTo('jaws'));
+
   container.querySelector('#btn-open-orders')?.addEventListener('click', () => navigateTo('orders'));
   container.querySelector('#hdr-orders')?.addEventListener('click', () => navigateTo('orders'));
   container.querySelector('#nav-orders')?.addEventListener('click', () => navigateTo('orders'));
 
-  container.querySelector('#btn-open-valuation').addEventListener('click', () => navigateTo('valuation'));
-  container.querySelector('#hdr-valuation').addEventListener('click', () => navigateTo('valuation'));
-  container.querySelector('#nav-val').addEventListener('click', () => navigateTo('valuation'));
+  container.querySelector('#btn-open-valuation')?.addEventListener('click', () => navigateTo('valuation'));
+  container.querySelector('#hdr-valuation')?.addEventListener('click', () => navigateTo('valuation'));
+  container.querySelector('#nav-val')?.addEventListener('click', () => navigateTo('valuation'));
 
   container.querySelector('#btn-print-report').addEventListener('click', () => {
     if (allProducts) openReportWindow(allProducts);
