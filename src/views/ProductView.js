@@ -8,18 +8,27 @@ import { printJawLabelHtml } from '../utils/jawLabelGenerator.js';
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 export function renderProductView(container, navigateTo, product) {
-  const currentProduct = product || {
-    id: 101,
-    sku: 'S355-FI20',
-    name: 'Pręty Stalowe Okrągłe',
-    quantity: 15.5,
-    uom: 'm',
-    location: '01 - Magazyn',
-    categoryId: 4
+  const rawProd = product || {};
+  const currentProduct = {
+    id: rawProd.id || rawProd.productId || 101,
+    templateId: rawProd.templateId || rawProd.id || 101,
+    sku: rawProd.sku || rawProd.default_code || '00000',
+    name: rawProd.name || 'Produkt / Detal',
+    quantity: rawProd.quantity !== undefined ? Number(rawProd.quantity) : (rawProd.qty_available !== undefined ? Number(rawProd.qty_available) : 0),
+    uom: rawProd.uom || rawProd.uom_name || 'szt',
+    location: rawProd.location || '01 - Magazyn',
+    locationId: rawProd.locationId || 5,
+    categoryId: rawProd.categoryId || (rawProd.categ_id ? (Array.isArray(rawProd.categ_id) ? rawProd.categ_id[0] : rawProd.categ_id) : 5),
+    description: rawProd.description || '',
+    ...rawProd
   };
+  if (!currentProduct.sku && currentProduct.default_code) currentProduct.sku = currentProduct.default_code;
+  if (!currentProduct.sku) currentProduct.sku = String(currentProduct.id || '00000');
+  if (isNaN(currentProduct.quantity)) currentProduct.quantity = 0;
 
   const isFinishedGood = currentProduct.categoryId === 5 || currentProduct.isFinishedProduct || currentProduct.uom === 'szt';
   const isLowInitial = Number(currentProduct.quantity) < (isFinishedGood ? 2.0 : 5.0);
+  const matchingJaws = getJawsByProductSku(currentProduct.sku);
 
   let operationMode = 'CUT'; // 'CUT' (Wydanie/Ucięcie) vs 'ADD' (Przyjęcie/Dostawa)
   let adjustmentAmount = isFinishedGood ? 1 : 0.1;
@@ -34,7 +43,7 @@ export function renderProductView(container, navigateTo, product) {
   }
 
   function calcFinalStock() {
-    const orig = Number(currentProduct.quantity);
+    const orig = Number(currentProduct.quantity) || 0;
     if (operationMode === 'CUT') {
       return Math.max(0, Number((orig - adjustmentAmount).toFixed(isFinishedGood ? 0 : 2)));
     } else {
@@ -685,33 +694,45 @@ export function renderProductView(container, navigateTo, product) {
       WYSYŁANIE DO ODOO...
     `;
 
-    const finalStockVal = calcFinalStock();
-    const locSelect = container.querySelector('#location-select');
-    const selectedLocationId = locSelect ? Number(locSelect.value) : (currentProduct.locationId || 5);
-    const selectedLocationName = locSelect ? locSelect.options[locSelect.selectedIndex]?.text : currentProduct.location;
+    try {
+      const finalStockVal = calcFinalStock();
+      const locSelect = container.querySelector('#location-select');
+      const selectedLocationId = locSelect ? Number(locSelect.value) : (currentProduct.locationId || 5);
+      const selectedLocationName = locSelect ? locSelect.options[locSelect.selectedIndex]?.text : currentProduct.location;
 
-    await applyStockAdjustment(currentProduct.id, finalStockVal, currentProduct.sku, currentProduct.quantity, selectedLocationId);
+      await applyStockAdjustment(currentProduct.id, finalStockVal, currentProduct.sku, currentProduct.quantity, selectedLocationId);
 
-    const toast = container.querySelector('#toast-modal');
-    const toastDesc = container.querySelector('#toast-desc');
-    toastDesc.textContent = `Zapisano nowy stan (${finalStockVal} ${currentProduct.uom}) w Odoo 19 (${selectedLocationName}).`;
+      const toast = container.querySelector('#toast-modal');
+      const toastDesc = container.querySelector('#toast-desc');
+      if (toastDesc) toastDesc.textContent = `Zapisano nowy stan (${finalStockVal} ${currentProduct.uom}) w Odoo 19 (${selectedLocationName}).`;
 
-    toast.classList.remove('opacity-0', 'pointer-events-none');
-    toast.classList.add('opacity-100');
-
-    setTimeout(() => {
-      if (finalStockVal < (isFinishedGood ? 2.0 : 5.0) && operationMode === 'CUT') {
-        toast.classList.add('opacity-0', 'pointer-events-none');
-        openLowStockAlertModal({
-          ...currentProduct,
-          quantity: finalStockVal
-        }, () => {
-          navigateTo('history');
-        });
-      } else {
-        navigateTo('history');
+      if (toast) {
+        toast.classList.remove('opacity-0', 'pointer-events-none');
+        toast.classList.add('opacity-100');
       }
-    }, 1200);
+
+      setTimeout(() => {
+        if (finalStockVal < (isFinishedGood ? 2.0 : 5.0) && operationMode === 'CUT') {
+          if (toast) toast.classList.add('opacity-0', 'pointer-events-none');
+          openLowStockAlertModal({
+            ...currentProduct,
+            quantity: finalStockVal
+          }, () => {
+            navigateTo('history');
+          });
+        } else {
+          navigateTo('history');
+        }
+      }, 1200);
+    } catch (err) {
+      console.error('Error applying stock adjustment:', err);
+      alert('Błąd zapisu w Odoo: ' + (err.message || err));
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+        ZATWIERDŹ ZMIANĘ W ODOO
+      `;
+    }
   });
 
   updateUI();

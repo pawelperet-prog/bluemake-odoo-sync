@@ -517,11 +517,18 @@ export function renderSoftJawsView(container, navigateTo, initialJawId = null) {
       btn.addEventListener('click', (e) => {
         const sku = e.currentTarget.getAttribute('data-sku');
         if (sku) {
-          const prod = allProducts.find(p => p.default_code === sku);
+          const prod = allProducts.find(p => p.default_code === sku || p.sku === sku);
           if (prod) {
-            navigateTo('product', { productId: prod.id });
+            navigateTo('product', prod);
           } else {
-            alert(`Nie znaleziono w Odoo produktu o SKU: ${sku}`);
+            navigateTo('product', {
+              id: 0,
+              sku: sku,
+              name: `Detal ${sku}`,
+              quantity: 0,
+              uom: 'szt',
+              categoryId: 5
+            });
           }
         }
       });
