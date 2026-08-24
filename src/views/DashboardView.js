@@ -337,7 +337,7 @@ export function renderDashboardView(container, navigateTo) {
                 </span>
               ` : ''}
             </div>
-            <h2 class="font-body-md text-body-md font-bold text-on-surface truncate mt-0.5">${p.name}</h2>
+            <h2 class="font-body-md text-body-md font-bold text-on-surface break-words leading-tight mt-1 mb-0.5">${p.name}</h2>
             <div class="text-xs text-on-surface-variant flex items-center gap-2">
               <span>Strefa 5</span>
               <span>•</span>
