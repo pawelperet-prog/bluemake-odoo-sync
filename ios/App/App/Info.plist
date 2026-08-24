@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Bluemake</string>
+	<string>PestkaLink</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<string>PestkaLink</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -22,13 +22,19 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>Aplikacja Bluemake wymaga dostępu do kamery do skanowania kodów QR z prętów.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>PestkaLink wymaga dostępu do Bluetooth, aby połączyć się z inteligentną obrożą psa.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>PestkaLink łączy się z inteligentną obrożą psa przez Bluetooth BLE.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Aplikacja Bluemake wymaga dostępu do kamery do skanowania kodów QR z prętów.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>PestkaLink łączy się z lokalnym hotspotem obroży w celu transferu nagrań audio.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
