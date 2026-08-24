@@ -1,6 +1,6 @@
 {
-  "appId": "com.odoo.industrial.sync",
-  "appName": "Bluemake",
+  "appId": "online.domowyasystent.pestkalink",
+  "appName": "PestkaLink",
   "webDir": "dist",
   "server": {
     "androidScheme": "https",
