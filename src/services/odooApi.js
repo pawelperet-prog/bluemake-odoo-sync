@@ -292,26 +292,56 @@ export async function getProducts() {
  */
 export async function getProductAttachments(productId, templateId, sku) {
   try {
-    const resIds = [Number(productId)];
-    if (templateId && templateId !== productId) resIds.push(Number(templateId));
+    let tId = templateId ? Number(templateId) : null;
+    const pId = productId ? Number(productId) : null;
 
-    const domain = [
-      ['res_model', 'in', ['product.template', 'product.product']],
-      ['res_id', 'in', resIds],
-      '|',
-      ['mimetype', 'ilike', 'pdf'],
-      ['name', 'ilike', '.pdf']
-    ];
-
-    const attachments = await callOdooRpc('ir.attachment', 'search_read', [domain], {
-      fields: ['id', 'name', 'res_model', 'res_id', 'file_size', 'mimetype', 'write_date']
-    });
-
-    if (Array.isArray(attachments) && attachments.length > 0) {
-      return attachments;
+    // Jeśli nie znamy templateId, pobierz go z Odoo dla tego product.product
+    if (!tId && pId) {
+      try {
+        const prodData = await callOdooRpc('product.product', 'read', [[pId], ['product_tmpl_id']]);
+        if (Array.isArray(prodData) && prodData.length > 0 && prodData[0].product_tmpl_id) {
+          tId = Array.isArray(prodData[0].product_tmpl_id) ? prodData[0].product_tmpl_id[0] : prodData[0].product_tmpl_id;
+        }
+      } catch (errTmpl) {
+        console.warn('Nie udało się pobrać templateId z Odoo:', errTmpl.message);
+      }
     }
 
-    // Fallback: szukaj po nazwie SKU jeśli nie znaleziono po relacji
+    // 1. Priorytet: Załącznik przypisany bezpośrednio do szablonu produktu (product.template)
+    if (tId) {
+      const tmplAtts = await callOdooRpc('ir.attachment', 'search_read', [[
+        ['res_model', '=', 'product.template'],
+        ['res_id', '=', tId],
+        '|',
+        ['mimetype', 'ilike', 'pdf'],
+        ['name', 'ilike', '.pdf']
+      ]], {
+        fields: ['id', 'name', 'res_model', 'res_id', 'file_size', 'mimetype', 'write_date']
+      });
+
+      if (Array.isArray(tmplAtts) && tmplAtts.length > 0) {
+        return tmplAtts;
+      }
+    }
+
+    // 2. Załącznik przypisany bezpośrednio do wariantu (product.product)
+    if (pId) {
+      const prodAtts = await callOdooRpc('ir.attachment', 'search_read', [[
+        ['res_model', '=', 'product.product'],
+        ['res_id', '=', pId],
+        '|',
+        ['mimetype', 'ilike', 'pdf'],
+        ['name', 'ilike', '.pdf']
+      ]], {
+        fields: ['id', 'name', 'res_model', 'res_id', 'file_size', 'mimetype', 'write_date']
+      });
+
+      if (Array.isArray(prodAtts) && prodAtts.length > 0) {
+        return prodAtts;
+      }
+    }
+
+    // 3. Fallback: szukaj po nazwie SKU w nazwie pliku
     if (sku && String(sku).trim().length > 2) {
       const cleanSku = String(sku).trim();
       const byName = await callOdooRpc('ir.attachment', 'search_read', [[
