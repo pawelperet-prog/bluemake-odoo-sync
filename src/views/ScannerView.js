@@ -140,6 +140,28 @@ export function renderScannerView(container, navigateTo) {
       return;
     }
 
+    // Check if scanned code is a BOM Cut Buffer QR Code (BOM-[SKU], e.g. BOM-00329)
+    if (codeClean.startsWith('BOM-') || codeClean.startsWith('BOM_')) {
+      const baseSku = codeClean.replace(/^BOM[-_]/i, '').split('-')[0];
+      const products = await getProducts();
+      const matched = products ? products.find(p => p.sku === baseSku || p.default_code === baseSku) : null;
+      setTimeout(() => {
+        if (matched) {
+          navigateTo('product', matched);
+        } else {
+          navigateTo('product', {
+            id: 0,
+            sku: baseSku,
+            name: `Detal ${baseSku}`,
+            quantity: 0,
+            uom: 'szt',
+            categoryId: 5
+          });
+        }
+      }, 1000);
+      return;
+    }
+
     const products = await getProducts();
 
     function normalizeCode(str) {

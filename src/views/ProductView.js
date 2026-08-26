@@ -4,6 +4,9 @@ import { openSingleQrLabelWindow } from '../utils/qrLabelReport.js';
 import { openLowStockAlertModal } from './LowStockModal.js';
 import { getJawsByProductSku, getJawsById } from '../services/jawStorageService.js';
 import { printJawLabelHtml } from '../utils/jawLabelGenerator.js';
+import { getCutBufferBySku, saveCutBufferRecord, deleteCutBufferRecord } from '../services/cutBufferService.js';
+import { printBomLabelHtml } from '../utils/bomLabelGenerator.js';
+import { getProducts } from '../services/odooApi.js';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -29,6 +32,7 @@ export function renderProductView(container, navigateTo, product) {
   const isFinishedGood = currentProduct.categoryId === 5 || currentProduct.isFinishedProduct || currentProduct.uom === 'szt';
   const isLowInitial = Number(currentProduct.quantity) < (isFinishedGood ? 2.0 : 5.0);
   const matchingJaws = getJawsByProductSku(currentProduct.sku);
+  const cutBuffer = getCutBufferBySku(currentProduct.sku);
 
   let operationMode = 'CUT'; // 'CUT' (Wydanie/Ucięcie) vs 'ADD' (Przyjęcie/Dostawa)
   let adjustmentAmount = isFinishedGood ? 1 : 0.1;
@@ -71,6 +75,61 @@ export function renderProductView(container, navigateTo, product) {
     <!-- Main Content Canvas -->
     <main class="flex-grow p-margin-mobile flex flex-col md:max-w-3xl md:mx-auto md:w-full gap-stack-lg pb-14">
       
+      <!-- TOP PRIORITY: CUT BOM BUFFER WAITING TO BE MACHINED (Pojawia się na samej górze gdy materiał jest ucięty) -->
+      ${isFinishedGood && cutBuffer && cutBuffer.quantity > 0 ? `
+        <section id="top-bom-banner" class="bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 border-2 border-emerald-500 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col gap-3 my-2 text-white animate-pulse">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-700/50 pb-2.5">
+            <div class="flex items-center gap-2.5">
+              <div class="w-11 h-11 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-3xl">inventory_2</span>
+              </div>
+              <div>
+                <div class="text-[11px] font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                  MATERIAŁ UCIĘTY CZEKA NA MASZYNĘ!
+                </div>
+                <div class="text-lg sm:text-xl font-black text-white">
+                  ${cutBuffer.quantity} SZT. • ${cutBuffer.dimensions}
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-emerald-900/90 border border-emerald-400 text-emerald-200 font-mono font-black text-sm px-3 py-1.5 rounded-xl shadow-inner">
+              ${cutBuffer.id}
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+            <div class="bg-slate-950/60 border border-emerald-800/40 rounded-xl p-2.5 flex flex-col">
+              <span class="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">Gatunek</span>
+              <span class="font-black text-amber-300 text-sm mt-0.5">${cutBuffer.grade}</span>
+            </div>
+
+            <div class="bg-slate-950/60 border border-emerald-800/40 rounded-xl p-2.5 flex flex-col">
+              <span class="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">Miejsce / Paleta</span>
+              <span class="font-black text-white text-sm mt-0.5">📍 ${cutBuffer.location}</span>
+            </div>
+
+            <div class="bg-slate-950/60 border border-emerald-800/40 rounded-xl p-2.5 flex flex-col col-span-2 sm:col-span-1">
+              <span class="text-[10px] text-emerald-300 font-bold uppercase tracking-wider">Data i Operator</span>
+              <span class="font-bold text-slate-300 text-xs mt-0.5">${cutBuffer.dateFormatted} (${cutBuffer.operator})</span>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between pt-2 gap-2 border-t border-emerald-800/40">
+            <button id="btn-print-top-bom" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-700/40 active:scale-95 transition-all">
+              <span class="material-symbols-outlined text-[18px]">qr_code_2</span>
+              <span>DRUKUJ ETYKIETĘ NA PALETĘ (${cutBuffer.id})</span>
+            </button>
+
+            <button id="btn-consume-top-bom" class="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-700/80 font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all" title="Usuń / Oznacz jako zużyte">
+              <span class="material-symbols-outlined text-[16px]">check_box</span>
+              <span>ZUŻYTO / SKASUJ BUFOR</span>
+            </button>
+          </div>
+        </section>
+      ` : ''}
+
       <!-- Low Stock Warning Banner -->
       ${isLowInitial ? `
         <div class="bg-rose-50 border-2 border-rose-500 rounded-xl p-3.5 flex items-center justify-between gap-3 shadow-sm mt-3 animate-pulse">
@@ -257,6 +316,59 @@ export function renderProductView(container, navigateTo, product) {
             <input id="input-raw-spec" type="text" placeholder="np. 20x70x115 (półfabrykat)" value="${initialRawMaterial}" class="w-full bg-surface-container-high text-primary font-bold font-mono text-sm px-3 py-2 rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary"/>
           </div>
           <p class="text-[11px] text-on-surface-variant">Wpisz gabaryty surowca wymaganego do wykonania tego detalu.</p>
+        </section>
+
+        <!-- Cut Raw Material for this Part (Sekcja BOM - na dole) -->
+        <section id="bom-cutter-section" class="bg-surface-container-lowest border-2 border-emerald-300 rounded-2xl p-4 sm:p-5 shadow-sm flex flex-col gap-3">
+          <div class="flex items-center justify-between border-b border-outline-variant/60 pb-2">
+            <div class="flex items-center gap-2 text-emerald-950 font-black text-xs uppercase tracking-wider">
+              <span class="material-symbols-outlined text-emerald-600 text-[20px]">content_cut</span>
+              <span>✂️ DOTNIJ MATERIAŁ POD DETAL (BUFOR BOM)</span>
+            </div>
+            <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+              KOD: BOM-${currentProduct.sku}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div class="flex flex-col gap-1">
+              <label class="text-[10px] font-bold text-on-surface-variant uppercase">Długość 1 szt. [mm] *</label>
+              <input id="bom-cut-len" type="number" value="140" placeholder="np. 140" class="bg-surface-container border border-outline-variant rounded-xl p-2.5 text-sm font-bold text-primary focus:ring-2 focus:ring-emerald-500 outline-none" />
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <label class="text-[10px] font-bold text-on-surface-variant uppercase">Ilość sztuk *</label>
+              <input id="bom-cut-qty" type="number" value="40" placeholder="np. 40" class="bg-surface-container border border-outline-variant rounded-xl p-2.5 text-sm font-bold text-primary focus:ring-2 focus:ring-emerald-500 outline-none" />
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <label class="text-[10px] font-bold text-on-surface-variant uppercase">Gatunek stali *</label>
+              <input id="bom-cut-grade" type="text" value="S355" placeholder="np. S355, 1.4301" class="bg-surface-container border border-outline-variant rounded-xl p-2.5 text-sm font-bold text-primary uppercase focus:ring-2 focus:ring-emerald-500 outline-none" />
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <label class="text-[10px] font-bold text-on-surface-variant uppercase">Miejsce / Paleta *</label>
+              <input id="bom-cut-loc" type="text" value="Paleta P-12" placeholder="np. Paleta P-12, Regał A2" class="bg-surface-container border border-outline-variant rounded-xl p-2.5 text-sm font-bold text-primary focus:ring-2 focus:ring-emerald-500 outline-none" />
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="text-[10px] font-bold text-on-surface-variant uppercase">Odejmij płaskownik / pręt z Odoo (Opcjonalnie):</label>
+            <select id="bom-raw-select" class="bg-surface-container border border-outline-variant rounded-xl p-2.5 text-xs font-bold text-primary focus:ring-2 focus:ring-emerald-500 outline-none">
+              <option value="">-- Wybierz płaskownik/pręt z Odoo do automatycznego odjęcia metrów --</option>
+            </select>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between pt-1 gap-2">
+            <div id="bom-calc-hint" class="text-xs text-emerald-800 font-bold">
+              Do ucięcia: <strong>40 szt. po 140mm = 5.6m</strong>
+            </div>
+
+            <button type="button" id="btn-save-bom-cut" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
+              <span class="material-symbols-outlined text-[18px]">print</span>
+              <span>ZAPISZ BUFOR & DRUKUJ ETYKIETĘ (BOM-${currentProduct.sku})</span>
+            </button>
+          </div>
         </section>
       ` : ''}
 
@@ -681,9 +793,102 @@ export function renderProductView(container, navigateTo, product) {
     });
   });
 
-  container.querySelector('#btn-assign-new-jaws')?.addEventListener('click', () => {
-    navigateTo('jaws', `SZ-${currentProduct.sku}`);
+  // Top BOM Banner Actions
+  container.querySelector('#btn-print-top-bom')?.addEventListener('click', () => {
+    if (cutBuffer) printBomLabelHtml(cutBuffer);
   });
+
+  container.querySelector('#btn-consume-top-bom')?.addEventListener('click', () => {
+    if (confirm(`Czy na pewno oznaczyć bufor materiału (${cutBuffer?.quantity} szt. ${cutBuffer?.dimensions}) jako zużyty / skasować?`)) {
+      deleteCutBufferRecord(currentProduct.sku);
+      renderProductView(container, navigateTo, currentProduct);
+    }
+  });
+
+  // Populate raw materials select for BOM cutting
+  const bomRawSelect = container.querySelector('#bom-raw-select');
+  const bomCutLen = container.querySelector('#bom-cut-len');
+  const bomCutQty = container.querySelector('#bom-cut-qty');
+  const bomCutGrade = container.querySelector('#bom-cut-grade');
+  const bomCutLoc = container.querySelector('#bom-cut-loc');
+  const bomCalcHint = container.querySelector('#bom-calc-hint');
+  const btnSaveBomCut = container.querySelector('#btn-save-bom-cut');
+
+  if (bomRawSelect) {
+    getProducts().then(prods => {
+      const rawProds = prods.filter(p => p.categoryId === 4 || p.isRawMaterial || p.uom === 'm');
+      bomRawSelect.innerHTML = `
+        <option value="">-- Opcjonalnie: Wybierz surowiec z Odoo do odjęcia metrów --</option>
+        ${rawProds.map(p => `
+          <option value="${p.id}" data-sku="${p.sku}" data-name="${p.name}" data-qty="${p.quantity}">
+            ${p.sku} | ${p.name} (Stan: ${Number(p.quantity).toFixed(1)}m)
+          </option>
+        `).join('')}
+      `;
+    }).catch(err => console.error('Error fetching raw products for BOM:', err));
+
+    const updateBomCalc = () => {
+      const lenMm = Number(bomCutLen.value) || 0;
+      const qty = Number(bomCutQty.value) || 0;
+      const totalMeters = ((lenMm * qty) / 1000).toFixed(2);
+      if (bomCalcHint) {
+        bomCalcHint.innerHTML = `Do ucięcia: <strong>${qty} szt. po ${lenMm}mm = ${totalMeters}m</strong> (+ rzazy piły)`;
+      }
+    };
+
+    bomCutLen?.addEventListener('input', updateBomCalc);
+    bomCutQty?.addEventListener('input', updateBomCalc);
+
+    btnSaveBomCut?.addEventListener('click', async () => {
+      const lenMm = Number(bomCutLen.value) || 140;
+      const qty = Number(bomCutQty.value) || 1;
+      const grade = bomCutGrade.value.trim() || 'S355';
+      const loc = bomCutLoc.value.trim() || 'Paleta buforowa';
+      const rawId = bomRawSelect.value ? Number(bomRawSelect.value) : null;
+      const rawOpt = bomRawSelect.selectedOptions[0];
+      const rawSku = rawOpt ? rawOpt.getAttribute('data-sku') : '';
+      const rawName = rawOpt ? rawOpt.getAttribute('data-name') : '';
+
+      btnSaveBomCut.disabled = true;
+      btnSaveBomCut.innerHTML = `<span class="material-symbols-outlined animate-spin text-[16px]">sync</span> ZAPISYWANIE...`;
+
+      try {
+        // If raw material selected -> deduct meters from Odoo
+        if (rawId) {
+          const totalMetersDeduct = Number(((lenMm * qty) / 1000).toFixed(2));
+          const curRawQty = Number(rawOpt.getAttribute('data-qty') || 0);
+          const newRawQty = Math.max(0, Number((curRawQty - totalMetersDeduct).toFixed(2)));
+          await applyStockAdjustment(rawId, newRawQty, rawSku, curRawQty, 5);
+        }
+
+        // Save BOM buffer record
+        const savedRec = saveCutBufferRecord({
+          id: `BOM-${currentProduct.sku}`,
+          productSku: currentProduct.sku,
+          productName: currentProduct.name,
+          productId: currentProduct.id,
+          rawMaterialSku: rawSku,
+          rawMaterialName: rawName,
+          grade: grade,
+          dimensions: `${lenMm}mm (${grade})`,
+          cutLengthMm: lenMm,
+          quantity: qty,
+          location: loc,
+          operator: 'Operator'
+        });
+
+        // Print thermal label popup
+        printBomLabelHtml(savedRec);
+
+        // Re-render view so top banner lights up!
+        renderProductView(container, navigateTo, currentProduct);
+      } catch (e) {
+        alert('Błąd podczas zapisywania bufora BOM: ' + e.message);
+        btnSaveBomCut.disabled = false;
+        btnSaveBomCut.innerHTML = `<span class="material-symbols-outlined text-[18px]">print</span><span>ZAPISZ BUFOR & DRUKUJ ETYKIETĘ (BOM-${currentProduct.sku})</span>`;
+      }
+    });
+  }
 
   backBtn.addEventListener('click', () => navigateTo('dashboard'));
 
