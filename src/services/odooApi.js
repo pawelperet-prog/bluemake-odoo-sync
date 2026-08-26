@@ -423,7 +423,9 @@ export async function createNewProduct({ name, sku, initialQuantity = 0, categor
       const qId = await callOdooRpc('stock.quant', 'create', [{
         product_id: pId,
         location_id: Number(config.locationId),
-        inventory_quantity: initialQuantity
+        inventory_quantity: initialQuantity,
+        inventory_quantity_set: true,
+        user_id: config.uid
       }]);
 
       if (qId) {
