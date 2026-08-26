@@ -436,25 +436,64 @@ export async function applyStockAdjustment(productId, newQuantity, sku, oldQuant
   saveHistoryItem(historyItem);
 
   try {
+    // Pobierz wszystkie quants w lokalizacjach wewnętrznych dla tego produktu
+    let allInternalQuants = [];
+    try {
+      allInternalQuants = await callOdooRpc('stock.quant', 'search_read', [[
+        ['product_id', '=', Number(productId)],
+        ['location_id.usage', '=', 'internal']
+      ]], {
+        fields: ['id', 'quantity', 'location_id']
+      });
+    } catch (e) {
+      console.warn('Nie udało się pobrać quants z filtrem usage=internal:', e.message);
+    }
+
+    // 1. Zaktualizuj lub utwórz quant w docelowej lokalizacji
+    let targetQuant = Array.isArray(allInternalQuants) ? allInternalQuants.find(q => {
+      const locId = Array.isArray(q.location_id) ? q.location_id[0] : q.location_id;
+      return locId === targetLoc;
+    }) : null;
+
     let quantId = null;
-
-    const searchRes = await callOdooRpc('stock.quant', 'search_read', [[['product_id', '=', Number(productId)], ['location_id', '=', targetLoc]]], {
-      fields: ['id', 'quantity', 'inventory_quantity']
-    });
-
-    if (Array.isArray(searchRes) && searchRes.length > 0) {
-      quantId = searchRes[0].id;
-      await callOdooRpc('stock.quant', 'write', [[quantId], { inventory_quantity: newQuantity }]);
+    if (targetQuant) {
+      quantId = targetQuant.id;
+      await callOdooRpc('stock.quant', 'write', [[quantId], {
+        inventory_quantity: newQuantity,
+        inventory_quantity_set: true,
+        user_id: config.uid
+      }]);
     } else {
       quantId = await callOdooRpc('stock.quant', 'create', [{
         product_id: Number(productId),
         location_id: targetLoc,
-        inventory_quantity: newQuantity
+        inventory_quantity: newQuantity,
+        inventory_quantity_set: true,
+        user_id: config.uid
       }]);
     }
 
     if (quantId) {
       await callOdooRpc('stock.quant', 'action_apply_inventory', [[quantId]]);
+    }
+
+    // 2. Wyzeruj stan na pozostałych lokalizacjach wewnętrznych tego produktu (jeśli tam był stary stan)
+    if (Array.isArray(allInternalQuants)) {
+      for (const otherQuant of allInternalQuants) {
+        const otherLocId = Array.isArray(otherQuant.location_id) ? otherQuant.location_id[0] : otherQuant.location_id;
+        if (otherLocId !== targetLoc && otherQuant.quantity > 0) {
+          try {
+            await callOdooRpc('stock.quant', 'write', [[otherQuant.id], {
+              inventory_quantity: 0,
+              inventory_quantity_set: true,
+              user_id: config.uid
+            }]);
+            await callOdooRpc('stock.quant', 'action_apply_inventory', [[otherQuant.id]]);
+          } catch (errZero) {
+            console.warn(`Nie udało się wyzerować starej lokacji ${otherLocId}:`, errZero.message);
+          }
+        }
+      }
     }
 
     updateHistoryItemStatus(historyItem.id, 'SYNCHRONIZED', null);
