@@ -7,7 +7,7 @@ const LOCAL_STORAGE_MQTT_KEY = 'bluemake_mqtt_config';
 
 const DEFAULT_MQTT_CONFIG = {
   enabled: true,
-  host: 'mqtt.domowyasystent.online',
+  host: 'mqtt.pestkalink.pl',
   port: 443,
   protocol: 'wss',
   path: '',
@@ -19,7 +19,15 @@ const DEFAULT_MQTT_CONFIG = {
 export function getMqttConfig() {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_MQTT_KEY);
-    return raw ? { ...DEFAULT_MQTT_CONFIG, ...JSON.parse(raw) } : { ...DEFAULT_MQTT_CONFIG };
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.host && parsed.host.includes('domowyasystent.online')) {
+        parsed.host = parsed.host.replace('domowyasystent.online', 'pestkalink.pl');
+        localStorage.setItem(LOCAL_STORAGE_MQTT_KEY, JSON.stringify(parsed));
+      }
+      return { ...DEFAULT_MQTT_CONFIG, ...parsed };
+    }
+    return { ...DEFAULT_MQTT_CONFIG };
   } catch (e) {
     return { ...DEFAULT_MQTT_CONFIG };
   }

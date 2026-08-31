@@ -368,7 +368,7 @@ export function openQrLabelsWindow(products) {
               🖨️ DRUKUJ NA ZEBRZE (CHMURA / CLOUDFLARE)
             </button>
             <div class="flex justify-between items-center text-[11px] text-gray-500 px-1">
-              <span>Serwer: <b class="font-mono text-indigo-700">${mqttCfg.host || 'mqtt.domowyasystent.online'}</b></span>
+              <span>Serwer: <b class="font-mono text-indigo-700">${mqttCfg.host || 'mqtt.pestkalink.pl'}</b></span>
               <button id="btn-direct-print-now" class="text-gray-600 hover:underline">Druk tradycyjny (przeglądarka) ↗</button>
             </div>
           ` : `

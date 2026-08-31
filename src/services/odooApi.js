@@ -3,7 +3,7 @@ import { getCurrentOperator } from './authService.js';
 
 // Odoo Config with LocalStorage persistence support
 const DEFAULT_CONFIG = {
-  url: 'https://odo.domowyasystent.online/jsonrpc',
+  url: 'https://odo.pestkalink.pl/jsonrpc',
   db: 'odoo',
   uid: 9,
   apiKey: 'de5aa75b2e7d300edb383050742f785707bcea63',
@@ -18,7 +18,15 @@ const LOCAL_STORAGE_PENDING_KEY = 'odoo_pending_syncs';
 export function getOdooConfig() {
   try {
     const saved = localStorage.getItem(LOCAL_STORAGE_CONFIG_KEY);
-    return saved ? { ...DEFAULT_CONFIG, ...JSON.parse(saved) } : { ...DEFAULT_CONFIG };
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.url && parsed.url.includes('domowyasystent.online')) {
+        parsed.url = parsed.url.replace('domowyasystent.online', 'pestkalink.pl');
+        localStorage.setItem(LOCAL_STORAGE_CONFIG_KEY, JSON.stringify(parsed));
+      }
+      return { ...DEFAULT_CONFIG, ...parsed };
+    }
+    return { ...DEFAULT_CONFIG };
   } catch (e) {
     return { ...DEFAULT_CONFIG };
   }

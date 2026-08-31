@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node -e \"console.log('Pestka dist')\"",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
