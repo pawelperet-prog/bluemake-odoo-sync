@@ -1,8 +1,4 @@
-/**
- * Zebra ZPL Label Printer - Direct Network Print via TCP port 9100
- * Generates ZPL II commands for 50x30mm labels with QR codes
- * Works with all Zebra printers (ZD220, ZD421, GK420, ZT series etc.)
- */
+import { sendZplViaMqtt, getMqttConfig } from '../services/mqttService.js';
 
 const ZEBRA_STORAGE_KEY = 'zebra_printer_ip';
 
@@ -118,6 +114,7 @@ export function openZebraPrintModal(products, onClose) {
 
   const savedIp = getZebraIp();
   const activeProducts = (products || []).filter(p => p.sku && p.sku.trim());
+  const mqttCfg = getMqttConfig();
 
   const html = `
     <div id="zebra-modal-backdrop" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[200] flex items-center justify-center p-3">
@@ -134,44 +131,48 @@ export function openZebraPrintModal(products, onClose) {
           <button id="zebra-close" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
         </div>
 
-        <!-- Printer IP -->
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-bold text-gray-700">📡 Adres IP drukarki Zebra (sieć Wi-Fi/LAN):</label>
-          <div class="flex gap-2">
-            <input id="zebra-ip" type="text" placeholder="np. 192.168.1.50" value="${savedIp}"
-              class="flex-1 border-2 border-gray-300 rounded-lg px-3 py-2 font-mono text-base focus:border-orange-500 focus:outline-none" />
-            <button id="zebra-save-ip" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2 rounded-lg text-sm border border-gray-300">
-              ZAPISZ
-            </button>
-          </div>
-          <p class="text-xs text-gray-400">Znajdziesz IP drukarki drukując stronę konfiguracji (przytrzymaj przycisk Feed przez 5 sek.)</p>
-        </div>
-
         <!-- Status -->
         <div id="zebra-status" class="hidden bg-green-50 border border-green-200 rounded-lg p-3 text-sm font-bold text-green-800"></div>
         <div id="zebra-error" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 text-sm font-bold text-red-700"></div>
 
         <!-- Action buttons -->
-        <div class="flex flex-col gap-2">
-          <button id="zebra-send" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-base uppercase shadow-lg active:scale-95 transition-transform">
-            🖨️ WYŚLIJ DO DRUKARKI (${activeProducts.length} etykiet)
+        <div class="flex flex-col gap-2.5">
+          <!-- 1. Primary Cloud Print via MQTT / WebLink Bridge -->
+          <button id="zebra-cloud-send" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 text-sm uppercase shadow-lg active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-xl">cloud_sync</span>
+            🖨️ DRUKUJ PRZEZ CHMURĘ (mqtt.pestkalink.pl)
           </button>
-          <button id="zebra-download" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-sm uppercase active:scale-95 transition-transform">
-            📥 POBIERZ PLIK .ZPL (przeciągnij na drukarkę)
-          </button>
-          <button id="zebra-single" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-sm border border-gray-300 uppercase active:scale-95 transition-transform">
-            🔲 WYŚLIJ TYLKO TĘ 1 ETYKIETĘ
+          <div class="text-[11px] text-center text-gray-500">
+            Serwer mostka: <b class="font-mono text-indigo-700">${mqttCfg.host || 'mqtt.pestkalink.pl'}</b>
+          </div>
+
+          <div class="border-t border-gray-100 my-1"></div>
+
+          <!-- Secondary options -->
+          <button id="zebra-download" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs uppercase active:scale-95 transition-transform">
+            📥 POBIERZ PLIK .ZPL (Do wgrania na drukarkę)
           </button>
         </div>
 
-        <!-- Instructions -->
+        <!-- Direct LAN Section (Accordion) -->
         <details class="border border-gray-200 rounded-lg">
-          <summary class="px-3 py-2 text-sm font-bold text-gray-600 cursor-pointer select-none">ℹ️ Jak znaleźć IP drukarki? (kliknij)</summary>
-          <div class="px-4 pb-3 pt-2 text-xs text-gray-600 space-y-1">
-            <p>1. Przytrzymaj przycisk <strong>Feed</strong> na drukarce przez ~5 sekund</p>
-            <p>2. Drukarka wydrukuje stronę konfiguracji</p>
-            <p>3. Znajdź linię <strong>IP Address</strong> — to jest adres IP</p>
-            <p>4. Wpisz go powyżej i kliknij ZAPISZ</p>
+          <summary class="px-3 py-2 text-xs font-bold text-gray-600 cursor-pointer select-none">⚙️ Zaawansowane: Druk bezpośredni po lokalnym IP (LAN)</summary>
+          <div class="p-3 bg-gray-50 rounded-b-lg space-y-2">
+            <div class="flex gap-2">
+              <input id="zebra-ip" type="text" placeholder="np. 192.168.1.51" value="${savedIp}"
+                class="flex-1 border border-gray-300 rounded-lg px-2.5 py-1.5 font-mono text-xs focus:border-orange-500 focus:outline-none" />
+              <button id="zebra-save-ip" class="bg-white hover:bg-gray-100 text-gray-700 font-bold px-3 py-1.5 rounded-lg text-xs border border-gray-300">
+                Zapisz IP
+              </button>
+            </div>
+            <div class="flex gap-2">
+              <button id="zebra-send" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-3 rounded-lg text-xs uppercase">
+                Drukuj po LAN (${activeProducts.length} szt.)
+              </button>
+              <button id="zebra-single" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-3 rounded-lg text-xs uppercase">
+                Tylko 1 szt. (LAN)
+              </button>
+            </div>
           </div>
         </details>
 
@@ -185,6 +186,7 @@ export function openZebraPrintModal(products, onClose) {
   const closeBtn = document.getElementById('zebra-close');
   const ipInput = document.getElementById('zebra-ip');
   const saveIpBtn = document.getElementById('zebra-save-ip');
+  const cloudSendBtn = document.getElementById('zebra-cloud-send');
   const sendBtn = document.getElementById('zebra-send');
   const downloadBtn = document.getElementById('zebra-download');
   const singleBtn = document.getElementById('zebra-single');
@@ -205,6 +207,23 @@ export function openZebraPrintModal(products, onClose) {
     statusEl.classList.add('hidden');
   };
 
+  // 1. Cloud Send (Default & Reliable)
+  cloudSendBtn.addEventListener('click', async () => {
+    cloudSendBtn.disabled = true;
+    cloudSendBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-lg">sync</span> WYSYŁANIE DO CHMURY...';
+    try {
+      const zpl = generateZplBatch(activeProducts);
+      await sendZplViaMqtt(zpl);
+      showStatus(`✅ Wysłano ${activeProducts.length} etykiet przez chmurę (${mqttCfg.host || 'mqtt.pestkalink.pl'}) do drukarki Zebra!`);
+      cloudSendBtn.innerHTML = '✅ WYDRUK WYSŁANY!';
+      setTimeout(close, 1800);
+    } catch (e) {
+      showError(`Błąd druku przez chmurę: ${e.message}`);
+      cloudSendBtn.disabled = false;
+      cloudSendBtn.innerHTML = '🖨️ DRUKUJ PRZEZ CHMURĘ (mqtt.pestkalink.pl)';
+    }
+  });
+
   saveIpBtn.addEventListener('click', () => {
     const ip = ipInput.value.trim();
     if (ip) { saveZebraIp(ip); showStatus(`✅ Zapisano adres IP: ${ip}`); }
@@ -218,35 +237,39 @@ export function openZebraPrintModal(products, onClose) {
     showStatus('📥 Plik ZPL pobrany. Prześlij go do drukarki przez sieć lub USB.');
   });
 
-  singleBtn.addEventListener('click', async () => {
-    const ip = ipInput.value.trim();
-    if (!ip) { showError('Wpisz adres IP drukarki.'); return; }
-    saveZebraIp(ip);
-    const zpl = generateZplLabel(activeProducts[0]);
-    sendBtn.disabled = true;
-    try {
-      await sendZplToPrinter(zpl, ip);
-      showStatus('✅ Wysłano! Sprawdź drukarkę.');
-    } catch (e) {
-      showError(`${e.message}\n\nUżyj przycisku "POBIERZ PLIK .ZPL" jako alternatywę.`);
-    } finally { sendBtn.disabled = false; }
-  });
+  if (singleBtn) {
+    singleBtn.addEventListener('click', async () => {
+      const ip = ipInput.value.trim();
+      if (!ip) { showError('Wpisz adres IP drukarki.'); return; }
+      saveZebraIp(ip);
+      const zpl = generateZplLabel(activeProducts[0]);
+      singleBtn.disabled = true;
+      try {
+        await sendZplToPrinter(zpl, ip);
+        showStatus('✅ Wysłano! Sprawdź drukarkę.');
+      } catch (e) {
+        showError(`${e.message}\n\nUżyj przycisku "DRUKUJ PRZEZ CHMURĘ" lub pobierz plik.`);
+      } finally { singleBtn.disabled = false; }
+    });
+  }
 
-  sendBtn.addEventListener('click', async () => {
-    const ip = ipInput.value.trim();
-    if (!ip) { showError('Wpisz adres IP drukarki.'); return; }
-    saveZebraIp(ip);
-    const zpl = generateZplBatch(activeProducts);
-    sendBtn.disabled = true;
-    sendBtn.textContent = '⏳ Wysyłanie...';
-    try {
-      await sendZplToPrinter(zpl, ip);
-      showStatus(`✅ Wysłano ${activeProducts.length} etykiet do drukarki ${ip}!`);
-    } catch (e) {
-      showError(`${e.message}\n\nUżyj przycisku "POBIERZ PLIK .ZPL" jako alternatywę.`);
-    } finally {
-      sendBtn.disabled = false;
-      sendBtn.textContent = `🖨️ WYŚLIJ DO DRUKARKI (${activeProducts.length} etykiet)`;
-    }
-  });
+  if (sendBtn) {
+    sendBtn.addEventListener('click', async () => {
+      const ip = ipInput.value.trim();
+      if (!ip) { showError('Wpisz adres IP drukarki.'); return; }
+      saveZebraIp(ip);
+      const zpl = generateZplBatch(activeProducts);
+      sendBtn.disabled = true;
+      sendBtn.textContent = '⏳ Wysyłanie...';
+      try {
+        await sendZplToPrinter(zpl, ip);
+        showStatus(`✅ Wysłano ${activeProducts.length} etykiet do drukarki ${ip}!`);
+      } catch (e) {
+        showError(`${e.message}\n\nUżyj przycisku "DRUKUJ PRZEZ CHMURĘ" lub pobierz plik.`);
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = `Drukuj po LAN (${activeProducts.length} szt.)`;
+      }
+    });
+  }
 }
