@@ -48,11 +48,14 @@ export function renderWzGeneratorView(container, navigateTo) {
 
   let odooProductsList = [];
   let showHistoryModal = false;
+  let showOdooPickerModal = false;
+  let targetPickerItemIdx = null;
 
   // Asynchronously fetch Odoo products for SKU autocomplete
   getProducts().then(prods => {
     if (Array.isArray(prods)) {
       odooProductsList = prods;
+      // Re-render suggestions if active
     }
   }).catch(() => {});
 
@@ -215,7 +218,7 @@ export function renderWzGeneratorView(container, navigateTo) {
             box-shadow: none !important;
             border: none !important;
           }
-          header, #wz-creator-controls, #history-modal-backdrop { display: none !important; }
+          header, #wz-creator-controls, #history-modal-backdrop, #odoo-picker-modal-backdrop { display: none !important; }
         }
       </style>
 
@@ -368,28 +371,63 @@ export function renderWzGeneratorView(container, navigateTo) {
 
           </div>
 
-          <!-- Items Interactive Edit Form List -->
+          <!-- Items Interactive Edit Form List with Autocomplete & Direct Odoo Picker -->
           <div class="flex flex-col gap-2 pt-2 border-t border-slate-200">
-            <span class="font-bold text-slate-700 text-xs uppercase">Edycja pozycji towarowych:</span>
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-700 text-xs uppercase tracking-wide">Pozycje towarowe (Wpisz numer / SKU lub wybierz z bazy):</span>
+              <span class="text-[11px] text-indigo-700 font-medium bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
+                💡 Wpisuj numer SKU z ręki lub klikaj podpowiedzi
+              </span>
+            </div>
+
             <div class="flex flex-col gap-2" id="wz-items-inputs-container">
               ${wzState.items.map((it, idx) => `
-                <div class="flex flex-wrap items-center gap-2 bg-slate-50 border border-slate-300 p-2.5 rounded-xl" data-item-idx="${idx}">
+                <div class="flex flex-wrap items-center gap-2 bg-slate-50 border border-slate-300 p-2.5 rounded-xl relative" data-item-idx="${idx}">
                   <span class="font-mono font-bold text-slate-500 w-6 text-center">${idx + 1}.</span>
                   
-                  <div class="flex-1 min-w-[200px] relative">
-                    <input type="text" list="odoo-products-datalist" value="${it.name || ''}" placeholder="Wpisz numer katalogowy / SKU / Nazwę (np. K0029)" 
-                      class="w-full bg-white border border-slate-300 rounded font-bold px-3 py-1.5 text-xs text-slate-900 item-name-input" data-idx="${idx}" />
+                  <!-- SKU / Product Name Input with Auto-Suggest Dropdown -->
+                  <div class="flex-1 min-w-[240px] relative">
+                    <div class="flex items-center gap-1">
+                      <input 
+                        type="text" 
+                        value="${it.name || ''}" 
+                        placeholder="Wpisz numer katalogowy / SKU / Nazwę (np. K0029)" 
+                        autocomplete="off"
+                        class="w-full bg-white border border-slate-300 rounded font-bold px-3 py-1.5 text-xs text-slate-900 item-name-input focus:ring-2 focus:ring-primary" 
+                        data-idx="${idx}" 
+                      />
+                      <button 
+                        type="button" 
+                        class="btn-open-odoo-picker bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-1.5 rounded text-[11px] font-bold whitespace-nowrap flex items-center gap-1 active:scale-95" 
+                        data-idx="${idx}" 
+                        title="Otwórz pełną listę produktów z Odoo"
+                      >
+                        <span class="material-symbols-outlined text-[15px]">inventory_2</span>
+                        <span>BAZA</span>
+                      </button>
+                    </div>
+
+                    <!-- Floating Autocomplete Suggestion Dropdown Box -->
+                    <div id="autocomplete-box-${idx}" class="autocomplete-dropdown hidden absolute top-full left-0 w-full bg-white border-2 border-indigo-500 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto mt-1 p-1"></div>
                   </div>
 
+                  <!-- Quantity -->
                   <div class="flex items-center gap-1">
                     <span class="text-xs text-slate-500 font-bold">Ilość:</span>
-                    <input type="number" step="1" min="1" value="${it.quantity}" 
-                      class="w-20 bg-white border border-slate-300 rounded font-bold font-mono px-2 py-1.5 text-xs text-center text-slate-900 item-qty-input" data-idx="${idx}" />
+                    <input 
+                      type="number" 
+                      step="1" 
+                      min="1" 
+                      value="${it.quantity}" 
+                      class="w-20 bg-white border border-slate-300 rounded font-bold font-mono px-2 py-1.5 text-xs text-center text-slate-900 item-qty-input focus:ring-2 focus:ring-primary" 
+                      data-idx="${idx}" 
+                    />
                   </div>
 
+                  <!-- Unit of Measure -->
                   <div class="flex items-center gap-1">
                     <span class="text-xs text-slate-500 font-bold">Jm:</span>
-                    <select class="bg-white border border-slate-300 rounded font-bold px-2 py-1.5 text-xs text-slate-900 item-uom-select" data-idx="${idx}">
+                    <select class="bg-white border border-slate-300 rounded font-bold px-2 py-1.5 text-xs text-slate-900 item-uom-select focus:ring-2 focus:ring-primary" data-idx="${idx}">
                       <option value="szt" ${it.uom === 'szt' ? 'selected' : ''}>szt</option>
                       <option value="m" ${it.uom === 'm' ? 'selected' : ''}>m</option>
                       <option value="kpl" ${it.uom === 'kpl' ? 'selected' : ''}>kpl</option>
@@ -397,18 +435,13 @@ export function renderWzGeneratorView(container, navigateTo) {
                     </select>
                   </div>
 
+                  <!-- Delete button -->
                   <button type="button" class="text-rose-600 hover:text-rose-800 p-1 rounded hover:bg-rose-50 btn-delete-item" data-idx="${idx}" title="Usuń ten wiersz">
                     <span class="material-symbols-outlined text-[18px]">delete</span>
                   </button>
                 </div>
               `).join('')}
             </div>
-            
-            <datalist id="odoo-products-datalist">
-              ${odooProductsList.map(p => `
-                <option value="${p.sku}">${p.name} (Stan: ${p.quantity}${p.uom})</option>
-              `).join('')}
-            </datalist>
           </div>
 
         </div>
@@ -496,6 +529,56 @@ export function renderWzGeneratorView(container, navigateTo) {
         </div>
 
       </main>
+
+      <!-- ═════════════════════════════════════════════════════════════════════
+           MODAL: ODOO PRODUCTS BROWSER / SELECTOR
+           ═════════════════════════════════════════════════════════════════════ -->
+      ${showOdooPickerModal ? `
+        <div id="odoo-picker-modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+          <div class="bg-white rounded-2xl max-w-3xl w-full p-5 shadow-2xl flex flex-col gap-3 max-h-[85vh]">
+            <div class="flex justify-between items-center border-b border-gray-200 pb-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-600 text-2xl">inventory_2</span>
+                <h2 class="font-bold text-gray-900 text-base">Wybierz produkt z bazy Odoo (Pozycja ${targetPickerItemIdx !== null ? targetPickerItemIdx + 1 : 1})</h2>
+              </div>
+              <button id="close-odoo-picker-btn" class="p-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <!-- Search input inside modal -->
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+              <input id="picker-search-input" type="text" placeholder="Szukaj po SKU, nazwie, gatunku..." autofocus class="w-full pl-10 pr-4 py-2 border-2 border-indigo-200 focus:border-indigo-600 rounded-xl text-sm font-bold" />
+            </div>
+
+            <!-- Products List -->
+            <div id="picker-products-list" class="flex-1 overflow-y-auto flex flex-col gap-1.5 max-h-[50vh]">
+              ${odooProductsList.map(p => `
+                <div class="picker-prod-card flex justify-between items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-colors cursor-pointer" data-sku="${p.sku}" data-name="${p.name}" data-uom="${p.uom || 'szt'}">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono font-bold bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded text-xs">${p.sku}</span>
+                      <span class="font-bold text-xs text-slate-800">${p.name}</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">Lokacja: ${p.location || 'Magazyn'} • Kategoria: ID ${p.categoryId || '-'}</div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="font-mono font-bold text-xs text-slate-700">Stan: ${Number(p.quantity || 0).toFixed(1)} ${p.uom || 'szt'}</span>
+                    <button type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Wybierz</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="flex justify-end pt-2 border-t border-gray-100">
+              <button id="btn-close-picker-bottom" class="bg-gray-200 hover:bg-gray-300 font-bold px-4 py-2 rounded-xl text-xs text-gray-800">
+                Anuluj
+              </button>
+            </div>
+          </div>
+        </div>
+      ` : ''}
 
       <!-- ═════════════════════════════════════════════════════════════════════
            HISTORY MODAL
@@ -709,23 +792,157 @@ export function renderWzGeneratorView(container, navigateTo) {
       });
     }
 
-    // Item Inputs Listeners
+    // ═════════════════════════════════════════════════════════════════════════
+    // LIVE AUTOCOMPLETE & INTERACTIVE ODOO SEARCH DROPDOWN FOR ITEMS
+    // ═════════════════════════════════════════════════════════════════════════
     container.querySelectorAll('.item-name-input').forEach(inp => {
-      inp.addEventListener('input', (e) => {
-        const idx = parseInt(e.target.getAttribute('data-idx'), 10);
-        if (wzState.items[idx]) {
-          wzState.items[idx].name = e.target.value;
-          // Auto-select unit if matched from Odoo
-          const matchedOdoo = odooProductsList.find(p => p.sku === e.target.value);
-          if (matchedOdoo && matchedOdoo.uom) {
-            wzState.items[idx].uom = matchedOdoo.uom;
-            const uomSelect = container.querySelector(`.item-uom-select[data-idx="${idx}"]`);
-            if (uomSelect) uomSelect.value = matchedOdoo.uom;
-          }
-          updatePreview();
+      const idx = parseInt(inp.getAttribute('data-idx'), 10);
+      const dropdown = container.querySelector(`#autocomplete-box-${idx}`);
+
+      const showSuggestions = (query) => {
+        if (!dropdown) return;
+        const q = (query || '').toLowerCase().trim();
+        if (!q) {
+          dropdown.classList.add('hidden');
+          return;
         }
+
+        const matches = odooProductsList.filter(p => 
+          (p.sku && p.sku.toLowerCase().includes(q)) || 
+          (p.name && p.name.toLowerCase().includes(q))
+        ).slice(0, 10);
+
+        if (matches.length === 0) {
+          dropdown.innerHTML = `
+            <div class="p-2 text-center text-xs text-gray-500 font-medium">
+              Brak dopasowań w bazie Odoo (wpisujesz pozycję niestandardową: <strong>${query}</strong>)
+            </div>
+          `;
+          dropdown.classList.remove('hidden');
+          return;
+        }
+
+        dropdown.innerHTML = matches.map(p => `
+          <div class="suggestion-item p-2 hover:bg-indigo-50 rounded-lg cursor-pointer flex justify-between items-center transition-colors border-b border-gray-100 last:border-none" data-sku="${p.sku}" data-uom="${p.uom || 'szt'}">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-xs bg-indigo-100 text-indigo-900 px-1.5 py-0.5 rounded">${p.sku}</span>
+                <span class="font-bold text-xs text-slate-900">${p.name}</span>
+              </div>
+              <div class="text-[10px] text-slate-500 mt-0.5">Lokacja: ${p.location || 'Strefa 5'}</div>
+            </div>
+            <div class="text-right">
+              <span class="font-mono font-bold text-xs text-indigo-700">${Number(p.quantity || 0).toFixed(1)} ${p.uom || 'szt'}</span>
+            </div>
+          </div>
+        `).join('');
+
+        dropdown.classList.remove('hidden');
+
+        // Suggestion click handler
+        dropdown.querySelectorAll('.suggestion-item').forEach(itemEl => {
+          itemEl.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // prevents blur before click
+            const selectedSku = itemEl.getAttribute('data-sku');
+            const selectedUom = itemEl.getAttribute('data-uom');
+
+            inp.value = selectedSku;
+            wzState.items[idx].name = selectedSku;
+            wzState.items[idx].uom = selectedUom;
+
+            const uomSelect = container.querySelector(`.item-uom-select[data-idx="${idx}"]`);
+            if (uomSelect) uomSelect.value = selectedUom;
+
+            dropdown.classList.add('hidden');
+            updatePreview();
+          });
+        });
+      };
+
+      inp.addEventListener('input', (e) => {
+        wzState.items[idx].name = e.target.value;
+        showSuggestions(e.target.value);
+        updatePreview();
+      });
+
+      inp.addEventListener('focus', (e) => {
+        if (e.target.value) showSuggestions(e.target.value);
+      });
+
+      inp.addEventListener('blur', () => {
+        setTimeout(() => {
+          if (dropdown) dropdown.classList.add('hidden');
+        }, 200);
       });
     });
+
+    // Direct Odoo Picker Button Handler
+    container.querySelectorAll('.btn-open-odoo-picker').forEach(btn => {
+      btn.addEventListener('click', () => {
+        targetPickerItemIdx = parseInt(btn.getAttribute('data-idx'), 10);
+        showOdooPickerModal = true;
+        renderUI();
+      });
+    });
+
+    // Odoo Picker Modal Search & Selection
+    if (showOdooPickerModal) {
+      const pickerClose = container.querySelector('#close-odoo-picker-btn');
+      const pickerCloseBottom = container.querySelector('#btn-close-picker-bottom');
+      const pickerSearch = container.querySelector('#picker-search-input');
+      const pickerList = container.querySelector('#picker-products-list');
+
+      const closePicker = () => {
+        showOdooPickerModal = false;
+        renderUI();
+      };
+
+      [pickerClose, pickerCloseBottom].forEach(b => { if (b) b.addEventListener('click', closePicker); });
+
+      if (pickerSearch && pickerList) {
+        pickerSearch.addEventListener('input', (e) => {
+          const q = e.target.value.toLowerCase().trim();
+          const filtered = odooProductsList.filter(p => 
+            (p.sku && p.sku.toLowerCase().includes(q)) || 
+            (p.name && p.name.toLowerCase().includes(q))
+          );
+
+          pickerList.innerHTML = filtered.map(p => `
+            <div class="picker-prod-card flex justify-between items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-colors cursor-pointer" data-sku="${p.sku}" data-name="${p.name}" data-uom="${p.uom || 'szt'}">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-mono font-bold bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded text-xs">${p.sku}</span>
+                  <span class="font-bold text-xs text-slate-800">${p.name}</span>
+                </div>
+                <div class="text-[11px] text-slate-500 mt-0.5">Lokacja: ${p.location || 'Magazyn'} • Kategoria: ID ${p.categoryId || '-'}</div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="font-mono font-bold text-xs text-slate-700">Stan: ${Number(p.quantity || 0).toFixed(1)} ${p.uom || 'szt'}</span>
+                <button type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Wybierz</button>
+              </div>
+            </div>
+          `).join('');
+
+          attachPickerCardEvents();
+        });
+      }
+
+      const attachPickerCardEvents = () => {
+        container.querySelectorAll('.picker-prod-card').forEach(card => {
+          card.addEventListener('click', () => {
+            const sku = card.getAttribute('data-sku');
+            const uom = card.getAttribute('data-uom');
+            if (targetPickerItemIdx !== null && wzState.items[targetPickerItemIdx]) {
+              wzState.items[targetPickerItemIdx].name = sku;
+              wzState.items[targetPickerItemIdx].uom = uom;
+            }
+            closePicker();
+          });
+        });
+      };
+
+      attachPickerCardEvents();
+    }
 
     container.querySelectorAll('.item-qty-input').forEach(inp => {
       inp.addEventListener('input', (e) => {
