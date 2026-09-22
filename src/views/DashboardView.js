@@ -34,6 +34,11 @@ export function renderDashboardView(container, navigateTo) {
           <span class="material-symbols-outlined text-[16px]">precision_manufacturing</span>
           <span>SZCZĘKI CNC</span>
         </button>
+        <!-- Dokument WZ Button -->
+        <button id="hdr-wz" title="Kreator Dokumentów WZ (Wydanie Magazynowe)" class="hidden sm:flex items-center gap-1 bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
+          <span class="material-symbols-outlined text-[16px]">description</span>
+          <span>DOKUMENT WZ</span>
+        </button>
         ${isOpAdmin ? `
           <button id="hdr-orders" title="Import i Wysyłka Zamówień" class="hidden sm:flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
             <span class="material-symbols-outlined text-[16px]">receipt_long</span>
@@ -70,6 +75,12 @@ export function renderDashboardView(container, navigateTo) {
         <button id="btn-open-jaws" class="h-touch-target-min bg-blue-600 hover:bg-blue-700 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Baza Szczęk Miękkich CNC (SZ-[SKU])">
           <span class="material-symbols-outlined text-[18px]">precision_manufacturing</span>
           SZCZĘKI CNC
+        </button>
+
+        <!-- WZ Generator Button -->
+        <button id="btn-open-wz" class="h-touch-target-min bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Kreator Dokumentów WZ (Wydanie Magazynowe)">
+          <span class="material-symbols-outlined text-[18px]">description</span>
+          DOKUMENT WZ
         </button>
         
         ${isOpAdmin ? `
@@ -433,6 +444,9 @@ export function renderDashboardView(container, navigateTo) {
 
   container.querySelector('#btn-open-jaws')?.addEventListener('click', () => navigateTo('jaws'));
   container.querySelector('#hdr-jaws')?.addEventListener('click', () => navigateTo('jaws'));
+
+  container.querySelector('#btn-open-wz')?.addEventListener('click', () => navigateTo('wz'));
+  container.querySelector('#hdr-wz')?.addEventListener('click', () => navigateTo('wz'));
 
   container.querySelector('#btn-open-orders')?.addEventListener('click', () => navigateTo('orders'));
   container.querySelector('#hdr-orders')?.addEventListener('click', () => navigateTo('orders'));
