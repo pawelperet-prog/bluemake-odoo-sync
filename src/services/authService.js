@@ -8,6 +8,26 @@ const LOCAL_STORAGE_OPERATOR_KEY = 'bluemake_active_operator_v3';
 const LOCAL_STORAGE_LOGGED_IN_KEY = 'bluemake_is_logged_in_v3';
 const LOCAL_STORAGE_AUDIT_LOGS_KEY = 'bluemake_audit_logs_v3';
 const LOCAL_STORAGE_LOCKOUT_KEY = 'bluemake_security_lockout_v3';
+const LOCAL_STORAGE_SITE_AUTH_KEY = 'bluemake_site_master_auth_v1';
+
+export const MASTER_SITE_PASSWORD = 'Szymon_Mateusz2025';
+
+export function isSiteUnlocked() {
+  return localStorage.getItem(LOCAL_STORAGE_SITE_AUTH_KEY) === 'UNLOCKED_OK';
+}
+
+export function verifySitePassword(pass) {
+  if (pass && pass.trim() === MASTER_SITE_PASSWORD) {
+    localStorage.setItem(LOCAL_STORAGE_SITE_AUTH_KEY, 'UNLOCKED_OK');
+    return true;
+  }
+  return false;
+}
+
+export function lockSite() {
+  localStorage.removeItem(LOCAL_STORAGE_SITE_AUTH_KEY);
+  localStorage.removeItem(LOCAL_STORAGE_LOGGED_IN_KEY);
+}
 
 // 4 Initial Operators with PIN 1234
 export const INITIAL_USERS = [

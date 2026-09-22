@@ -8,19 +8,33 @@ import { renderOrderImportView } from './views/OrderImportView.js';
 import { renderSoftJawsView } from './views/SoftJawsView.js';
 import { renderWzGeneratorView } from './views/WzGeneratorView.js';
 import { renderLoginView } from './views/LoginView.js';
-import { isUserLoggedIn, isAdmin, getCurrentOperator } from './services/authService.js';
+import { renderSiteGateView } from './views/SiteGateView.js';
+import { isSiteUnlocked, isUserLoggedIn, isAdmin, getCurrentOperator } from './services/authService.js';
 
 const app = document.getElementById('app');
 
 function navigateTo(route, params = null) {
-  // Jeśli użytkownik nie jest zalogowany i nie jest na ekranie logowania, przekieruj do login
+  // 1. Zabezpieczenie Główne Strony: Wymagane hasło dostępowe Szymon_Mateusz2025
+  if (!isSiteUnlocked()) {
+    app.innerHTML = '';
+    renderSiteGateView(app, () => {
+      if (!isUserLoggedIn()) {
+        navigateTo('login');
+      } else {
+        navigateTo('dashboard');
+      }
+    });
+    return;
+  }
+
+  // 2. Jeśli użytkownik nie jest zalogowany i nie jest na ekranie logowania, przekieruj do login
   if (!isUserLoggedIn() && route !== 'login') {
     app.innerHTML = '';
     renderLoginView(app, navigateTo);
     return;
   }
 
-  // Zabezpieczenie: Zamówienia i Wyceny tylko dla Adminów (Paweł, Mateusz)
+  // 3. Zabezpieczenie: Zamówienia i Wyceny tylko dla Adminów (Paweł, Mateusz)
   if ((route === 'orders' || route === 'valuation') && !isAdmin()) {
     alert(`⛔ Brak uprawnień: Moduł "${route === 'orders' ? 'Zamówienia' : 'Wycena'}" jest dostępny wyłącznie dla Administratorów.`);
     route = 'dashboard';
@@ -61,8 +75,17 @@ function navigateTo(route, params = null) {
 }
 
 // Initial route
-if (!isUserLoggedIn()) {
+if (!isSiteUnlocked()) {
+  renderSiteGateView(app, () => {
+    if (!isUserLoggedIn()) {
+      navigateTo('login');
+    } else {
+      navigateTo('dashboard');
+    }
+  });
+} else if (!isUserLoggedIn()) {
   navigateTo('login');
 } else {
   navigateTo('dashboard');
 }
+
