@@ -1,3 +1,4 @@
+import html2pdf from 'html2pdf.js';
 import { getProducts } from '../services/odooApi.js';
 import { getCurrentOperator } from '../services/authService.js';
 import { 
@@ -13,11 +14,14 @@ import {
 
 export function renderWzGeneratorView(container, navigateTo) {
   const currentOp = getCurrentOperator();
-  const nextNumInfo = getNextWzNumber();
 
   const now = new Date();
+  const currentMonthStr = String(now.getMonth() + 1).padStart(2, '0');
+  const currentYearStr = String(now.getFullYear());
   const todayStr = now.toISOString().split('T')[0];
   const orderDefaultDate = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  const nextNumInfo = getNextWzNumber(currentMonthStr, currentYearStr);
 
   const customers = getSavedCustomers();
   const initialCustomer = customers[0] || {
@@ -33,7 +37,7 @@ export function renderWzGeneratorView(container, navigateTo) {
     wzNum: String(nextNumInfo.num),
     wzMonth: nextNumInfo.month,
     wzYear: nextNumInfo.year,
-    wzSuffix: '/WZ/BM',
+    wzSuffix: '/BM',
     issueDate: todayStr,
     issuePlace: 'MIELEC',
     orderNumber: `ZZ-72/${nextNumInfo.month}/${nextNumInfo.year}/EC`,
@@ -50,17 +54,17 @@ export function renderWzGeneratorView(container, navigateTo) {
   let showHistoryModal = false;
   let showOdooPickerModal = false;
   let targetPickerItemIdx = null;
+  let isGeneratingPdf = false;
 
   // Asynchronously fetch Odoo products for SKU autocomplete
   getProducts().then(prods => {
     if (Array.isArray(prods)) {
       odooProductsList = prods;
-      // Re-render suggestions if active
     }
   }).catch(() => {});
 
   function formatFullWzNumber() {
-    return `Nr ${wzState.wzNum}/${wzState.wzMonth}/${wzState.wzYear}${wzState.wzSuffix}`;
+    return `Nr ${wzState.wzNum}/${wzState.wzMonth}/${wzState.wzYear}${wzState.wzSuffix || '/BM'}`;
   }
 
   function getFormattedCustomerHtml() {
@@ -86,7 +90,30 @@ export function renderWzGeneratorView(container, navigateTo) {
     `;
   }
 
-  function generateStandaloneHtml() {
+  async function downloadPdfFile(docState = wzState) {
+    const element = document.getElementById('printable-wz-sheet');
+    if (!element) return;
+
+    const fileName = `WZ_${docState.wzNum}_${docState.wzMonth}_${docState.wzYear}_BM.pdf`;
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: fileName,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    try {
+      await html2pdf().set(opt).from(element).save();
+      return true;
+    } catch (e) {
+      console.error('Error generating PDF with html2pdf:', e);
+      window.print();
+      return false;
+    }
+  }
+
+  function downloadHtmlFile() {
     const rows = wzState.items.map((it, idx) => `
       <tr>
         <td style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">${idx + 1}</td>
@@ -96,7 +123,7 @@ export function renderWzGeneratorView(container, navigateTo) {
       </tr>
     `).join('');
 
-    return `<!DOCTYPE html>
+    const html = `<!DOCTYPE html>
 <html lang="pl">
 <head>
   <meta charset="utf-8">
@@ -121,7 +148,6 @@ export function renderWzGeneratorView(container, navigateTo) {
   </style>
 </head>
 <body>
-  <!-- Header Grid -->
   <table class="wz-table">
     <tr>
       <td class="header-box" style="text-align: center;">
@@ -155,7 +181,6 @@ export function renderWzGeneratorView(container, navigateTo) {
     </tr>
   </table>
 
-  <!-- Items Table -->
   <table class="items-table">
     <thead>
       <tr>
@@ -170,7 +195,6 @@ export function renderWzGeneratorView(container, navigateTo) {
     </tbody>
   </table>
 
-  <!-- Signatures -->
   <table class="signatures">
     <tr>
       <td style="padding-left: 10px;">
@@ -185,15 +209,12 @@ export function renderWzGeneratorView(container, navigateTo) {
   </table>
 </body>
 </html>`;
-  }
 
-  function downloadHtmlFile() {
-    const html = generateStandaloneHtml();
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `WZ_${wzState.wzNum}_${wzState.wzMonth}_${wzState.wzYear}.html`;
+    a.download = `WZ_${wzState.wzNum}_${wzState.wzMonth}_${wzState.wzYear}_BM.html`;
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
@@ -255,7 +276,7 @@ export function renderWzGeneratorView(container, navigateTo) {
           <!-- Top Row Form Inputs -->
           <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center text-xs">
             
-            <!-- Nr WZ: [ 1 ] / [ 09 ] / [ 2026 ] /WZ/BM -->
+            <!-- Nr WZ: [ 1 ] / [ 09 ] / [ 2026 ] /BM -->
             <div class="md:col-span-4 flex items-center gap-1 bg-slate-50 border border-slate-300 p-2 rounded-xl">
               <span class="font-bold text-slate-700 whitespace-nowrap">Nr WZ:</span>
               <input id="input-wz-num" type="number" min="1" value="${wzState.wzNum}" class="w-12 text-center bg-white border border-slate-300 rounded font-bold font-mono py-1 px-1 focus:ring-1 focus:ring-primary" />
@@ -352,18 +373,18 @@ export function renderWzGeneratorView(container, navigateTo) {
             <!-- Action Buttons (Exact Green, Blue, Dark, Blue as in photo!) -->
             <div class="flex flex-wrap items-center gap-2">
               <button id="btn-save-wz-state" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
-                <span class="material-symbols-outlined text-[16px]">save</span>
-                <span>Zapisz stan</span>
+                <span class="material-symbols-outlined text-[16px]">${isGeneratingPdf ? 'sync' : 'save'}</span>
+                <span>${isGeneratingPdf ? 'GENEROWANIE PDF...' : '💾 Zapisz & Pobierz PDF'}</span>
               </button>
-              <button id="btn-download-wz-html" class="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
-                <span class="material-symbols-outlined text-[16px]">download</span>
+              <button id="btn-download-wz-html" class="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
+                <span class="material-symbols-outlined text-[16px]">html</span>
                 <span>Pobierz HTML</span>
               </button>
               <button id="btn-reset-new-wz" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[16px]">add_circle</span>
                 <span>Nowa WZ</span>
               </button>
-              <button id="btn-print-wz-doc" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-1.5 active:scale-95 transition-all">
+              <button id="btn-print-wz-doc" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[18px]">print</span>
                 <span>Drukuj WZ</span>
               </button>
@@ -585,32 +606,44 @@ export function renderWzGeneratorView(container, navigateTo) {
            ═════════════════════════════════════════════════════════════════════ -->
       ${showHistoryModal ? `
         <div id="history-modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3">
-          <div class="bg-white rounded-2xl max-w-2xl w-full p-5 shadow-2xl flex flex-col gap-4 max-h-[85vh]">
+          <div class="bg-white rounded-2xl max-w-3xl w-full p-5 shadow-2xl flex flex-col gap-4 max-h-[85vh]">
             <div class="flex justify-between items-center border-b border-gray-200 pb-2">
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-amber-600 text-2xl">history</span>
-                <h2 class="font-bold text-gray-900 text-base">Zapisane Dokumenty WZ</h2>
+                <h2 class="font-bold text-gray-900 text-base">Baza Wystawionych Dokumentów WZ (${getWzHistory().length})</h2>
               </div>
               <button id="close-history-modal-btn" class="p-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
                 <span class="material-symbols-outlined">close</span>
               </button>
             </div>
 
-            <div class="flex-1 overflow-y-auto flex flex-col gap-2">
+            <div class="flex-1 overflow-y-auto flex flex-col gap-2.5">
               ${getWzHistory().length === 0 ? `
-                <div class="text-center py-8 text-gray-400 text-xs font-bold">Brak zapisanych dokumentów WZ. Utwórz nową WZ i kliknij „Zapisz stan”.</div>
+                <div class="text-center py-10 text-gray-400 text-xs font-bold flex flex-col items-center gap-2">
+                  <span class="material-symbols-outlined text-4xl text-gray-300">folder_open</span>
+                  <span>Brak zapisanych dokumentów WZ. Utwórz WZ i kliknij „Zapisz & Pobierz PDF”.</span>
+                </div>
               ` : getWzHistory().map(w => `
-                <div class="flex justify-between items-center p-3 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors">
-                  <div>
-                    <div class="font-bold text-sm text-slate-900">Nr ${w.wzNum}/${w.wzMonth}/${w.wzYear}${w.wzSuffix}</div>
-                    <div class="text-xs text-slate-600">${w.customer?.name || 'Brak odbiorcy'} • Data: ${w.issueDate} • Zam: ${w.orderNumber}</div>
-                    <div class="text-[11px] text-amber-700 font-medium">${w.items?.length || 0} pozycji towarowych</div>
+                <div class="flex flex-wrap justify-between items-center p-3.5 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-slate-100/80 transition-all gap-2">
+                  <div class="flex flex-col gap-0.5">
+                    <div class="flex items-center gap-2">
+                      <span class="font-bold text-sm text-slate-950">${w.formattedNumber || `Nr ${w.wzNum}/${w.wzMonth}/${w.wzYear}${w.wzSuffix || '/BM'}`}</span>
+                      <span class="text-[10px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">${w.issueDate}</span>
+                    </div>
+                    <div class="text-xs text-slate-700 font-semibold">${w.customer?.name || 'Brak odbiorcy'} • Zam: <span class="font-mono text-slate-900">${w.orderNumber}</span></div>
+                    <div class="text-[11px] text-slate-500">
+                      Pozycje (${w.items?.length || 0}): ${w.items?.map(i => `${i.name} (${i.quantity}${i.uom})`).slice(0, 3).join(', ')}${w.items?.length > 3 ? '...' : ''}
+                    </div>
                   </div>
                   <div class="flex items-center gap-2">
-                    <button class="btn-load-wz bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg active:scale-95" data-id="${w.id}">
+                    <button class="btn-load-wz bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm" data-id="${w.id}">
                       Wczytaj
                     </button>
-                    <button class="btn-del-wz text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg" data-id="${w.id}" title="Usuń z bazy">
+                    <button class="btn-history-pdf bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm flex items-center gap-1" data-id="${w.id}" title="Pobierz plik PDF">
+                      <span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>
+                      <span>PDF</span>
+                    </button>
+                    <button class="btn-del-wz text-rose-600 hover:bg-rose-50 p-2 rounded-xl" data-id="${w.id}" title="Usuń z bazy">
                       <span class="material-symbols-outlined text-[18px]">delete</span>
                     </button>
                   </div>
@@ -652,7 +685,7 @@ export function renderWzGeneratorView(container, navigateTo) {
       });
     });
 
-    // History Load and Delete handlers
+    // History Load, Download PDF and Delete handlers
     container.querySelectorAll('.btn-load-wz').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
@@ -665,10 +698,26 @@ export function renderWzGeneratorView(container, navigateTo) {
       });
     });
 
+    container.querySelectorAll('.btn-history-pdf').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const found = getWzHistory().find(w => w.id === id);
+        if (found) {
+          const oldState = { ...wzState };
+          wzState = JSON.parse(JSON.stringify(found));
+          showHistoryModal = false;
+          renderUI();
+          setTimeout(async () => {
+            await downloadPdfFile(found);
+          }, 200);
+        }
+      });
+    });
+
     container.querySelectorAll('.btn-del-wz').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
-        if (confirm('Czy na pewno usunąć ten dokument z historii WZ?')) {
+        if (confirm('Czy na pewno usunąć ten dokument z bazy WZ?')) {
           deleteWzDocument(id);
           renderUI();
         }
@@ -682,8 +731,24 @@ export function renderWzGeneratorView(container, navigateTo) {
     const inputSuffix = container.querySelector('#input-wz-suffix');
 
     if (inputNum) inputNum.addEventListener('input', (e) => { wzState.wzNum = e.target.value; updatePreview(); });
-    if (inputMonth) inputMonth.addEventListener('input', (e) => { wzState.wzMonth = e.target.value; updatePreview(); });
-    if (inputYear) inputYear.addEventListener('input', (e) => { wzState.wzYear = e.target.value; updatePreview(); });
+    if (inputMonth) {
+      inputMonth.addEventListener('input', (e) => { 
+        wzState.wzMonth = e.target.value;
+        const next = getNextWzNumber(wzState.wzMonth, wzState.wzYear);
+        wzState.wzNum = String(next.num);
+        if (inputNum) inputNum.value = wzState.wzNum;
+        updatePreview(); 
+      });
+    }
+    if (inputYear) {
+      inputYear.addEventListener('input', (e) => { 
+        wzState.wzYear = e.target.value; 
+        const next = getNextWzNumber(wzState.wzMonth, wzState.wzYear);
+        wzState.wzNum = String(next.num);
+        if (inputNum) inputNum.value = wzState.wzNum;
+        updatePreview(); 
+      });
+    }
     if (inputSuffix) inputSuffix.addEventListener('input', (e) => { wzState.wzSuffix = e.target.value; updatePreview(); });
 
     // Dates and Places
@@ -692,7 +757,29 @@ export function renderWzGeneratorView(container, navigateTo) {
     const inputOrderNum = container.querySelector('#input-order-num');
     const inputOrderDate = container.querySelector('#input-order-date');
 
-    if (inputIssueDate) inputIssueDate.addEventListener('input', (e) => { wzState.issueDate = e.target.value; updatePreview(); });
+    if (inputIssueDate) {
+      inputIssueDate.addEventListener('input', (e) => { 
+        wzState.issueDate = e.target.value; 
+        if (e.target.value) {
+          const parts = e.target.value.split('-');
+          if (parts.length === 3) {
+            const y = parts[0];
+            const m = parts[1];
+            if (m !== wzState.wzMonth || y !== wzState.wzYear) {
+              wzState.wzMonth = m;
+              wzState.wzYear = y;
+              const next = getNextWzNumber(m, y);
+              wzState.wzNum = String(next.num);
+              if (inputMonth) inputMonth.value = m;
+              if (inputYear) inputYear.value = y;
+              if (inputNum) inputNum.value = wzState.wzNum;
+            }
+          }
+        }
+        updatePreview(); 
+      });
+    }
+
     if (inputIssuePlace) inputIssuePlace.addEventListener('input', (e) => { wzState.issuePlace = e.target.value.toUpperCase(); updatePreview(); });
     if (inputOrderNum) inputOrderNum.addEventListener('input', (e) => { wzState.orderNumber = e.target.value; updatePreview(); });
     if (inputOrderDate) inputOrderDate.addEventListener('input', (e) => { wzState.orderDate = e.target.value; updatePreview(); });
@@ -792,9 +879,7 @@ export function renderWzGeneratorView(container, navigateTo) {
       });
     }
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // LIVE AUTOCOMPLETE & INTERACTIVE ODOO SEARCH DROPDOWN FOR ITEMS
-    // ═════════════════════════════════════════════════════════════════════════
+    // Autocomplete for Items
     container.querySelectorAll('.item-name-input').forEach(inp => {
       const idx = parseInt(inp.getAttribute('data-idx'), 10);
       const dropdown = container.querySelector(`#autocomplete-box-${idx}`);
@@ -815,7 +900,7 @@ export function renderWzGeneratorView(container, navigateTo) {
         if (matches.length === 0) {
           dropdown.innerHTML = `
             <div class="p-2 text-center text-xs text-gray-500 font-medium">
-              Brak dopasowań w bazie Odoo (wpisujesz pozycję niestandardową: <strong>${query}</strong>)
+              Pozycja niestandardowa: <strong>${query}</strong>
             </div>
           `;
           dropdown.classList.remove('hidden');
@@ -839,10 +924,9 @@ export function renderWzGeneratorView(container, navigateTo) {
 
         dropdown.classList.remove('hidden');
 
-        // Suggestion click handler
         dropdown.querySelectorAll('.suggestion-item').forEach(itemEl => {
           itemEl.addEventListener('mousedown', (e) => {
-            e.preventDefault(); // prevents blur before click
+            e.preventDefault();
             const selectedSku = itemEl.getAttribute('data-sku');
             const selectedUom = itemEl.getAttribute('data-uom');
 
@@ -977,14 +1061,30 @@ export function renderWzGeneratorView(container, navigateTo) {
       });
     });
 
-    // Action Buttons
+    // Action: Save to Database & Download PDF
     const btnSaveState = container.querySelector('#btn-save-wz-state');
     if (btnSaveState) {
-      btnSaveState.addEventListener('click', () => {
+      btnSaveState.addEventListener('click', async () => {
+        isGeneratingPdf = true;
+        btnSaveState.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>ZAPISYWANIE & POBIERANIE PDF...</span>';
+        btnSaveState.disabled = true;
+
+        // 1. Save to database
         saveWzDocument(wzState);
+
+        // 2. Increment monthly counter
         incrementWzCounter(wzState.wzNum, wzState.wzMonth, wzState.wzYear);
-        alert(`💾 Zapisano dokument WZ (${formatFullWzNumber()}) do pamięci!`);
-        renderUI();
+
+        // 3. Download real PDF file
+        await downloadPdfFile(wzState);
+
+        isGeneratingPdf = false;
+        btnSaveState.disabled = false;
+        btnSaveState.innerHTML = '<span class="material-symbols-outlined text-[16px]">check_circle</span><span>ZAPISANO & POBRANO!</span>';
+
+        setTimeout(() => {
+          renderUI();
+        }, 1500);
       });
     }
 
@@ -996,28 +1096,25 @@ export function renderWzGeneratorView(container, navigateTo) {
     const btnResetNew = container.querySelector('#btn-reset-new-wz');
     if (btnResetNew) {
       btnResetNew.addEventListener('click', () => {
-        if (confirm('Czy utworzyć nową WZ (z kolejnym numerem)?')) {
-          incrementWzCounter(wzState.wzNum, wzState.wzMonth, wzState.wzYear);
-          const next = getNextWzNumber();
-          wzState = {
-            id: `WZ_${Date.now()}`,
-            wzNum: String(next.num),
-            wzMonth: next.month,
-            wzYear: next.year,
-            wzSuffix: '/WZ/BM',
-            issueDate: new Date().toISOString().split('T')[0],
-            issuePlace: 'MIELEC',
-            orderNumber: `ZZ-73/${next.month}/${next.year}/EC`,
-            orderDate: new Date().toISOString().split('T')[0],
-            issuerName: wzState.issuerName,
-            supplier: { ...DEFAULT_SUPPLIER },
-            customer: { ...wzState.customer },
-            items: [
-              { id: 1, name: '', quantity: 1, uom: 'szt' }
-            ]
-          };
-          renderUI();
-        }
+        const next = getNextWzNumber(wzState.wzMonth, wzState.wzYear);
+        wzState = {
+          id: `WZ_${Date.now()}`,
+          wzNum: String(next.num),
+          wzMonth: next.month,
+          wzYear: next.year,
+          wzSuffix: '/BM',
+          issueDate: new Date().toISOString().split('T')[0],
+          issuePlace: 'MIELEC',
+          orderNumber: `ZZ-73/${next.month}/${next.year}/EC`,
+          orderDate: new Date().toISOString().split('T')[0],
+          issuerName: wzState.issuerName,
+          supplier: { ...DEFAULT_SUPPLIER },
+          customer: { ...wzState.customer },
+          items: [
+            { id: 1, name: '', quantity: 1, uom: 'szt' }
+          ]
+        };
+        renderUI();
       });
     }
 

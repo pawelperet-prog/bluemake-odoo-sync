@@ -1,10 +1,10 @@
 /**
- * WZ (Wydanie z Magazynu) Storage & Numbering Service
+ * WZ (Wydanie z Magazynu) Storage & Monthly Numbering Service
  */
 
-const STORAGE_KEY_WZ_HISTORY = 'bluemake_wz_history_v1';
-const STORAGE_KEY_WZ_COUNTER = 'bluemake_wz_counter_v1';
-const STORAGE_KEY_WZ_CUSTOMERS = 'bluemake_wz_customers_v1';
+const STORAGE_KEY_WZ_HISTORY = 'bluemake_wz_history_v2';
+const STORAGE_KEY_WZ_COUNTERS = 'bluemake_wz_monthly_counters_v2';
+const STORAGE_KEY_WZ_CUSTOMERS = 'bluemake_wz_customers_v2';
 
 export const DEFAULT_SUPPLIER = {
   name: 'BLUEMAKE SPÓŁKA Z O.O.',
@@ -71,10 +71,16 @@ export function getWzHistory() {
 export function saveWzDocument(wzDoc) {
   const history = getWzHistory();
   const idx = history.findIndex(w => w.id === wzDoc.id);
+  const docWithMeta = {
+    ...wzDoc,
+    savedAt: new Date().toISOString(),
+    formattedNumber: `Nr ${wzDoc.wzNum}/${wzDoc.wzMonth}/${wzDoc.wzYear}${wzDoc.wzSuffix || '/BM'}`
+  };
+
   if (idx >= 0) {
-    history[idx] = wzDoc;
+    history[idx] = docWithMeta;
   } else {
-    history.unshift(wzDoc);
+    history.unshift(docWithMeta);
   }
   localStorage.setItem(STORAGE_KEY_WZ_HISTORY, JSON.stringify(history));
   return history;
@@ -86,39 +92,69 @@ export function deleteWzDocument(wzId) {
   return history;
 }
 
-export function getNextWzNumber() {
+/**
+ * Get the next WZ number for a given month and year (resets automatically every month to 1)
+ */
+export function getNextWzNumber(targetMonth = null, targetYear = null) {
   const now = new Date();
-  const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
-  const currentYear = String(now.getFullYear());
+  const month = targetMonth || String(now.getMonth() + 1).padStart(2, '0');
+  const year = targetYear || String(now.getFullYear());
+  const key = `${year}-${month}`;
   
   try {
-    const saved = localStorage.getItem(STORAGE_KEY_WZ_COUNTER);
-    if (saved) {
-      const data = JSON.parse(saved);
-      if (data.year === currentYear && data.month === currentMonth) {
+    const savedCounters = localStorage.getItem(STORAGE_KEY_WZ_COUNTERS);
+    if (savedCounters) {
+      const counters = JSON.parse(savedCounters);
+      if (counters[key] !== undefined && counters[key] !== null) {
         return {
-          num: data.nextNum || 1,
-          month: currentMonth,
-          year: currentYear,
-          suffix: '/WZ/BM'
+          num: counters[key],
+          month: month,
+          year: year,
+          suffix: '/BM'
         };
       }
     }
   } catch (e) {}
 
+  // Also check history for highest number in this month/year
+  const history = getWzHistory();
+  const monthDocs = history.filter(w => w.wzMonth === month && w.wzYear === year);
+  if (monthDocs.length > 0) {
+    const maxNum = Math.max(...monthDocs.map(w => parseInt(w.wzNum, 10) || 0));
+    return {
+      num: maxNum + 1,
+      month: month,
+      year: year,
+      suffix: '/BM'
+    };
+  }
+
   return {
     num: 1,
-    month: currentMonth,
-    year: currentYear,
-    suffix: '/WZ/BM'
+    month: month,
+    year: year,
+    suffix: '/BM'
   };
 }
 
+/**
+ * Increment and save counter for a specific month and year
+ */
 export function incrementWzCounter(usedNum, month, year) {
-  const nextNum = (parseInt(usedNum, 10) || 1) + 1;
-  localStorage.setItem(STORAGE_KEY_WZ_COUNTER, JSON.stringify({
-    nextNum,
-    month,
-    year
-  }));
+  const m = String(month).padStart(2, '0');
+  const y = String(year);
+  const key = `${y}-${m}`;
+
+  let counters = {};
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_WZ_COUNTERS);
+    if (saved) counters = JSON.parse(saved);
+  } catch (e) {}
+
+  const currentVal = counters[key] || parseInt(usedNum, 10) || 1;
+  const nextNum = Math.max((parseInt(usedNum, 10) || 1) + 1, currentVal + 1);
+  
+  counters[key] = nextNum;
+  localStorage.setItem(STORAGE_KEY_WZ_COUNTERS, JSON.stringify(counters));
+  return nextNum;
 }
