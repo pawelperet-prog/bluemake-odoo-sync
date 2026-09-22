@@ -1,5 +1,5 @@
 import html2pdf from 'html2pdf.js';
-import { getProducts } from '../services/odooApi.js';
+import { getProducts, applyStockAdjustment } from '../services/odooApi.js';
 import { getCurrentOperator } from '../services/authService.js';
 import { 
   DEFAULT_SUPPLIER, 
@@ -46,7 +46,16 @@ export function renderWzGeneratorView(container, navigateTo) {
     supplier: { ...DEFAULT_SUPPLIER },
     customer: { ...initialCustomer },
     items: [
-      { id: 1, name: 'K0029', quantity: 10, uom: 'szt' }
+      { 
+        id: 1, 
+        name: '00229 - EC-VAC 0108000-004-01 - Podkladka gniazdo', 
+        sku: '00229',
+        productId: null,
+        currentStock: 0,
+        locationId: 5,
+        quantity: 10, 
+        uom: 'szt' 
+      }
     ]
   };
 
@@ -54,12 +63,25 @@ export function renderWzGeneratorView(container, navigateTo) {
   let showHistoryModal = false;
   let showOdooPickerModal = false;
   let targetPickerItemIdx = null;
-  let isGeneratingPdf = false;
+  let isProcessing = false;
+  let statusBannerMsg = '';
+  let statusBannerType = 'info'; // 'success' | 'info' | 'error'
 
   // Asynchronously fetch Odoo products for SKU autocomplete
   getProducts().then(prods => {
     if (Array.isArray(prods)) {
       odooProductsList = prods;
+      // Auto-match initial items with Odoo data if possible
+      wzState.items.forEach(it => {
+        const found = odooProductsList.find(p => p.sku === it.sku || p.sku === it.name || (it.name && it.name.includes(p.sku)));
+        if (found) {
+          it.productId = found.id;
+          it.currentStock = Number(found.quantity || 0);
+          it.locationId = found.locationId || 5;
+          it.uom = found.uom || it.uom || 'szt';
+        }
+      });
+      updatePreview();
     }
   }).catch(() => {});
 
@@ -70,23 +92,23 @@ export function renderWzGeneratorView(container, navigateTo) {
   function getFormattedCustomerHtml() {
     const c = wzState.customer;
     let lines = [];
-    if (c.name) lines.push(`<strong>${c.name}</strong>`);
-    if (c.address) lines.push(c.address);
+    if (c.name) lines.push(`<strong class="text-slate-900 font-bold">${c.name}</strong>`);
+    if (c.address) lines.push(`<span class="text-slate-700">${c.address}</span>`);
     let idParts = [];
-    if (c.nip) idParts.push(`NIP: ${c.nip}`);
+    if (c.nip) idParts.push(`NIP: <strong>${c.nip}</strong>`);
     if (c.regon) idParts.push(`REGON: ${c.regon}`);
-    if (idParts.length > 0) lines.push(idParts.join(', '));
-    if (c.contact) lines.push(c.contact);
+    if (idParts.length > 0) lines.push(`<span class="text-slate-600 text-[11px]">${idParts.join(', ')}</span>`);
+    if (c.contact) lines.push(`<span class="text-slate-500 text-[11px]">${c.contact}</span>`);
     return lines.join('<br/>');
   }
 
   function getFormattedSupplierHtml() {
     const s = wzState.supplier;
     return `
-      <strong>${s.name}</strong><br/>
-      ${s.address}<br/>
-      NIP: ${s.nip}<br/>
-      ${s.email}
+      <strong class="text-slate-900 font-bold">${s.name}</strong><br/>
+      <span class="text-slate-700">${s.address}</span><br/>
+      <span class="text-slate-600 text-[11px]">NIP: <strong>${s.nip}</strong></span><br/>
+      <span class="text-slate-500 text-[11px]">${s.email}</span>
     `;
   }
 
@@ -96,7 +118,7 @@ export function renderWzGeneratorView(container, navigateTo) {
 
     const fileName = `WZ_${docState.wzNum}_${docState.wzMonth}_${docState.wzYear}_BM.pdf`;
     const opt = {
-      margin: [8, 8, 8, 8],
+      margin: [6, 6, 6, 6],
       filename: fileName,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true, logging: false },
@@ -115,11 +137,11 @@ export function renderWzGeneratorView(container, navigateTo) {
 
   function downloadHtmlFile() {
     const rows = wzState.items.map((it, idx) => `
-      <tr>
-        <td style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">${idx + 1}</td>
-        <td style="border: 1px solid #000; padding: 6px 8px; font-weight: bold;">${it.name || ''}</td>
-        <td style="border: 1px solid #000; padding: 6px 8px; text-align: center; font-weight: bold;">${it.quantity}</td>
-        <td style="border: 1px solid #000; padding: 6px 8px; text-align: center;">${it.uom || 'szt'}</td>
+      <tr style="background-color: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; font-weight: bold; font-family: monospace;">${idx + 1}</td>
+        <td style="border: 1px solid #475569; padding: 7px 10px; font-weight: bold; color: #0f172a;">${it.name || ''}</td>
+        <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; font-weight: bold; font-family: monospace; font-size: 11pt;">${it.quantity}</td>
+        <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; color: #475569;">${it.uom || 'szt'}</td>
       </tr>
     `).join('');
 
@@ -129,18 +151,19 @@ export function renderWzGeneratorView(container, navigateTo) {
   <meta charset="utf-8">
   <title>WZ ${wzState.wzNum}/${wzState.wzMonth}/${wzState.wzYear}${wzState.wzSuffix}</title>
   <style>
-    @page { size: A4 portrait; margin: 15mm; }
-    body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; color: #000; background: #fff; margin: 0; padding: 20px; }
-    .wz-table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
-    .wz-table td, .wz-table th { border: 1px solid #000; padding: 8px 10px; font-size: 10pt; vertical-align: top; }
-    .wz-title-box { text-align: center; font-size: 16pt; font-weight: bold; padding: 12px !important; }
+    @page { size: A4 portrait; margin: 12mm; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10.5pt; color: #0f172a; background: #fff; margin: 0; padding: 15px; }
+    .wz-table { width: 100%; border-collapse: collapse; margin-bottom: 0; border: 1.5px solid #334155; }
+    .wz-table td { border: 1px solid #475569; padding: 8px 10px; vertical-align: top; }
     .header-box { width: 33.33%; }
-    .items-table { width: 100%; border-collapse: collapse; margin-top: -1px; }
-    .items-table th { background: #f0f0f0; border: 1px solid #000; padding: 6px 8px; font-size: 10pt; text-align: left; }
-    .items-table td { border: 1px solid #000; padding: 6px 8px; font-size: 10pt; }
-    .signatures { width: 100%; margin-top: 50px; border-collapse: collapse; }
+    .title-box { background-color: #f1f5f9; text-align: center; padding: 12px 6px !important; }
+    .title-text { font-size: 15pt; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #0f172a; margin: 0; }
+    .party-header { background-color: #f1f5f9; font-size: 8.5pt; font-weight: 800; text-transform: uppercase; color: #475569; padding: 4px 8px; margin: -8px -10px 6px -10px; border-bottom: 1px solid #cbd5e1; }
+    .items-table { width: 100%; border-collapse: collapse; margin-top: -1px; border: 1.5px solid #334155; }
+    .items-table th { background-color: #e2e8f0; border: 1px solid #475569; padding: 8px 6px; font-size: 9.5pt; font-weight: 800; text-transform: uppercase; color: #1e293b; }
+    .signatures { width: 100%; margin-top: 45px; border-collapse: collapse; }
     .signatures td { border: none; width: 50%; vertical-align: top; }
-    .sig-line { border-top: 1px solid #000; width: 85%; margin-bottom: 5px; }
+    .sig-box { border-top: 1.5px solid #334155; width: 85%; padding-top: 6px; font-size: 9.5pt; color: #334155; }
     @media print {
       body { padding: 0; }
       .no-print { display: none !important; }
@@ -150,33 +173,33 @@ export function renderWzGeneratorView(container, navigateTo) {
 <body>
   <table class="wz-table">
     <tr>
-      <td class="header-box" style="text-align: center;">
-        <div style="font-weight: bold; font-size: 11pt;">${wzState.issueDate} ${wzState.issuePlace}</div>
-        <div style="font-size: 8pt; color: #444; margin-top: 3px;">Data i miejsce wystawienia</div>
+      <td class="header-box" style="text-align: center; vertical-align: middle;">
+        <div style="font-weight: 800; font-size: 11pt; color: #0f172a;">${wzState.issueDate} ${wzState.issuePlace}</div>
+        <div style="font-size: 8pt; color: #64748b; margin-top: 2px;">Data i miejsce wystawienia</div>
       </td>
-      <td class="header-box wz-title-box">
-        Wydanie z magazynu (WZ)
+      <td class="header-box title-box">
+        <div class="title-text">Wydanie z magazynu (WZ)</div>
       </td>
       <td class="header-box" style="text-align: center; vertical-align: middle;">
-        <div style="font-weight: bold; font-size: 12pt;">${formatFullWzNumber()}</div>
-      </td>
-    </tr>
-    <tr>
-      <td style="width: 50%;" colspan="1">
-        <div style="font-size: 9pt; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; color: #555;">Dostawca:</div>
-        ${getFormattedSupplierHtml()}
-      </td>
-      <td style="width: 50%;" colspan="2">
-        <div style="font-size: 9pt; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; color: #555;">Odbiorca:</div>
-        ${getFormattedCustomerHtml()}
+        <div style="font-weight: 900; font-size: 12.5pt; color: #0f172a; font-family: monospace;">${formatFullWzNumber()}</div>
       </td>
     </tr>
     <tr>
       <td style="width: 50%;">
-        <strong>Numer zamówienia:</strong> ${wzState.orderNumber || '-'}
+        <div class="party-header">Dostawca:</div>
+        ${getFormattedSupplierHtml()}
       </td>
       <td style="width: 50%;" colspan="2">
-        <strong>Data zamówienia:</strong> ${wzState.orderDate || '-'}
+        <div class="party-header">Odbiorca:</div>
+        ${getFormattedCustomerHtml()}
+      </td>
+    </tr>
+    <tr style="background-color: #f8fafc;">
+      <td style="width: 50%; font-size: 9.5pt;">
+        <strong style="color: #334155;">Numer zamówienia:</strong> <span style="font-family: monospace; font-weight: bold; color: #0f172a;">${wzState.orderNumber || '-'}</span>
+      </td>
+      <td style="width: 50%; font-size: 9.5pt;" colspan="2">
+        <strong style="color: #334155;">Data zamówienia:</strong> <span style="font-weight: bold; color: #0f172a;">${wzState.orderDate || '-'}</span>
       </td>
     </tr>
   </table>
@@ -184,10 +207,10 @@ export function renderWzGeneratorView(container, navigateTo) {
   <table class="items-table">
     <thead>
       <tr>
-        <th style="width: 40px; text-align: center;">Lp.</th>
-        <th>Nazwa towaru / usługi</th>
-        <th style="width: 90px; text-align: center;">Ilość</th>
-        <th style="width: 60px; text-align: center;">Jm</th>
+        <th style="width: 45px; text-align: center;">Lp.</th>
+        <th style="text-align: left; padding-left: 10px;">Nazwa towaru / usługi</th>
+        <th style="width: 95px; text-align: center;">Ilość</th>
+        <th style="width: 65px; text-align: center;">Jm</th>
       </tr>
     </thead>
     <tbody>
@@ -198,12 +221,14 @@ export function renderWzGeneratorView(container, navigateTo) {
   <table class="signatures">
     <tr>
       <td style="padding-left: 10px;">
-        <div class="sig-line"></div>
-        <div style="font-size: 9pt; color: #333;">Odebrał(a)</div>
+        <div class="sig-box">
+          <div style="font-weight: bold; color: #475569;">Odebrał(a)</div>
+        </div>
       </td>
       <td style="padding-left: 20px;">
-        <div class="sig-line"></div>
-        <div style="font-size: 9pt; color: #333;">Wystawił(a): <strong>${wzState.issuerName}</strong></div>
+        <div class="sig-box">
+          <div style="color: #475569;">Wystawił(a): <strong style="color: #0f172a;">${wzState.issuerName}</strong></div>
+        </div>
       </td>
     </tr>
   </table>
@@ -266,8 +291,21 @@ export function renderWzGeneratorView(container, navigateTo) {
         </div>
       </header>
 
-      <main class="w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 flex flex-col gap-5 mt-14 mb-20">
+      <main class="w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 flex flex-col gap-4 mt-14 mb-20">
         
+        <!-- Status Toast Banner -->
+        ${statusBannerMsg ? `
+          <div class="p-3.5 rounded-2xl flex items-center justify-between gap-2 shadow-md ${statusBannerType === 'success' ? 'bg-emerald-100 border-2 border-emerald-400 text-emerald-950' : 'bg-blue-100 border-2 border-blue-400 text-blue-950'}">
+            <div class="flex items-center gap-2 font-bold text-xs sm:text-sm">
+              <span class="material-symbols-outlined ${statusBannerType === 'success' ? 'text-emerald-600' : 'text-blue-600'}">
+                ${statusBannerType === 'success' ? 'check_circle' : 'info'}
+              </span>
+              <span>${statusBannerMsg}</span>
+            </div>
+            <button id="btn-dismiss-status" class="text-xs font-bold px-2 py-1 hover:bg-black/10 rounded-lg">✕</button>
+          </div>
+        ` : ''}
+
         <!-- ═════════════════════════════════════════════════════════════════════
              CREATOR CONTROLS BAR (Styled identically to user photo!)
              ═════════════════════════════════════════════════════════════════════ -->
@@ -373,8 +411,8 @@ export function renderWzGeneratorView(container, navigateTo) {
             <!-- Action Buttons (Exact Green, Blue, Dark, Blue as in photo!) -->
             <div class="flex flex-wrap items-center gap-2">
               <button id="btn-save-wz-state" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
-                <span class="material-symbols-outlined text-[16px]">${isGeneratingPdf ? 'sync' : 'save'}</span>
-                <span>${isGeneratingPdf ? 'GENEROWANIE PDF...' : '💾 Zapisz & Pobierz PDF'}</span>
+                <span class="material-symbols-outlined text-[16px]">${isProcessing ? 'sync' : 'cloud_sync'}</span>
+                <span>${isProcessing ? 'SYNCHRONIZACJA ODOO & PDF...' : '💾 Generuj WZ (Odejmij Stan & Pobierz PDF)'}</span>
               </button>
               <button id="btn-download-wz-html" class="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[16px]">html</span>
@@ -396,8 +434,9 @@ export function renderWzGeneratorView(container, navigateTo) {
           <div class="flex flex-col gap-2 pt-2 border-t border-slate-200">
             <div class="flex justify-between items-center">
               <span class="font-bold text-slate-700 text-xs uppercase tracking-wide">Pozycje towarowe (Wpisz numer / SKU lub wybierz z bazy):</span>
-              <span class="text-[11px] text-indigo-700 font-medium bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
-                💡 Wpisuj numer SKU z ręki lub klikaj podpowiedzi
+              <span class="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">inventory_2</span>
+                Automatyczne odejmowanie ze stanu Odoo 19 przy zapisie
               </span>
             </div>
 
@@ -407,12 +446,12 @@ export function renderWzGeneratorView(container, navigateTo) {
                   <span class="font-mono font-bold text-slate-500 w-6 text-center">${idx + 1}.</span>
                   
                   <!-- SKU / Product Name Input with Auto-Suggest Dropdown -->
-                  <div class="flex-1 min-w-[240px] relative">
+                  <div class="flex-1 min-w-[260px] relative">
                     <div class="flex items-center gap-1">
                       <input 
                         type="text" 
                         value="${it.name || ''}" 
-                        placeholder="Wpisz numer katalogowy / SKU / Nazwę (np. K0029)" 
+                        placeholder="Wpisz numer (np. 00229) lub nazwę detalu" 
                         autocomplete="off"
                         class="w-full bg-white border border-slate-300 rounded font-bold px-3 py-1.5 text-xs text-slate-900 item-name-input focus:ring-2 focus:ring-primary" 
                         data-idx="${idx}" 
@@ -456,6 +495,13 @@ export function renderWzGeneratorView(container, navigateTo) {
                     </select>
                   </div>
 
+                  <!-- Stock badge if matched with Odoo -->
+                  ${it.productId ? `
+                    <span class="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-1 rounded-lg">
+                      Stan Odoo: ${it.currentStock} ${it.uom}
+                    </span>
+                  ` : ''}
+
                   <!-- Delete button -->
                   <button type="button" class="text-rose-600 hover:text-rose-800 p-1 rounded hover:bg-rose-50 btn-delete-item" data-idx="${idx}" title="Usuń ten wiersz">
                     <span class="material-symbols-outlined text-[18px]">delete</span>
@@ -468,67 +514,71 @@ export function renderWzGeneratorView(container, navigateTo) {
         </div>
 
         <!-- ═════════════════════════════════════════════════════════════════════
-             LIVE PRINTABLE A4 WZ DOCUMENT PREVIEW (1:1 identical to photo!)
+             LIVE PRO A4 WZ DOCUMENT PREVIEW (ELEGANT SLATE SHADES)
              ═════════════════════════════════════════════════════════════════════ -->
         <div class="flex flex-col items-center">
           <div class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider flex items-center gap-1">
             <span class="material-symbols-outlined text-[16px]">visibility</span>
-            <span>Podgląd wydruku A4 (1:1 Dokument Oryginał / Kopia)</span>
+            <span>Podgląd wydruku A4 (Elegancki styl biznesowy PRO)</span>
           </div>
 
-          <div id="printable-wz-sheet" class="bg-white text-black border border-slate-400 p-8 sm:p-12 shadow-2xl rounded-none w-full max-w-[850px] font-sans text-[13px] leading-relaxed select-text">
+          <div id="printable-wz-sheet" class="bg-white text-slate-950 border-2 border-slate-600 p-8 sm:p-12 shadow-2xl rounded-none w-full max-w-[850px] font-sans text-[12.5px] leading-relaxed select-text">
             
-            <!-- Header Grid: 3 Boxes -->
-            <table class="w-full border-collapse border border-black mb-0">
+            <!-- Header Grid: 3 Clean Boxes -->
+            <table class="w-full border-collapse border-2 border-slate-700 mb-0">
               <tr>
-                <td class="border border-black p-3 text-center w-1/3 align-middle">
-                  <div class="font-bold text-sm" id="prev-issue-date-place">${wzState.issueDate} ${wzState.issuePlace}</div>
-                  <div class="text-[10px] text-gray-600 mt-0.5">Data i miejsce wystawienia</div>
+                <td class="border border-slate-600 p-3 text-center w-1/3 align-middle bg-slate-50/70">
+                  <div class="font-extrabold text-sm text-slate-900" id="prev-issue-date-place">${wzState.issueDate} ${wzState.issuePlace}</div>
+                  <div class="text-[9.5px] text-slate-500 font-semibold mt-0.5 uppercase tracking-wider">Data i miejsce wystawienia</div>
                 </td>
-                <td class="border border-black p-3 text-center w-1/3 align-middle bg-slate-50/50">
-                  <h2 class="text-lg sm:text-xl font-bold uppercase tracking-wider m-0">Wydanie z magazynu (WZ)</h2>
+                <td class="border border-slate-600 p-3 text-center w-1/3 align-middle bg-slate-100">
+                  <h2 class="text-base sm:text-lg font-black uppercase tracking-wider text-slate-900 m-0">Wydanie z magazynu (WZ)</h2>
                 </td>
-                <td class="border border-black p-3 text-center w-1/3 align-middle">
-                  <div class="font-bold text-sm sm:text-base" id="prev-wz-full-number">${formatFullWzNumber()}</div>
+                <td class="border border-slate-600 p-3 text-center w-1/3 align-middle bg-slate-50/70">
+                  <div class="font-black text-sm sm:text-base text-slate-950 font-mono" id="prev-wz-full-number">${formatFullWzNumber()}</div>
                 </td>
               </tr>
               <tr>
-                <td class="border border-black p-3.5 align-top w-1/2" colspan="1">
-                  <div class="text-[10px] font-bold text-gray-500 uppercase mb-1">Dostawca:</div>
+                <td class="border border-slate-600 p-3.5 align-top w-1/2">
+                  <div class="bg-slate-100 -m-3.5 mb-2.5 p-1.5 px-3 border-b border-slate-300 font-bold text-[10px] text-slate-700 uppercase tracking-wider">
+                    Dostawca:
+                  </div>
                   <div id="prev-supplier-block">${getFormattedSupplierHtml()}</div>
                 </td>
-                <td class="border border-black p-3.5 align-top w-1/2" colspan="2">
-                  <div class="text-[10px] font-bold text-gray-500 uppercase mb-1">Odbiorca:</div>
+                <td class="border border-slate-600 p-3.5 align-top w-1/2" colspan="2">
+                  <div class="bg-slate-100 -m-3.5 mb-2.5 p-1.5 px-3 border-b border-slate-300 font-bold text-[10px] text-slate-700 uppercase tracking-wider">
+                    Odbiorca:
+                  </div>
                   <div id="prev-customer-block">${getFormattedCustomerHtml()}</div>
                 </td>
               </tr>
-              <tr>
-                <td class="border border-black p-2.5 align-middle">
-                  <strong>Numer zamówienia:</strong> <span id="prev-order-num">${wzState.orderNumber || '-'}</span>
+              <tr class="bg-slate-50/60">
+                <td class="border border-slate-600 p-2.5 align-middle">
+                  <span class="text-slate-600 font-semibold">Numer zamówienia:</span> <strong class="text-slate-900 font-mono text-xs" id="prev-order-num">${wzState.orderNumber || '-'}</strong>
                 </td>
-                <td class="border border-black p-2.5 align-middle" colspan="2">
-                  <strong>Data zamówienia:</strong> <span id="prev-order-date">${wzState.orderDate || '-'}</span>
+                <td class="border border-slate-600 p-2.5 align-middle" colspan="2">
+                  <span class="text-slate-600 font-semibold">Data zamówienia:</span> <strong class="text-slate-900 text-xs" id="prev-order-date">${wzState.orderDate || '-'}</strong>
                 </td>
               </tr>
             </table>
 
-            <!-- Goods / Items Table -->
-            <table class="w-full border-collapse border border-black -mt-[1px]">
+            <!-- Goods / Items Table with Pro Header & Zebra Striping -->
+            <table class="w-full border-collapse border-2 border-slate-700 -mt-[2px]">
               <thead>
-                <tr class="bg-gray-100 text-black text-xs font-bold">
-                  <th class="border border-black py-2 px-2 text-center w-12">Lp.</th>
-                  <th class="border border-black py-2 px-3 text-left">Nazwa towaru / usługi</th>
-                  <th class="border border-black py-2 px-3 text-center w-24">Ilość</th>
-                  <th class="border border-black py-2 px-3 text-center w-16">Jm</th>
+                <tr class="bg-slate-200 text-slate-900 text-xs font-black uppercase tracking-wider">
+                  <th class="border border-slate-600 py-2.5 px-2 text-center w-12">Lp.</th>
+                  <th class="border border-slate-600 py-2.5 px-3 text-left">Nazwa towaru / usługi</th>
+                  <th class="border border-slate-600 py-2.5 px-3 text-center w-24">Ilość</th>
+                  <th class="border border-slate-600 py-2.5 px-3 text-center w-16">Jm</th>
                 </tr>
               </thead>
               <tbody id="prev-items-tbody">
                 ${wzState.items.map((it, idx) => `
-                  <tr>
-                    <td class="border border-black py-2 px-2 text-center font-bold">${idx + 1}</td>
-                    <td class="border border-black py-2 px-3 font-bold">${it.name || '-'}</td>
-                    <td class="border border-black py-2 px-3 text-center font-bold">${it.quantity}</td>
-                    <td class="border border-black py-2 px-3 text-center">${it.uom || 'szt'}</td>
+                  <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/80'}">
+                    <td class="border border-slate-600 py-2 px-2 text-center font-mono font-bold text-slate-600">${idx + 1}</td>
+                    <td class="border border-slate-600 py-2 px-3 font-bold text-slate-950">${it.name || '-'}</td>
+                    <td class="border border-slate-600 py-2 px-3 text-center font-mono font-bold text-sm text-slate-950">${it.quantity}</td>
+                    <td class="border border-slate-600 py-2 px-3 text-center text-slate-700 font-medium">${it.uom || 'szt'}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -537,12 +587,12 @@ export function renderWzGeneratorView(container, navigateTo) {
             <!-- Signatures Section -->
             <div class="mt-16 grid grid-cols-2 gap-8 px-4">
               <div class="flex flex-col items-start">
-                <div class="w-4/5 border-t border-black mb-1"></div>
-                <div class="text-[11px] text-gray-700">Odebrał(a)</div>
+                <div class="w-4/5 border-t-2 border-slate-700 mb-1.5"></div>
+                <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Odebrał(a)</div>
               </div>
               <div class="flex flex-col items-start">
-                <div class="w-4/5 border-t border-black mb-1"></div>
-                <div class="text-[11px] text-gray-700">Wystawił(a): <strong id="prev-issuer-signature">${wzState.issuerName}</strong></div>
+                <div class="w-4/5 border-t-2 border-slate-700 mb-1.5"></div>
+                <div class="text-[11px] text-slate-600">Wystawił(a): <strong class="text-slate-950" id="prev-issuer-signature">${wzState.issuerName}</strong></div>
               </div>
             </div>
 
@@ -570,13 +620,14 @@ export function renderWzGeneratorView(container, navigateTo) {
             <!-- Search input inside modal -->
             <div class="relative">
               <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-              <input id="picker-search-input" type="text" placeholder="Szukaj po SKU, nazwie, gatunku..." autofocus class="w-full pl-10 pr-4 py-2 border-2 border-indigo-200 focus:border-indigo-600 rounded-xl text-sm font-bold" />
+              <input id="picker-search-input" type="text" placeholder="Szukaj po numerze SKU, nazwie detalu, gatunku..." autofocus class="w-full pl-10 pr-4 py-2 border-2 border-indigo-200 focus:border-indigo-600 rounded-xl text-sm font-bold" />
             </div>
 
             <!-- Products List -->
             <div id="picker-products-list" class="flex-1 overflow-y-auto flex flex-col gap-1.5 max-h-[50vh]">
               ${odooProductsList.map(p => `
-                <div class="picker-prod-card flex justify-between items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-colors cursor-pointer" data-sku="${p.sku}" data-name="${p.name}" data-uom="${p.uom || 'szt'}">
+                <div class="picker-prod-card flex justify-between items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-colors cursor-pointer" 
+                  data-sku="${p.sku}" data-name="${p.name}" data-id="${p.id}" data-qty="${p.quantity || 0}" data-loc="${p.locationId || 5}" data-uom="${p.uom || 'szt'}">
                   <div>
                     <div class="flex items-center gap-2">
                       <span class="font-mono font-bold bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded text-xs">${p.sku}</span>
@@ -621,7 +672,7 @@ export function renderWzGeneratorView(container, navigateTo) {
               ${getWzHistory().length === 0 ? `
                 <div class="text-center py-10 text-gray-400 text-xs font-bold flex flex-col items-center gap-2">
                   <span class="material-symbols-outlined text-4xl text-gray-300">folder_open</span>
-                  <span>Brak zapisanych dokumentów WZ. Utwórz WZ i kliknij „Zapisz & Pobierz PDF”.</span>
+                  <span>Brak zapisanych dokumentów WZ. Utwórz WZ i kliknij „Generuj WZ”.</span>
                 </div>
               ` : getWzHistory().map(w => `
                 <div class="flex flex-wrap justify-between items-center p-3.5 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-slate-100/80 transition-all gap-2">
@@ -667,6 +718,14 @@ export function renderWzGeneratorView(container, navigateTo) {
   function setupEventHandlers() {
     const backBtn = container.querySelector('#btn-back-mag');
     if (backBtn) backBtn.addEventListener('click', () => navigateTo('dashboard'));
+
+    const dismissStatus = container.querySelector('#btn-dismiss-status');
+    if (dismissStatus) {
+      dismissStatus.addEventListener('click', () => {
+        statusBannerMsg = '';
+        renderUI();
+      });
+    }
 
     const histToggle = container.querySelector('#btn-toggle-wz-history');
     if (histToggle) {
@@ -862,6 +921,10 @@ export function renderWzGeneratorView(container, navigateTo) {
         wzState.items.push({
           id: Date.now(),
           name: '',
+          sku: '',
+          productId: null,
+          currentStock: 0,
+          locationId: 5,
           quantity: 1,
           uom: 'szt'
         });
@@ -907,44 +970,65 @@ export function renderWzGeneratorView(container, navigateTo) {
           return;
         }
 
-        dropdown.innerHTML = matches.map(p => `
-          <div class="suggestion-item p-2 hover:bg-indigo-50 rounded-lg cursor-pointer flex justify-between items-center transition-colors border-b border-gray-100 last:border-none" data-sku="${p.sku}" data-uom="${p.uom || 'szt'}">
-            <div>
-              <div class="flex items-center gap-1.5">
-                <span class="font-mono font-bold text-xs bg-indigo-100 text-indigo-900 px-1.5 py-0.5 rounded">${p.sku}</span>
-                <span class="font-bold text-xs text-slate-900">${p.name}</span>
+        dropdown.innerHTML = matches.map(p => {
+          // Format full label: e.g. "00229 - EC-VAC 0108000-004-01 - Podkladka gniazdo"
+          const fullLabel = p.name.includes(p.sku) ? p.name : `${p.sku} - ${p.name}`;
+          return `
+            <div class="suggestion-item p-2 hover:bg-indigo-50 rounded-lg cursor-pointer flex justify-between items-center transition-colors border-b border-gray-100 last:border-none" 
+              data-sku="${p.sku}" data-name="${fullLabel}" data-id="${p.id}" data-qty="${p.quantity || 0}" data-loc="${p.locationId || 5}" data-uom="${p.uom || 'szt'}">
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono font-bold text-xs bg-indigo-100 text-indigo-900 px-1.5 py-0.5 rounded">${p.sku}</span>
+                  <span class="font-bold text-xs text-slate-900">${p.name}</span>
+                </div>
+                <div class="text-[10px] text-slate-500 mt-0.5">Lokacja: ${p.location || 'Strefa składowania'}</div>
               </div>
-              <div class="text-[10px] text-slate-500 mt-0.5">Lokacja: ${p.location || 'Strefa 5'}</div>
+              <div class="text-right">
+                <span class="font-mono font-bold text-xs text-indigo-700">${Number(p.quantity || 0).toFixed(1)} ${p.uom || 'szt'}</span>
+              </div>
             </div>
-            <div class="text-right">
-              <span class="font-mono font-bold text-xs text-indigo-700">${Number(p.quantity || 0).toFixed(1)} ${p.uom || 'szt'}</span>
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
 
         dropdown.classList.remove('hidden');
 
         dropdown.querySelectorAll('.suggestion-item').forEach(itemEl => {
           itemEl.addEventListener('mousedown', (e) => {
             e.preventDefault();
+            const selectedLabel = itemEl.getAttribute('data-name');
             const selectedSku = itemEl.getAttribute('data-sku');
+            const selectedId = Number(itemEl.getAttribute('data-id'));
+            const selectedQty = Number(itemEl.getAttribute('data-qty'));
+            const selectedLoc = Number(itemEl.getAttribute('data-loc'));
             const selectedUom = itemEl.getAttribute('data-uom');
 
-            inp.value = selectedSku;
-            wzState.items[idx].name = selectedSku;
+            inp.value = selectedLabel;
+            wzState.items[idx].name = selectedLabel;
+            wzState.items[idx].sku = selectedSku;
+            wzState.items[idx].productId = selectedId;
+            wzState.items[idx].currentStock = selectedQty;
+            wzState.items[idx].locationId = selectedLoc;
             wzState.items[idx].uom = selectedUom;
 
             const uomSelect = container.querySelector(`.item-uom-select[data-idx="${idx}"]`);
             if (uomSelect) uomSelect.value = selectedUom;
 
             dropdown.classList.add('hidden');
-            updatePreview();
+            renderUI();
           });
         });
       };
 
       inp.addEventListener('input', (e) => {
         wzState.items[idx].name = e.target.value;
+        // Check if matches SKU
+        const matched = odooProductsList.find(p => p.sku.toLowerCase() === e.target.value.toLowerCase().trim());
+        if (matched) {
+          wzState.items[idx].productId = matched.id;
+          wzState.items[idx].currentStock = Number(matched.quantity || 0);
+          wzState.items[idx].locationId = matched.locationId || 5;
+          wzState.items[idx].uom = matched.uom || 'szt';
+        }
         showSuggestions(e.target.value);
         updatePreview();
       });
@@ -991,21 +1075,25 @@ export function renderWzGeneratorView(container, navigateTo) {
             (p.name && p.name.toLowerCase().includes(q))
           );
 
-          pickerList.innerHTML = filtered.map(p => `
-            <div class="picker-prod-card flex justify-between items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-colors cursor-pointer" data-sku="${p.sku}" data-name="${p.name}" data-uom="${p.uom || 'szt'}">
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="font-mono font-bold bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded text-xs">${p.sku}</span>
-                  <span class="font-bold text-xs text-slate-800">${p.name}</span>
+          pickerList.innerHTML = filtered.map(p => {
+            const fullLabel = p.name.includes(p.sku) ? p.name : `${p.sku} - ${p.name}`;
+            return `
+              <div class="picker-prod-card flex justify-between items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-colors cursor-pointer" 
+                data-sku="${p.sku}" data-name="${fullLabel}" data-id="${p.id}" data-qty="${p.quantity || 0}" data-loc="${p.locationId || 5}" data-uom="${p.uom || 'szt'}">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono font-bold bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded text-xs">${p.sku}</span>
+                    <span class="font-bold text-xs text-slate-800">${p.name}</span>
+                  </div>
+                  <div class="text-[11px] text-slate-500 mt-0.5">Lokacja: ${p.location || 'Magazyn'} • Kategoria: ID ${p.categoryId || '-'}</div>
                 </div>
-                <div class="text-[11px] text-slate-500 mt-0.5">Lokacja: ${p.location || 'Magazyn'} • Kategoria: ID ${p.categoryId || '-'}</div>
+                <div class="flex items-center gap-3">
+                  <span class="font-mono font-bold text-xs text-slate-700">Stan: ${Number(p.quantity || 0).toFixed(1)} ${p.uom || 'szt'}</span>
+                  <button type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Wybierz</button>
+                </div>
               </div>
-              <div class="flex items-center gap-3">
-                <span class="font-mono font-bold text-xs text-slate-700">Stan: ${Number(p.quantity || 0).toFixed(1)} ${p.uom || 'szt'}</span>
-                <button type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Wybierz</button>
-              </div>
-            </div>
-          `).join('');
+            `;
+          }).join('');
 
           attachPickerCardEvents();
         });
@@ -1014,10 +1102,19 @@ export function renderWzGeneratorView(container, navigateTo) {
       const attachPickerCardEvents = () => {
         container.querySelectorAll('.picker-prod-card').forEach(card => {
           card.addEventListener('click', () => {
+            const label = card.getAttribute('data-name');
             const sku = card.getAttribute('data-sku');
+            const id = Number(card.getAttribute('data-id'));
+            const qty = Number(card.getAttribute('data-qty'));
+            const loc = Number(card.getAttribute('data-loc'));
             const uom = card.getAttribute('data-uom');
+
             if (targetPickerItemIdx !== null && wzState.items[targetPickerItemIdx]) {
-              wzState.items[targetPickerItemIdx].name = sku;
+              wzState.items[targetPickerItemIdx].name = label;
+              wzState.items[targetPickerItemIdx].sku = sku;
+              wzState.items[targetPickerItemIdx].productId = id;
+              wzState.items[targetPickerItemIdx].currentStock = qty;
+              wzState.items[targetPickerItemIdx].locationId = loc;
               wzState.items[targetPickerItemIdx].uom = uom;
             }
             closePicker();
@@ -1055,36 +1152,76 @@ export function renderWzGeneratorView(container, navigateTo) {
           wzState.items.splice(idx, 1);
           renderUI();
         } else {
-          wzState.items[0] = { id: 1, name: '', quantity: 1, uom: 'szt' };
+          wzState.items[0] = { id: 1, name: '', sku: '', productId: null, currentStock: 0, locationId: 5, quantity: 1, uom: 'szt' };
           renderUI();
         }
       });
     });
 
-    // Action: Save to Database & Download PDF
+    // ═════════════════════════════════════════════════════════════════════════
+    // ACTION: GENERATE WZ (DEDUCT STOCK FROM ODOO + SAVE DB + DOWNLOAD PDF)
+    // ═════════════════════════════════════════════════════════════════════════
     const btnSaveState = container.querySelector('#btn-save-wz-state');
     if (btnSaveState) {
       btnSaveState.addEventListener('click', async () => {
-        isGeneratingPdf = true;
-        btnSaveState.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>ZAPISYWANIE & POBIERANIE PDF...</span>';
+        isProcessing = true;
+        btnSaveState.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>ODEJMOWANIE ZE STANU ODOO...</span>';
         btnSaveState.disabled = true;
 
-        // 1. Save to database
-        saveWzDocument(wzState);
+        let deductedCount = 0;
+        let deductedSummary = [];
 
-        // 2. Increment monthly counter
-        incrementWzCounter(wzState.wzNum, wzState.wzMonth, wzState.wzYear);
+        try {
+          // 1. Deduct Stock in Odoo 19 for matched items
+          for (const it of wzState.items) {
+            let pId = it.productId;
+            let curStock = it.currentStock;
+            let locId = it.locationId || 5;
+            let sku = it.sku || it.name;
 
-        // 3. Download real PDF file
-        await downloadPdfFile(wzState);
+            // If productId not assigned, search in odooProductsList
+            if (!pId && odooProductsList.length > 0) {
+              const matched = odooProductsList.find(p => p.sku === it.name || (it.name && it.name.includes(p.sku)));
+              if (matched) {
+                pId = matched.id;
+                curStock = Number(matched.quantity || 0);
+                locId = matched.locationId || 5;
+                sku = matched.sku;
+              }
+            }
 
-        isGeneratingPdf = false;
-        btnSaveState.disabled = false;
-        btnSaveState.innerHTML = '<span class="material-symbols-outlined text-[16px]">check_circle</span><span>ZAPISANO & POBRANO!</span>';
+            if (pId && it.quantity > 0) {
+              const newQty = Math.max(0, Number((curStock - it.quantity).toFixed(2)));
+              await applyStockAdjustment(pId, newQty, sku, curStock, locId);
+              it.currentStock = newQty;
+              deductedCount++;
+              deductedSummary.push(`${sku} (-${it.quantity} ${it.uom})`);
+            }
+          }
 
-        setTimeout(() => {
+          // 2. Save full WZ document to database
+          saveWzDocument(wzState);
+
+          // 3. Increment monthly counter
+          incrementWzCounter(wzState.wzNum, wzState.wzMonth, wzState.wzYear);
+
+          // 4. Generate & Download real PDF
+          btnSaveState.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>POBIERANIE PLIKU PDF...</span>';
+          await downloadPdfFile(wzState);
+
+          statusBannerType = 'success';
+          statusBannerMsg = `Wystawiono WZ (${formatFullWzNumber()})! ${deductedCount > 0 ? `Zaktualizowano stan w Odoo 19 dla: ${deductedSummary.join(', ')}.` : 'Zapisano do bazy i pobrano PDF.'}`;
+
+        } catch (err) {
+          console.error('Error processing WZ stock adjustment:', err);
+          statusBannerType = 'error';
+          statusBannerMsg = `Błąd zapisu w Odoo: ${err.message || err}. Pobrano PDF i zapisano kopię lokalną.`;
+          saveWzDocument(wzState);
+          await downloadPdfFile(wzState);
+        } finally {
+          isProcessing = false;
           renderUI();
-        }, 1500);
+        }
       });
     }
 
@@ -1111,9 +1248,10 @@ export function renderWzGeneratorView(container, navigateTo) {
           supplier: { ...DEFAULT_SUPPLIER },
           customer: { ...wzState.customer },
           items: [
-            { id: 1, name: '', quantity: 1, uom: 'szt' }
+            { id: 1, name: '', sku: '', productId: null, currentStock: 0, locationId: 5, quantity: 1, uom: 'szt' }
           ]
         };
+        statusBannerMsg = '';
         renderUI();
       });
     }
@@ -1151,11 +1289,11 @@ export function renderWzGeneratorView(container, navigateTo) {
     const tbody = container.querySelector('#prev-items-tbody');
     if (tbody) {
       tbody.innerHTML = wzState.items.map((it, idx) => `
-        <tr>
-          <td class="border border-black py-2 px-2 text-center font-bold">${idx + 1}</td>
-          <td class="border border-black py-2 px-3 font-bold">${it.name || '-'}</td>
-          <td class="border border-black py-2 px-3 text-center font-bold">${it.quantity}</td>
-          <td class="border border-black py-2 px-3 text-center">${it.uom || 'szt'}</td>
+        <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/80'}">
+          <td class="border border-slate-600 py-2 px-2 text-center font-mono font-bold text-slate-600">${idx + 1}</td>
+          <td class="border border-slate-600 py-2 px-3 font-bold text-slate-950">${it.name || '-'}</td>
+          <td class="border border-slate-600 py-2 px-3 text-center font-mono font-bold text-sm text-slate-950">${it.quantity}</td>
+          <td class="border border-slate-600 py-2 px-3 text-center text-slate-700 font-medium">${it.uom || 'szt'}</td>
         </tr>
       `).join('');
     }
