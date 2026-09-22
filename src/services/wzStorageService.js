@@ -8,9 +8,9 @@ const STORAGE_KEY_WZ_CUSTOMERS = 'bluemake_wz_customers_v2';
 
 export const DEFAULT_SUPPLIER = {
   name: 'BLUEMAKE Sp. z o.o.',
-  address: '39-300 Mielec, Tuwima 39',
+  address: 'ul. Tuwima 39, 39-300 Mielec',
   nip: '8172210070',
-  email: 'm.klimkowski@bluemake.eu'
+  email: 'm.klimkowski@bluemake.eu, www.bluemake.eu'
 };
 
 export const DEFAULT_CUSTOMERS = [

@@ -104,12 +104,19 @@ export function renderWzGeneratorView(container, navigateTo) {
 
   function getFormattedSupplierHtml() {
     const s = wzState.supplier;
-    return `
-      <strong class="text-slate-900 font-bold">${s.name}</strong><br/>
-      <span class="text-slate-700">${s.address}</span><br/>
-      <span class="text-slate-600 text-[11px]">NIP: <strong>${s.nip}</strong></span><br/>
-      <span class="text-slate-500 text-[11px]">${s.email}</span>
-    `;
+    let lines = [];
+    if (s.name) lines.push(`<strong class="text-slate-900 font-bold">${s.name}</strong>`);
+    if (s.address) lines.push(`<span class="text-slate-700">${s.address}</span>`);
+    let idParts = [];
+    if (s.nip) idParts.push(`NIP: <strong>${s.nip}</strong>`);
+    if (s.regon) idParts.push(`REGON: ${s.regon}`);
+    if (idParts.length > 0) lines.push(`<span class="text-slate-600 text-[11px]">${idParts.join(', ')}</span>`);
+    if (s.email) lines.push(`<span class="text-slate-500 text-[11px]">${s.email}</span>`);
+    return lines.join('<br/>');
+  }
+
+  function getTotalQuantity() {
+    return wzState.items.reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
   }
 
   async function downloadPdfFile(docState = wzState) {
@@ -161,9 +168,12 @@ export function renderWzGeneratorView(container, navigateTo) {
     .party-header { background-color: #f1f5f9; font-size: 8.5pt; font-weight: 800; text-transform: uppercase; color: #475569; padding: 4px 8px; margin: -8px -10px 6px -10px; border-bottom: 1px solid #cbd5e1; }
     .items-table { width: 100%; border-collapse: collapse; margin-top: -1px; border: 1.5px solid #334155; }
     .items-table th { background-color: #e2e8f0; border: 1px solid #475569; padding: 8px 6px; font-size: 9.5pt; font-weight: 800; text-transform: uppercase; color: #1e293b; }
+    .items-table tfoot td { background-color: #f1f5f9; border: 1px solid #475569; padding: 7px 8px; font-weight: bold; }
     .signatures { width: 100%; margin-top: 45px; border-collapse: collapse; }
     .signatures td { border: none; width: 50%; vertical-align: top; }
     .sig-box { border-top: 1.5px solid #334155; width: 85%; padding-top: 6px; font-size: 9.5pt; color: #334155; }
+    .sig-sub { font-size: 8pt; color: #64748b; margin-top: 2px; }
+    .footer-note { margin-top: 35px; padding-top: 8px; border-top: 1px solid #cbd5e1; font-size: 8pt; color: #94a3b8; display: flex; justify-content: space-between; }
     @media print {
       body { padding: 0; }
       .no-print { display: none !important; }
@@ -216,22 +226,36 @@ export function renderWzGeneratorView(container, navigateTo) {
     <tbody>
       ${rows}
     </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2" style="text-align: right; text-transform: uppercase; font-size: 9pt; color: #475569; padding-right: 12px;">Razem:</td>
+        <td style="text-align: center; font-family: monospace; font-size: 11pt; color: #0f172a;">${getTotalQuantity()}</td>
+        <td style="text-align: center; color: #475569; font-size: 9pt;">${wzState.items[0]?.uom || 'szt'}</td>
+      </tr>
+    </tfoot>
   </table>
 
   <table class="signatures">
     <tr>
       <td style="padding-left: 10px;">
         <div class="sig-box">
-          <div style="font-weight: bold; color: #475569;">Odebrał(a)</div>
+          <div style="font-weight: bold; color: #334155;">Odebrał(a)</div>
+          <div class="sig-sub">Podpis osoby upoważnionej</div>
         </div>
       </td>
       <td style="padding-left: 20px;">
         <div class="sig-box">
-          <div style="color: #475569;">Wystawił(a): <strong style="color: #0f172a;">${wzState.issuerName}</strong></div>
+          <div style="color: #334155;">Wystawił(a): <strong style="color: #0f172a;">${wzState.issuerName}</strong></div>
+          <div class="sig-sub">Podpis wystawcy dokumentu</div>
         </div>
       </td>
     </tr>
   </table>
+
+  <div class="footer-note">
+    <span>System Bluemake Industrial Sync • Odoo 19</span>
+    <span>Dokument WZ • Oryginał / Kopia</span>
+  </div>
 </body>
 </html>`;
 
@@ -582,18 +606,33 @@ export function renderWzGeneratorView(container, navigateTo) {
                   </tr>
                 `).join('')}
               </tbody>
+              <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-700">
+                <tr>
+                  <td colspan="2" class="border border-slate-600 py-2 px-3 text-right text-xs uppercase tracking-wider text-slate-600">Razem:</td>
+                  <td class="border border-slate-600 py-2 px-3 text-center font-mono font-bold text-sm text-slate-950" id="prev-total-qty">${getTotalQuantity()}</td>
+                  <td class="border border-slate-600 py-2 px-3 text-center text-xs text-slate-600" id="prev-total-uom">${wzState.items[0]?.uom || 'szt'}</td>
+                </tr>
+              </tfoot>
             </table>
 
             <!-- Signatures Section -->
-            <div class="mt-16 grid grid-cols-2 gap-8 px-4">
+            <div class="mt-14 grid grid-cols-2 gap-8 px-4">
               <div class="flex flex-col items-start">
                 <div class="w-4/5 border-t-2 border-slate-700 mb-1.5"></div>
-                <div class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Odebrał(a)</div>
+                <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Odebrał(a)</div>
+                <div class="text-[9.5px] text-slate-400 mt-0.5">Podpis osoby upoważnionej</div>
               </div>
               <div class="flex flex-col items-start">
                 <div class="w-4/5 border-t-2 border-slate-700 mb-1.5"></div>
-                <div class="text-[11px] text-slate-600">Wystawił(a): <strong class="text-slate-950" id="prev-issuer-signature">${wzState.issuerName}</strong></div>
+                <div class="text-[11px] text-slate-700"><span class="font-bold uppercase tracking-wider">Wystawił(a):</span> <strong class="text-slate-950 font-bold" id="prev-issuer-signature">${wzState.issuerName}</strong></div>
+                <div class="text-[9.5px] text-slate-400 mt-0.5">Podpis wystawcy dokumentu</div>
               </div>
+            </div>
+
+            <!-- Footer note -->
+            <div class="mt-12 pt-3 border-t border-slate-200 flex justify-between text-[9.5px] text-slate-400 font-medium">
+              <span>System Bluemake Industrial Sync • Odoo 19</span>
+              <span>Dokument WZ • Oryginał / Kopia</span>
             </div>
 
           </div>
@@ -1297,6 +1336,12 @@ export function renderWzGeneratorView(container, navigateTo) {
         </tr>
       `).join('');
     }
+
+    const prevTotalQty = container.querySelector('#prev-total-qty');
+    if (prevTotalQty) prevTotalQty.textContent = getTotalQuantity();
+
+    const prevTotalUom = container.querySelector('#prev-total-uom');
+    if (prevTotalUom) prevTotalUom.textContent = wzState.items[0]?.uom || 'szt';
   }
 
   renderUI();
