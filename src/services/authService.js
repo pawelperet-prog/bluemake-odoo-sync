@@ -3,11 +3,11 @@
  */
 import { callOdooRpc } from './odooApi.js';
 
-const LOCAL_STORAGE_USERS_KEY = 'bluemake_users_credentials_v3';
-const LOCAL_STORAGE_OPERATOR_KEY = 'bluemake_active_operator_v3';
-const LOCAL_STORAGE_LOGGED_IN_KEY = 'bluemake_is_logged_in_v3';
-const LOCAL_STORAGE_AUDIT_LOGS_KEY = 'bluemake_audit_logs_v3';
-const LOCAL_STORAGE_LOCKOUT_KEY = 'bluemake_security_lockout_v3';
+const LOCAL_STORAGE_USERS_KEY = 'bluemake_users_credentials_v4';
+const LOCAL_STORAGE_OPERATOR_KEY = 'bluemake_active_operator_v4';
+const LOCAL_STORAGE_LOGGED_IN_KEY = 'bluemake_is_logged_in_v4';
+const LOCAL_STORAGE_AUDIT_LOGS_KEY = 'bluemake_audit_logs_v4';
+const LOCAL_STORAGE_LOCKOUT_KEY = 'bluemake_security_lockout_v4';
 const LOCAL_STORAGE_SITE_AUTH_KEY = 'bluemake_site_master_auth_v1';
 
 export const MASTER_SITE_PASSWORD = 'Szymon_Mateusz2025';
@@ -39,11 +39,18 @@ export const INITIAL_USERS = [
 
 export function getUsers() {
   try {
-    const saved = localStorage.getItem(LOCAL_STORAGE_USERS_KEY);
+    const saved = localStorage.getItem(LOCAL_STORAGE_USERS_KEY) || localStorage.getItem('bluemake_users_credentials_v3');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length === 4 && parsed.some(u => u.name === 'Mateusz') && parsed.some(u => u.name === 'Szymon')) {
-        return parsed;
+      if (Array.isArray(parsed) && parsed.length >= 4) {
+        const merged = INITIAL_USERS.map(initUser => {
+          const found = parsed.find(p => p.id === initUser.id || p.name === initUser.name);
+          return found 
+            ? { ...initUser, ...found, pin: String(found.pin || initUser.pin).trim() } 
+            : initUser;
+        });
+        localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(merged));
+        return merged;
       }
     }
   } catch (e) {
@@ -58,9 +65,20 @@ export function saveUsers(users) {
   localStorage.setItem(LOCAL_STORAGE_USERS_KEY, JSON.stringify(users));
 }
 
+export function getUserById(userId) {
+  const users = getUsers();
+  return users.find(u => u.id === Number(userId)) || null;
+}
+
+export function verifyUserPin(userId, pin) {
+  const user = getUserById(userId);
+  if (!user) return false;
+  return String(user.pin).trim() === String(pin).trim();
+}
+
 export function changeUserPin(userId, newPin) {
   const users = getUsers();
-  const user = users.find(u => u.id === userId);
+  const user = users.find(u => u.id === Number(userId));
   if (user) {
     user.pin = String(newPin).trim();
     user.hasChangedPin = true;
@@ -73,7 +91,7 @@ export function changeUserPin(userId, newPin) {
     });
 
     const current = getCurrentOperator();
-    if (current && current.id === userId) {
+    if (current && current.id === user.id) {
       current.pin = user.pin;
       current.hasChangedPin = true;
       saveCurrentOperator(current);
@@ -83,25 +101,50 @@ export function changeUserPin(userId, newPin) {
   return false;
 }
 
+export function verifyAndChangePin(userId, oldPin, newPin) {
+  const user = getUserById(userId);
+  if (!user) {
+    return { success: false, error: 'Nie znaleziono profilu operatora!' };
+  }
+  if (String(user.pin).trim() !== String(oldPin).trim()) {
+    return { success: false, error: 'Obecny kod PIN jest nieprawidłowy!' };
+  }
+  const cleanNewPin = String(newPin).trim();
+  if (!/^\d{4}$/.test(cleanNewPin)) {
+    return { success: false, error: 'Nowy PIN musi składać się dokładnie z 4 cyfr!' };
+  }
+  if (cleanNewPin === String(oldPin).trim()) {
+    return { success: false, error: 'Nowy PIN musi różnić się od obecnego!' };
+  }
+
+  const success = changeUserPin(user.id, cleanNewPin);
+  return { success, error: success ? null : 'Błąd podczas zapisywania nowego kodu PIN.' };
+}
+
 export function isUserLoggedIn() {
   return localStorage.getItem(LOCAL_STORAGE_LOGGED_IN_KEY) === 'true';
 }
 
 export function setLoggedIn(operator) {
+  const freshUser = getUserById(operator?.id) || operator;
   localStorage.setItem(LOCAL_STORAGE_LOGGED_IN_KEY, 'true');
-  saveCurrentOperator(operator);
-  resetFailedAttempts(operator.id);
+  saveCurrentOperator(freshUser);
+  resetFailedAttempts(freshUser.id);
   logAuditAction({
     action: 'LOGOWANIE',
-    details: `Zalogowano operatora ${operator.name} (${operator.roleLabel})`,
-    operator: operator.name
+    details: `Zalogowano operatora ${freshUser.name} (${freshUser.roleLabel})`,
+    operator: freshUser.name
   });
 }
 
 export function getCurrentOperator() {
   try {
-    const saved = localStorage.getItem(LOCAL_STORAGE_OPERATOR_KEY);
-    if (saved) return JSON.parse(saved);
+    const saved = localStorage.getItem(LOCAL_STORAGE_OPERATOR_KEY) || localStorage.getItem('bluemake_active_operator_v3');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const freshUser = getUserById(parsed?.id);
+      return freshUser || parsed;
+    }
   } catch (e) {}
   return getUsers()[0];
 }
@@ -133,7 +176,7 @@ export function isAdmin(operator = null) {
  */
 function getLockoutData() {
   try {
-    const data = localStorage.getItem(LOCAL_STORAGE_LOCKOUT_KEY);
+    const data = localStorage.getItem(LOCAL_STORAGE_LOCKOUT_KEY) || localStorage.getItem('bluemake_security_lockout_v3');
     return data ? JSON.parse(data) : {};
   } catch (e) {
     return {};
@@ -267,7 +310,7 @@ export function logAuditAction({ action, details, operator = null, sku = null })
 
 export function getAuditLogs() {
   try {
-    const data = localStorage.getItem(LOCAL_STORAGE_AUDIT_LOGS_KEY);
+    const data = localStorage.getItem(LOCAL_STORAGE_AUDIT_LOGS_KEY) || localStorage.getItem('bluemake_audit_logs_v3');
     return data ? JSON.parse(data) : [];
   } catch (e) {
     return [];

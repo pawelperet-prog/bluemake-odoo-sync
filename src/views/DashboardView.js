@@ -4,6 +4,7 @@ import { openCreateProductModal } from './CreateProductModal.js';
 import { openReportWindow } from '../utils/reportGenerator.js';
 import { openQrLabelsWindow, openSingleQrLabelWindow } from '../utils/qrLabelReport.js';
 import { openLowStockAlertModal } from './LowStockModal.js';
+import { openOperatorModal } from './OperatorModal.js';
 import { getCurrentOperator, logoutOperator } from '../services/authService.js';
 
 export function renderDashboardView(container, navigateTo) {
@@ -483,10 +484,7 @@ export function renderDashboardView(container, navigateTo) {
   });
 
   container.querySelector('#hdr-operator-btn').addEventListener('click', () => {
-    if (confirm(`Zalogowano jako: ${activeOp ? activeOp.name : 'Operator'}. Czy chcesz zmienić operatora / wylogować się?`)) {
-      logoutOperator();
-      navigateTo('login');
-    }
+    openOperatorModal(navigateTo);
   });
 
   container.querySelector('#header-settings').addEventListener('click', () => {
