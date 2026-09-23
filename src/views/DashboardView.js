@@ -72,57 +72,25 @@ export function renderDashboardView(container, navigateTo) {
         </div>
         
         <!-- Interactive Category Select Button -->
-        <button id="cat-selector-btn" class="h-touch-target-min bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-caps px-3 rounded flex items-center justify-center gap-1 transition-colors flex-shrink-0 font-bold border border-outline-variant text-xs">
+        <button id="cat-selector-btn" class="h-touch-target-min bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-caps px-3.5 rounded flex items-center justify-center gap-1.5 transition-colors flex-shrink-0 font-bold border border-outline-variant text-xs">
           <span class="material-symbols-outlined text-[18px]">filter_list</span>
           <span id="cat-btn-label">SUROWIEC (ID: 4)</span>
         </button>
 
-        <!-- Soft Jaws Button -->
-        <button id="btn-open-jaws" class="h-touch-target-min bg-blue-600 hover:bg-blue-700 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Baza Szczęk Miękkich CNC (SZ-[SKU])">
-          <span class="material-symbols-outlined text-[18px]">precision_manufacturing</span>
-          SZCZĘKI CNC
-        </button>
-
-        <!-- WZ Generator Button -->
-        <button id="btn-open-wz" class="h-touch-target-min bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Kreator Dokumentów WZ (Wydanie Magazynowe)">
-          <span class="material-symbols-outlined text-[18px]">description</span>
-          DOKUMENT WZ
-        </button>
-
-        <!-- Employees & Leave Button -->
-        <button id="btn-open-employees" class="h-touch-target-min bg-purple-700 hover:bg-purple-800 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Ewidencja Pracowników, Urlopy i Zgłoszenia">
-          <span class="material-symbols-outlined text-[18px]">badge</span>
-          PRACOWNICY
-        </button>
-        
-        ${isOpAdmin ? `
-          <!-- Orders Subpage Button -->
-          <button id="btn-open-orders" class="h-touch-target-min bg-indigo-600 hover:bg-indigo-700 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Moduł Importu Zamówień PDF i Etykiet Wysyłkowych">
-            <span class="material-symbols-outlined text-[18px]">receipt_long</span>
-            ZAMÓWIENIA
-          </button>
-
-          <!-- Valuation Subpage Button -->
-          <button id="btn-open-valuation" class="h-touch-target-min bg-emerald-700 hover:bg-emerald-800 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs">
-            <span class="material-symbols-outlined text-[18px]">payments</span>
-            WYCENA & WAGA
-          </button>
-        ` : ''}
-
         <!-- Printable Report Button -->
-        <button id="btn-print-report" class="h-touch-target-min bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs">
+        <button id="btn-print-report" class="h-touch-target-min bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-3.5 rounded flex items-center justify-center gap-1.5 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Wygeneruj raport stanu magazynowego">
           <span class="material-symbols-outlined text-[18px]">print</span>
           RAPORT HTML
         </button>
 
         <!-- Printable QR Labels Button (50x30mm) -->
-        <button id="btn-qr-labels" class="h-touch-target-min bg-indigo-700 hover:bg-indigo-800 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Generuj etykiety QR w formacie 50x30mm">
+        <button id="btn-qr-labels" class="h-touch-target-min bg-indigo-700 hover:bg-indigo-800 text-white font-label-caps px-3.5 rounded flex items-center justify-center gap-1.5 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Generuj etykiety QR w formacie 50x30mm">
           <span class="material-symbols-outlined text-[18px]">qr_code_2</span>
           KODY QR (50x30)
         </button>
 
         <!-- Add Product Button -->
-        <button id="btn-add-product" class="h-touch-target-min bg-[#ff6b00] hover:bg-[#e66000] text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs">
+        <button id="btn-add-product" class="h-touch-target-min bg-[#ff6b00] hover:bg-[#e66000] text-white font-label-caps px-3.5 rounded flex items-center justify-center gap-1.5 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Dodaj nowy produkt do bazy Odoo">
           <span class="material-symbols-outlined text-[18px]">add_box</span>
           DODAJ PRODUKT
         </button>
@@ -454,21 +422,13 @@ export function renderDashboardView(container, navigateTo) {
     container.querySelector('#cat-modal').classList.add('hidden');
   });
 
-  container.querySelector('#btn-open-jaws')?.addEventListener('click', () => navigateTo('jaws'));
+  // Navigation Event Listeners (Top Header Bar)
   container.querySelector('#hdr-jaws')?.addEventListener('click', () => navigateTo('jaws'));
-
-  container.querySelector('#btn-open-wz')?.addEventListener('click', () => navigateTo('wz'));
   container.querySelector('#hdr-wz')?.addEventListener('click', () => navigateTo('wz'));
-
-  container.querySelector('#btn-open-employees')?.addEventListener('click', () => navigateTo('employees'));
   container.querySelector('#hdr-employees')?.addEventListener('click', () => navigateTo('employees'));
-
-  container.querySelector('#btn-open-orders')?.addEventListener('click', () => navigateTo('orders'));
   container.querySelector('#hdr-orders')?.addEventListener('click', () => navigateTo('orders'));
-  container.querySelector('#nav-orders')?.addEventListener('click', () => navigateTo('orders'));
-
-  container.querySelector('#btn-open-valuation')?.addEventListener('click', () => navigateTo('valuation'));
   container.querySelector('#hdr-valuation')?.addEventListener('click', () => navigateTo('valuation'));
+  container.querySelector('#nav-orders')?.addEventListener('click', () => navigateTo('orders'));
   container.querySelector('#nav-val')?.addEventListener('click', () => navigateTo('valuation'));
 
   container.querySelector('#btn-print-report').addEventListener('click', () => {
