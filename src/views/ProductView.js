@@ -27,12 +27,16 @@ export function renderProductView(container, navigateTo, product) {
   };
   if (!currentProduct.sku && currentProduct.default_code) currentProduct.sku = currentProduct.default_code;
   if (!currentProduct.sku) currentProduct.sku = String(currentProduct.id || '00000');
-  if (isNaN(currentProduct.quantity)) currentProduct.quantity = 0;
+  const isExplicitRaw = currentProduct.categoryId === 4 || 
+                        currentProduct.isRawMaterial === true ||
+                        (currentProduct.categoryName && currentProduct.categoryName.toLowerCase().includes('surowiec')) ||
+                        /^(pręt|płaskownik|blacha|rura|wałek|profil)/i.test(currentProduct.name || '') ||
+                        /^(304-|316l-|s355-|s235-|c45-|c55-|42crmo4-|16mncr5-|bl-)/i.test(currentProduct.sku || '');
 
-  const isFinishedGood = currentProduct.categoryId === 5 || currentProduct.isFinishedProduct || currentProduct.uom === 'szt';
+  const isFinishedGood = !isExplicitRaw && (currentProduct.categoryId === 5 || currentProduct.isFinishedProduct === true || (currentProduct.categoryName && currentProduct.categoryName.toLowerCase().includes('produkt')));
   const isLowInitial = Number(currentProduct.quantity) < (isFinishedGood ? 2.0 : 5.0);
-  const matchingJaws = getJawsByProductSku(currentProduct.sku);
-  const cutBuffer = getCutBufferBySku(currentProduct.sku);
+  const matchingJaws = isFinishedGood ? getJawsByProductSku(currentProduct.sku) : [];
+  const cutBuffer = isFinishedGood ? getCutBufferBySku(currentProduct.sku) : null;
 
   let operationMode = 'CUT'; // 'CUT' (Wydanie/Ucięcie) vs 'ADD' (Przyjęcie/Dostawa)
   let adjustmentAmount = isFinishedGood ? 1 : 0.1;
