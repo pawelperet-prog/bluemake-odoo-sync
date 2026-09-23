@@ -80,69 +80,69 @@ export async function openCreateProductModal(onCreatedCallback) {
 
           <!-- TAB 1: PRĘT (Round Bar Inputs) -->
           <div id="panel-rod" class="tab-panel flex flex-col gap-3">
-            <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-lg flex items-center gap-2 text-xs font-semibold text-amber-900">
-              <span class="material-symbols-outlined text-amber-600">info</span>
+            <div class="bg-amber-950/40 border border-amber-500/40 p-3 rounded-lg flex items-center gap-2 text-xs font-semibold text-amber-200">
+              <span class="material-symbols-outlined text-amber-400">info</span>
               <span>Wprowadź średnicę pręta. Długość podajesz w metrach [m] (jako ilość w Odoo).</span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Średnica Ø [mm] *</label>
-                <input id="rod-diameter" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg" required />
+                <input id="rod-diameter" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-white" required />
               </div>
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Długość w (ilościach) [m] *</label>
-                <input id="rod-length-meters" type="number" step="0.1" min="0.1" value="12.0" placeholder="np. 12.5" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-emerald-700" required />
+                <input id="rod-length-meters" type="number" step="0.1" min="0.1" value="12.0" placeholder="np. 12.5" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-emerald-400" required />
               </div>
             </div>
           </div>
 
           <!-- TAB 2: PŁASKOWNIK (Flat Bar Inputs) -->
           <div id="panel-flat" class="tab-panel hidden flex flex-col gap-3">
-            <div class="bg-blue-500/10 border border-blue-500/30 p-3 rounded-lg flex items-center gap-2 text-xs font-semibold text-blue-900">
-              <span class="material-symbols-outlined text-blue-600">info</span>
+            <div class="bg-blue-950/40 border border-blue-500/40 p-3 rounded-lg flex items-center gap-2 text-xs font-semibold text-blue-200">
+              <span class="material-symbols-outlined text-blue-400">info</span>
               <span>Wprowadź 2 wymiary przekroju. Długość podajesz w metrach [m] (jako ilość w Odoo).</span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Szerokość [mm] *</label>
-                <input id="flat-width" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg" />
+                <input id="flat-width" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-white" />
               </div>
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Wysokość / Grubość [mm] *</label>
-                <input id="flat-height" type="number" step="1" min="1" placeholder="np. 10" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg" />
+                <input id="flat-height" type="number" step="1" min="1" placeholder="np. 10" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-white" />
               </div>
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Długość w (ilościach) [m] *</label>
-                <input id="flat-length-meters" type="number" step="0.1" min="0.1" value="6.0" placeholder="np. 6.0" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-emerald-700" />
+                <input id="flat-length-meters" type="number" step="0.1" min="0.1" value="6.0" placeholder="np. 6.0" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-emerald-400" />
               </div>
             </div>
           </div>
 
           <!-- TAB 3: PŁASKOWNIK ŚCINKI (Flat Bar Scraps Inputs) -->
           <div id="panel-scrap" class="tab-panel hidden flex flex-col gap-3">
-            <div class="bg-purple-500/10 border border-purple-500/30 p-3 rounded-lg flex items-center gap-2 text-xs font-semibold text-purple-900">
-              <span class="material-symbols-outlined text-purple-600">info</span>
+            <div class="bg-purple-950/40 border border-purple-500/40 p-3 rounded-lg flex items-center gap-2 text-xs font-semibold text-purple-200">
+              <span class="material-symbols-outlined text-purple-400">info</span>
               <span>Wprowadź 3 wymiary ścinka (Dł x Szer x Wys). Ilość podajesz w sztukach [szt].</span>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Długość [mm] *</label>
-                <input id="scrap-length" type="number" step="1" min="1" placeholder="np. 450" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold" />
+                <input id="scrap-length" type="number" step="1" min="1" placeholder="np. 450" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold text-white" />
               </div>
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Szerokość [mm] *</label>
-                <input id="scrap-width" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold" />
+                <input id="scrap-width" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold text-white" />
               </div>
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Wysokość [mm] *</label>
-                <input id="scrap-height" type="number" step="1" min="1" placeholder="np. 10" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold" />
+                <input id="scrap-height" type="number" step="1" min="1" placeholder="np. 10" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold text-white" />
               </div>
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Ilość [szt] *</label>
-                <input id="scrap-qty-pcs" type="number" step="1" min="1" value="1" placeholder="np. 5" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold text-purple-700" />
+                <input id="scrap-qty-pcs" type="number" step="1" min="1" value="1" placeholder="np. 5" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold text-purple-300" />
               </div>
             </div>
           </div>

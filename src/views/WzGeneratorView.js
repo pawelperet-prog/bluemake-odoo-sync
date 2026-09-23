@@ -128,7 +128,7 @@ export function renderWzGeneratorView(container, navigateTo) {
       margin: [6, 6, 6, 6],
       filename: fileName,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
+      html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
@@ -276,38 +276,53 @@ export function renderWzGeneratorView(container, navigateTo) {
     container.innerHTML = `
       <style>
         @media print {
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          body {
+            background: #ffffff !important;
+            color: #000000 !important;
+          }
           body * { visibility: hidden; }
-          #printable-wz-sheet, #printable-wz-sheet * { visibility: visible; }
+          #printable-wz-sheet, #printable-wz-sheet * {
+            visibility: visible;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           #printable-wz-sheet {
             position: absolute;
             left: 0;
             top: 0;
             width: 100% !important;
             margin: 0 !important;
-            padding: 0 !important;
+            padding: 8mm !important;
             box-shadow: none !important;
             border: none !important;
+            background-color: #ffffff !important;
+            color: #0f172a !important;
           }
           header, #wz-creator-controls, #history-modal-backdrop, #odoo-picker-modal-backdrop { display: none !important; }
         }
       </style>
 
       <!-- Top Bar -->
-      <header class="fixed top-0 left-0 w-full z-40 bg-surface border-b border-outline-variant h-14 flex justify-between items-center px-4">
+      <header class="fixed top-0 left-0 w-full z-40 bg-slate-900 border-b border-slate-800 h-14 flex justify-between items-center px-4">
         <div class="flex items-center gap-3">
-          <button id="btn-back-mag" class="flex items-center gap-1 text-primary hover:bg-surface-container-high px-2.5 py-1.5 rounded-lg font-bold text-xs transition-transform active:scale-95">
+          <button id="btn-back-mag" class="flex items-center gap-1 text-slate-300 hover:text-white hover:bg-slate-800 px-2.5 py-1.5 rounded-lg font-bold text-xs transition-transform active:scale-95">
             <span class="material-symbols-outlined text-[18px]">arrow_back</span>
             <span>MAGAZYN</span>
           </button>
-          <div class="h-4 w-px bg-outline-variant"></div>
+          <div class="h-4 w-px bg-slate-800"></div>
           <div class="flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-amber-600 text-[22px]">description</span>
-            <h1 class="font-bold text-primary text-sm sm:text-base">Kreator Dokumentów WZ</h1>
+            <span class="material-symbols-outlined text-amber-500 text-[22px]">description</span>
+            <h1 class="font-bold text-white text-sm sm:text-base">Kreator Dokumentów WZ</h1>
           </div>
         </div>
 
         <div class="flex items-center gap-2">
-          <button id="btn-toggle-wz-history" class="flex items-center gap-1 bg-surface-container-high hover:bg-surface-container-highest text-primary border border-outline-variant font-bold text-xs px-3 py-1.5 rounded-lg transition-all shadow-sm">
+          <button id="btn-toggle-wz-history" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs px-3 py-1.5 rounded-lg transition-all shadow-sm">
             <span class="material-symbols-outlined text-[16px]">history</span>
             <span>HISTORIA WZ</span>
             <span class="bg-amber-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono">${getWzHistory().length}</span>
@@ -319,47 +334,47 @@ export function renderWzGeneratorView(container, navigateTo) {
         
         <!-- Status Toast Banner -->
         ${statusBannerMsg ? `
-          <div class="p-3.5 rounded-2xl flex items-center justify-between gap-2 shadow-md ${statusBannerType === 'success' ? 'bg-emerald-100 border-2 border-emerald-400 text-emerald-950' : 'bg-blue-100 border-2 border-blue-400 text-blue-950'}">
+          <div class="p-3.5 rounded-2xl flex items-center justify-between gap-2 shadow-md ${statusBannerType === 'success' ? 'bg-emerald-950/80 border border-emerald-600 text-emerald-200' : (statusBannerType === 'error' ? 'bg-rose-950/80 border border-rose-600 text-rose-200' : 'bg-blue-950/80 border border-blue-600 text-blue-200')}">
             <div class="flex items-center gap-2 font-bold text-xs sm:text-sm">
-              <span class="material-symbols-outlined ${statusBannerType === 'success' ? 'text-emerald-600' : 'text-blue-600'}">
-                ${statusBannerType === 'success' ? 'check_circle' : 'info'}
+              <span class="material-symbols-outlined ${statusBannerType === 'success' ? 'text-emerald-400' : (statusBannerType === 'error' ? 'text-rose-400' : 'text-blue-400')}">
+                ${statusBannerType === 'success' ? 'check_circle' : (statusBannerType === 'error' ? 'error' : 'info')}
               </span>
               <span>${statusBannerMsg}</span>
             </div>
-            <button id="btn-dismiss-status" class="text-xs font-bold px-2 py-1 hover:bg-black/10 rounded-lg">✕</button>
+            <button id="btn-dismiss-status" class="text-xs font-bold px-2 py-1 hover:bg-white/10 rounded-lg">✕</button>
           </div>
         ` : ''}
 
         <!-- ═════════════════════════════════════════════════════════════════════
-             CREATOR CONTROLS BAR (Styled identically to user photo!)
+             CREATOR CONTROLS BAR (MODERN DARK INDUSTRIAL THEME)
              ═════════════════════════════════════════════════════════════════════ -->
-        <div id="wz-creator-controls" class="bg-surface-container-lowest border-2 border-outline-variant/80 rounded-2xl p-4 sm:p-5 shadow-md flex flex-col gap-4">
+        <div id="wz-creator-controls" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col gap-4 text-slate-100">
           
           <!-- Top Row Form Inputs -->
           <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center text-xs">
             
             <!-- Nr WZ: [ 1 ] / [ 09 ] / [ 2026 ] /BM -->
-            <div class="md:col-span-4 flex items-center gap-1 bg-slate-50 border border-slate-300 p-2 rounded-xl">
-              <span class="font-bold text-slate-700 whitespace-nowrap">Nr WZ:</span>
-              <input id="input-wz-num" type="number" min="1" value="${wzState.wzNum}" class="w-12 text-center bg-white border border-slate-300 rounded font-bold font-mono py-1 px-1 focus:ring-1 focus:ring-primary" />
-              <span class="font-bold text-slate-400">/</span>
-              <input id="input-wz-month" type="text" maxlength="2" value="${wzState.wzMonth}" class="w-10 text-center bg-white border border-slate-300 rounded font-bold font-mono py-1 px-1 focus:ring-1 focus:ring-primary" />
-              <span class="font-bold text-slate-400">/</span>
-              <input id="input-wz-year" type="text" maxlength="4" value="${wzState.wzYear}" class="w-14 text-center bg-white border border-slate-300 rounded font-bold font-mono py-1 px-1 focus:ring-1 focus:ring-primary" />
-              <input id="input-wz-suffix" type="text" value="${wzState.wzSuffix}" class="w-16 text-center bg-white border border-slate-300 rounded font-bold font-mono py-1 px-1 focus:ring-1 focus:ring-primary" />
+            <div class="md:col-span-4 flex items-center gap-1 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
+              <span class="font-bold text-slate-300 whitespace-nowrap">Nr WZ:</span>
+              <input id="input-wz-num" type="number" min="1" value="${wzState.wzNum}" class="w-12 text-center bg-slate-950 border border-slate-700 rounded font-bold font-mono py-1 px-1 text-white focus:ring-1 focus:ring-blue-500" />
+              <span class="font-bold text-slate-500">/</span>
+              <input id="input-wz-month" type="text" maxlength="2" value="${wzState.wzMonth}" class="w-10 text-center bg-slate-950 border border-slate-700 rounded font-bold font-mono py-1 px-1 text-white focus:ring-1 focus:ring-blue-500" />
+              <span class="font-bold text-slate-500">/</span>
+              <input id="input-wz-year" type="text" maxlength="4" value="${wzState.wzYear}" class="w-14 text-center bg-slate-950 border border-slate-700 rounded font-bold font-mono py-1 px-1 text-white focus:ring-1 focus:ring-blue-500" />
+              <input id="input-wz-suffix" type="text" value="${wzState.wzSuffix}" class="w-16 text-center bg-slate-950 border border-slate-700 rounded font-bold font-mono py-1 px-1 text-white focus:ring-1 focus:ring-blue-500" />
             </div>
 
             <!-- Data wystawienia & Miejsce -->
-            <div class="md:col-span-4 flex items-center gap-1.5 bg-slate-50 border border-slate-300 p-2 rounded-xl">
-              <span class="font-bold text-slate-700 whitespace-nowrap">Data:</span>
-              <input id="input-issue-date" type="date" value="${wzState.issueDate}" class="flex-1 bg-white border border-slate-300 rounded font-bold py-1 px-2 focus:ring-1 focus:ring-primary" />
-              <input id="input-issue-place" type="text" value="${wzState.issuePlace}" placeholder="MIELEC" class="w-20 bg-white border border-slate-300 rounded font-bold uppercase py-1 px-1.5 text-center focus:ring-1 focus:ring-primary" />
+            <div class="md:col-span-4 flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
+              <span class="font-bold text-slate-300 whitespace-nowrap">Data:</span>
+              <input id="input-issue-date" type="date" value="${wzState.issueDate}" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold py-1 px-2 text-white focus:ring-1 focus:ring-blue-500" />
+              <input id="input-issue-place" type="text" value="${wzState.issuePlace}" placeholder="MIELEC" class="w-20 bg-slate-950 border border-slate-700 rounded font-bold uppercase py-1 px-1.5 text-center text-white focus:ring-1 focus:ring-blue-500" />
             </div>
 
             <!-- Nr zamówienia & Data zamówienia -->
-            <div class="md:col-span-4 flex items-center gap-1.5 bg-slate-50 border border-slate-300 p-2 rounded-xl">
-              <span class="font-bold text-slate-700 whitespace-nowrap">Nr zam.:</span>
-              <input id="input-order-num" type="text" value="${wzState.orderNumber}" placeholder="ZZ-72/09/2026/EC" class="flex-1 bg-white border border-slate-300 rounded font-bold font-mono py-1 px-2 focus:ring-1 focus:ring-primary" />
+            <div class="md:col-span-4 flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
+              <span class="font-bold text-slate-300 whitespace-nowrap">Nr zam.:</span>
+              <input id="input-order-num" type="text" value="${wzState.orderNumber}" placeholder="ZZ-72/09/2026/EC" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold font-mono py-1 px-2 text-white focus:ring-1 focus:ring-blue-500" />
             </div>
 
           </div>
@@ -368,15 +383,15 @@ export function renderWzGeneratorView(container, navigateTo) {
           <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center text-xs">
             
             <!-- Data zamówienia -->
-            <div class="md:col-span-3 flex items-center gap-1.5 bg-slate-50 border border-slate-300 p-2 rounded-xl">
-              <span class="font-bold text-slate-700 whitespace-nowrap">Data zam.:</span>
-              <input id="input-order-date" type="date" value="${wzState.orderDate}" class="flex-1 bg-white border border-slate-300 rounded font-bold py-1 px-2 focus:ring-1 focus:ring-primary" />
+            <div class="md:col-span-3 flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
+              <span class="font-bold text-slate-300 whitespace-nowrap">Data zam.:</span>
+              <input id="input-order-date" type="date" value="${wzState.orderDate}" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold py-1 px-2 text-white focus:ring-1 focus:ring-blue-500" />
             </div>
 
             <!-- Wystawiający (Kto wystawia WZ) -->
-            <div class="md:col-span-4 flex items-center gap-1.5 bg-slate-50 border border-slate-300 p-2 rounded-xl">
-              <span class="font-bold text-slate-700 whitespace-nowrap">Wystawił:</span>
-              <select id="select-issuer-name" class="flex-1 bg-white border border-slate-300 rounded font-bold py-1 px-2 focus:ring-1 focus:ring-primary">
+            <div class="md:col-span-4 flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
+              <span class="font-bold text-slate-300 whitespace-nowrap">Wystawił:</span>
+              <select id="select-issuer-name" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold py-1 px-2 text-white focus:ring-1 focus:ring-blue-500">
                 <option value="Mateusz Klimkowski" ${wzState.issuerName === 'Mateusz Klimkowski' ? 'selected' : ''}>Mateusz Klimkowski</option>
                 <option value="Paweł Peret" ${wzState.issuerName === 'Paweł Peret' ? 'selected' : ''}>Paweł Peret</option>
                 <option value="Szymon" ${wzState.issuerName === 'Szymon' ? 'selected' : ''}>Szymon</option>
@@ -386,15 +401,15 @@ export function renderWzGeneratorView(container, navigateTo) {
             </div>
 
             <!-- Odbiorca (Klient) Preset Selector -->
-            <div class="md:col-span-5 flex items-center gap-1.5 bg-slate-50 border border-slate-300 p-2 rounded-xl">
-              <span class="font-bold text-slate-700 whitespace-nowrap">Odbiorca:</span>
-              <select id="select-customer-preset" class="flex-1 bg-white border border-slate-300 rounded font-bold py-1 px-2 focus:ring-1 focus:ring-primary">
+            <div class="md:col-span-5 flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
+              <span class="font-bold text-slate-300 whitespace-nowrap">Odbiorca:</span>
+              <select id="select-customer-preset" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold py-1 px-2 text-white focus:ring-1 focus:ring-blue-500">
                 ${customers.map(c => `
                   <option value="${c.id}" ${wzState.customer.name === c.name ? 'selected' : ''}>${c.name}</option>
                 `).join('')}
                 <option value="NEW">+ Dodaj nowego kontrahenta</option>
               </select>
-              <button id="btn-edit-customer" title="Edytuj dane odbiorcy" class="bg-slate-200 hover:bg-slate-300 p-1 rounded">
+              <button id="btn-edit-customer" title="Edytuj dane odbiorcy" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-1.5 rounded-lg transition-colors">
                 <span class="material-symbols-outlined text-[16px]">edit</span>
               </button>
             </div>
@@ -402,51 +417,51 @@ export function renderWzGeneratorView(container, navigateTo) {
           </div>
 
           <!-- Customer Edit Drawer (Collapsible) -->
-          <div id="customer-edit-box" class="hidden bg-amber-50/70 border border-amber-300 p-3 rounded-xl flex flex-col gap-2 text-xs">
-            <span class="font-bold text-amber-900 uppercase">Edycja danych odbiorcy na dokumencie WZ:</span>
+          <div id="customer-edit-box" class="hidden bg-amber-950/40 border border-amber-500/50 p-3 rounded-xl flex flex-col gap-2 text-xs">
+            <span class="font-bold text-amber-300 uppercase tracking-wide">Edycja danych odbiorcy na dokumencie WZ:</span>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <input id="edit-cust-name" type="text" placeholder="Nazwa firmy" value="${wzState.customer.name || ''}" class="bg-white border border-amber-300 p-1.5 rounded font-bold" />
-              <input id="edit-cust-address" type="text" placeholder="Adres (Ulica, Kod, Miasto)" value="${wzState.customer.address || ''}" class="bg-white border border-amber-300 p-1.5 rounded" />
-              <input id="edit-cust-nip" type="text" placeholder="NIP (np. PL9452024663)" value="${wzState.customer.nip || ''}" class="bg-white border border-amber-300 p-1.5 rounded font-mono" />
-              <input id="edit-cust-contact" type="text" placeholder="Kontakt / email / www" value="${wzState.customer.contact || ''}" class="bg-white border border-amber-300 p-1.5 rounded" />
+              <input id="edit-cust-name" type="text" placeholder="Nazwa firmy" value="${wzState.customer.name || ''}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded font-bold text-white" />
+              <input id="edit-cust-address" type="text" placeholder="Adres (Ulica, Kod, Miasto)" value="${wzState.customer.address || ''}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded text-white" />
+              <input id="edit-cust-nip" type="text" placeholder="NIP (np. PL9452024663)" value="${wzState.customer.nip || ''}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded font-mono text-white" />
+              <input id="edit-cust-contact" type="text" placeholder="Kontakt / email / www" value="${wzState.customer.contact || ''}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded text-white" />
             </div>
             <div class="flex justify-end gap-2 mt-1">
-              <button id="btn-save-cust-preset" class="bg-amber-700 hover:bg-amber-800 text-white font-bold py-1 px-3 rounded text-xs">Zapisz do listy odbiorców</button>
+              <button id="btn-save-cust-preset" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black py-1.5 px-3 rounded-lg text-xs transition-colors">Zapisz do listy odbiorców</button>
             </div>
           </div>
 
           <!-- Items Row Controls: [ Usuń ] [ Licznik ] [ + Dodaj ] + Action Buttons -->
-          <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-200">
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800">
             
             <!-- Items counter and add/remove buttons -->
-            <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-300 text-xs">
-              <span class="font-bold text-slate-700 px-1">Pozycje:</span>
-              <button id="btn-remove-last-item" class="bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold px-2.5 py-1 rounded-lg transition-all active:scale-95 flex items-center gap-0.5">
+            <div class="flex items-center gap-2 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700 text-xs">
+              <span class="font-bold text-slate-300 px-1">Pozycje:</span>
+              <button id="btn-remove-last-item" class="bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 font-bold px-2.5 py-1 rounded-lg transition-all active:scale-95 flex items-center gap-0.5">
                 <span class="material-symbols-outlined text-[14px]">remove</span>
                 <span>Usuń</span>
               </button>
-              <span id="items-count-badge" class="font-mono font-bold bg-white border border-slate-300 px-2.5 py-0.5 rounded-md text-slate-900">${wzState.items.length}</span>
-              <button id="btn-add-new-item" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold px-2.5 py-1 rounded-lg transition-all active:scale-95 flex items-center gap-0.5">
+              <span id="items-count-badge" class="font-mono font-bold bg-slate-950 border border-slate-700 px-2.5 py-0.5 rounded-md text-white">${wzState.items.length}</span>
+              <button id="btn-add-new-item" class="bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/60 font-bold px-2.5 py-1 rounded-lg transition-all active:scale-95 flex items-center gap-0.5">
                 <span class="material-symbols-outlined text-[14px]">add</span>
                 <span>+ Dodaj</span>
               </button>
             </div>
 
-            <!-- Action Buttons (Exact Green, Blue, Dark, Blue as in photo!) -->
+            <!-- Action Buttons -->
             <div class="flex flex-wrap items-center gap-2">
-              <button id="btn-save-wz-state" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
+              <button id="btn-save-wz-state" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[16px]">${isProcessing ? 'sync' : 'cloud_sync'}</span>
                 <span>${isProcessing ? 'SYNCHRONIZACJA ODOO & PDF...' : '💾 Generuj WZ (Odejmij Stan & Pobierz PDF)'}</span>
               </button>
-              <button id="btn-download-wz-html" class="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
+              <button id="btn-download-wz-html" class="bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[16px]">html</span>
                 <span>Pobierz HTML</span>
               </button>
-              <button id="btn-reset-new-wz" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
+              <button id="btn-reset-new-wz" class="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[16px]">add_circle</span>
                 <span>Nowa WZ</span>
               </button>
-              <button id="btn-print-wz-doc" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-1.5 active:scale-95 transition-all">
+              <button id="btn-print-wz-doc" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/20 flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[18px]">print</span>
                 <span>Drukuj WZ</span>
               </button>
@@ -455,10 +470,10 @@ export function renderWzGeneratorView(container, navigateTo) {
           </div>
 
           <!-- Items Interactive Edit Form List with Autocomplete & Direct Odoo Picker -->
-          <div class="flex flex-col gap-2 pt-2 border-t border-slate-200">
+          <div class="flex flex-col gap-2 pt-2 border-t border-slate-800">
             <div class="flex justify-between items-center">
-              <span class="font-bold text-slate-700 text-xs uppercase tracking-wide">Pozycje towarowe (Wpisz numer / SKU lub wybierz z bazy):</span>
-              <span class="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
+              <span class="font-bold text-slate-300 text-xs uppercase tracking-wide">Pozycje towarowe (Wpisz numer / SKU lub wybierz z bazy):</span>
+              <span class="text-[11px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-700/50 flex items-center gap-1">
                 <span class="material-symbols-outlined text-[14px]">inventory_2</span>
                 Automatyczne odejmowanie ze stanu Odoo 19 przy zapisie
               </span>
@@ -466,8 +481,8 @@ export function renderWzGeneratorView(container, navigateTo) {
 
             <div class="flex flex-col gap-2" id="wz-items-inputs-container">
               ${wzState.items.map((it, idx) => `
-                <div class="flex flex-wrap items-center gap-2 bg-slate-50 border border-slate-300 p-2.5 rounded-xl relative" data-item-idx="${idx}">
-                  <span class="font-mono font-bold text-slate-500 w-6 text-center">${idx + 1}.</span>
+                <div class="flex flex-wrap items-center gap-2 bg-slate-800/80 border border-slate-700 p-2.5 rounded-xl relative" data-item-idx="${idx}">
+                  <span class="font-mono font-bold text-slate-400 w-6 text-center">${idx + 1}.</span>
                   
                   <!-- SKU / Product Name Input with Auto-Suggest Dropdown -->
                   <div class="flex-1 min-w-[260px] relative">
@@ -477,12 +492,12 @@ export function renderWzGeneratorView(container, navigateTo) {
                         value="${it.name || ''}" 
                         placeholder="Wpisz numer (np. 00229) lub nazwę detalu" 
                         autocomplete="off"
-                        class="w-full bg-white border border-slate-300 rounded font-bold px-3 py-1.5 text-xs text-slate-900 item-name-input focus:ring-2 focus:ring-primary" 
+                        class="w-full bg-slate-950 border border-slate-700 rounded font-bold px-3 py-1.5 text-xs text-white item-name-input focus:ring-2 focus:ring-blue-500" 
                         data-idx="${idx}" 
                       />
                       <button 
                         type="button" 
-                        class="btn-open-odoo-picker bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-1.5 rounded text-[11px] font-bold whitespace-nowrap flex items-center gap-1 active:scale-95" 
+                        class="btn-open-odoo-picker bg-indigo-950/70 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-700/60 px-2 py-1.5 rounded text-[11px] font-bold whitespace-nowrap flex items-center gap-1 active:scale-95" 
                         data-idx="${idx}" 
                         title="Otwórz pełną listę produktów z Odoo"
                       >
@@ -492,26 +507,26 @@ export function renderWzGeneratorView(container, navigateTo) {
                     </div>
 
                     <!-- Floating Autocomplete Suggestion Dropdown Box -->
-                    <div id="autocomplete-box-${idx}" class="autocomplete-dropdown hidden absolute top-full left-0 w-full bg-white border-2 border-indigo-500 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto mt-1 p-1"></div>
+                    <div id="autocomplete-box-${idx}" class="autocomplete-dropdown hidden absolute top-full left-0 w-full bg-slate-900 border-2 border-indigo-500 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto mt-1 p-1 text-white"></div>
                   </div>
 
                   <!-- Quantity -->
                   <div class="flex items-center gap-1">
-                    <span class="text-xs text-slate-500 font-bold">Ilość:</span>
+                    <span class="text-xs text-slate-400 font-bold">Ilość:</span>
                     <input 
                       type="number" 
                       step="1" 
                       min="1" 
                       value="${it.quantity}" 
-                      class="w-20 bg-white border border-slate-300 rounded font-bold font-mono px-2 py-1.5 text-xs text-center text-slate-900 item-qty-input focus:ring-2 focus:ring-primary" 
+                      class="w-20 bg-slate-950 border border-slate-700 rounded font-bold font-mono px-2 py-1.5 text-xs text-center text-white item-qty-input focus:ring-2 focus:ring-blue-500" 
                       data-idx="${idx}" 
                     />
                   </div>
 
                   <!-- Unit of Measure -->
                   <div class="flex items-center gap-1">
-                    <span class="text-xs text-slate-500 font-bold">Jm:</span>
-                    <select class="bg-white border border-slate-300 rounded font-bold px-2 py-1.5 text-xs text-slate-900 item-uom-select focus:ring-2 focus:ring-primary" data-idx="${idx}">
+                    <span class="text-xs text-slate-400 font-bold">Jm:</span>
+                    <select class="bg-slate-950 border border-slate-700 rounded font-bold px-2 py-1.5 text-xs text-white item-uom-select focus:ring-2 focus:ring-blue-500" data-idx="${idx}">
                       <option value="szt" ${it.uom === 'szt' ? 'selected' : ''}>szt</option>
                       <option value="m" ${it.uom === 'm' ? 'selected' : ''}>m</option>
                       <option value="kpl" ${it.uom === 'kpl' ? 'selected' : ''}>kpl</option>
@@ -521,13 +536,13 @@ export function renderWzGeneratorView(container, navigateTo) {
 
                   <!-- Stock badge if matched with Odoo -->
                   ${it.productId ? `
-                    <span class="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-1 rounded-lg">
+                    <span class="text-[10px] font-mono font-bold bg-emerald-950/70 text-emerald-300 border border-emerald-700/60 px-2 py-1 rounded-lg">
                       Stan Odoo: ${it.currentStock} ${it.uom}
                     </span>
                   ` : ''}
 
                   <!-- Delete button -->
-                  <button type="button" class="text-rose-600 hover:text-rose-800 p-1 rounded hover:bg-rose-50 btn-delete-item" data-idx="${idx}" title="Usuń ten wiersz">
+                  <button type="button" class="text-rose-400 hover:text-rose-300 p-1 rounded hover:bg-rose-950/40 btn-delete-item" data-idx="${idx}" title="Usuń ten wiersz">
                     <span class="material-symbols-outlined text-[18px]">delete</span>
                   </button>
                 </div>
@@ -538,99 +553,99 @@ export function renderWzGeneratorView(container, navigateTo) {
         </div>
 
         <!-- ═════════════════════════════════════════════════════════════════════
-             LIVE PRO A4 WZ DOCUMENT PREVIEW (ELEGANT SLATE SHADES)
+             LIVE PRO A4 WZ DOCUMENT PREVIEW (EXACT SHADES & PERFECT PRINT FIDELITY)
              ═════════════════════════════════════════════════════════════════════ -->
         <div class="flex flex-col items-center">
-          <div class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider flex items-center gap-1">
+          <div class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider flex items-center gap-1">
             <span class="material-symbols-outlined text-[16px]">visibility</span>
-            <span>Podgląd wydruku A4 (Elegancki styl biznesowy PRO)</span>
+            <span>Podgląd wydruku A4 (Elegancki styl biznesowy PRO • 100% zgodność z wydrukiem)</span>
           </div>
 
-          <div id="printable-wz-sheet" class="bg-white text-slate-950 border-2 border-slate-600 p-8 sm:p-12 shadow-2xl rounded-none w-full max-w-[850px] font-sans text-[12.5px] leading-relaxed select-text">
+          <div id="printable-wz-sheet" style="background-color: #ffffff !important; color: #0f172a !important; border: 2px solid #334155 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="p-8 sm:p-12 shadow-2xl rounded-none w-full max-w-[850px] font-sans text-[12.5px] leading-relaxed select-text">
             
             <!-- Header Grid: 3 Clean Boxes -->
-            <table class="w-full border-collapse border-2 border-slate-700 mb-0">
+            <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #334155; margin-bottom: 0;">
               <tr>
-                <td class="border border-slate-600 p-3 text-center w-1/3 align-middle bg-slate-50/70">
-                  <div class="font-extrabold text-sm text-slate-900" id="prev-issue-date-place">${wzState.issueDate} ${wzState.issuePlace}</div>
-                  <div class="text-[9.5px] text-slate-500 font-semibold mt-0.5 uppercase tracking-wider">Data i miejsce wystawienia</div>
+                <td style="border: 1px solid #475569; padding: 10px 8px; text-align: center; width: 33.33%; vertical-align: middle; background-color: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                  <div style="font-weight: 800; font-size: 13px; color: #0f172a;" id="prev-issue-date-place">${wzState.issueDate} ${wzState.issuePlace}</div>
+                  <div style="font-size: 9.5px; color: #64748b; font-weight: 600; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px;">Data i miejsce wystawienia</div>
                 </td>
-                <td class="border border-slate-600 p-3 text-center w-1/3 align-middle bg-slate-100">
-                  <h2 class="text-base sm:text-lg font-black uppercase tracking-wider text-slate-900 m-0">Wydanie z magazynu (WZ)</h2>
+                <td style="border: 1px solid #475569; padding: 10px 8px; text-align: center; width: 33.33%; vertical-align: middle; background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                  <h2 style="font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0f172a; margin: 0;">Wydanie z magazynu (WZ)</h2>
                 </td>
-                <td class="border border-slate-600 p-3 text-center w-1/3 align-middle bg-slate-50/70">
-                  <div class="font-black text-sm sm:text-base text-slate-950 font-mono" id="prev-wz-full-number">${formatFullWzNumber()}</div>
+                <td style="border: 1px solid #475569; padding: 10px 8px; text-align: center; width: 33.33%; vertical-align: middle; background-color: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                  <div style="font-weight: 900; font-size: 14.5px; color: #0f172a; font-family: monospace;" id="prev-wz-full-number">${formatFullWzNumber()}</div>
                 </td>
               </tr>
               <tr>
-                <td class="border border-slate-600 p-3.5 align-top w-1/2">
-                  <div class="bg-slate-100 -m-3.5 mb-2.5 p-1.5 px-3 border-b border-slate-300 font-bold text-[10px] text-slate-700 uppercase tracking-wider">
+                <td style="border: 1px solid #475569; padding: 12px 10px; vertical-align: top; width: 50%;">
+                  <div style="background-color: #f1f5f9 !important; margin: -12px -10px 8px -10px; padding: 5px 10px; border-bottom: 1px solid #cbd5e1; font-weight: 800; font-size: 9.5px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                     Dostawca:
                   </div>
                   <div id="prev-supplier-block">${getFormattedSupplierHtml()}</div>
                 </td>
-                <td class="border border-slate-600 p-3.5 align-top w-1/2" colspan="2">
-                  <div class="bg-slate-100 -m-3.5 mb-2.5 p-1.5 px-3 border-b border-slate-300 font-bold text-[10px] text-slate-700 uppercase tracking-wider">
+                <td style="border: 1px solid #475569; padding: 12px 10px; vertical-align: top; width: 50%;" colspan="2">
+                  <div style="background-color: #f1f5f9 !important; margin: -12px -10px 8px -10px; padding: 5px 10px; border-bottom: 1px solid #cbd5e1; font-weight: 800; font-size: 9.5px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                     Odbiorca:
                   </div>
                   <div id="prev-customer-block">${getFormattedCustomerHtml()}</div>
                 </td>
               </tr>
-              <tr class="bg-slate-50/60">
-                <td class="border border-slate-600 p-2.5 align-middle">
-                  <span class="text-slate-600 font-semibold">Numer zamówienia:</span> <strong class="text-slate-900 font-mono text-xs" id="prev-order-num">${wzState.orderNumber || '-'}</strong>
+              <tr style="background-color: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                <td style="border: 1px solid #475569; padding: 8px 10px; vertical-align: middle;">
+                  <span style="color: #475569; font-weight: 600;">Numer zamówienia:</span> <strong style="color: #0f172a; font-family: monospace; font-size: 12px;" id="prev-order-num">${wzState.orderNumber || '-'}</strong>
                 </td>
-                <td class="border border-slate-600 p-2.5 align-middle" colspan="2">
-                  <span class="text-slate-600 font-semibold">Data zamówienia:</span> <strong class="text-slate-900 text-xs" id="prev-order-date">${wzState.orderDate || '-'}</strong>
+                <td style="border: 1px solid #475569; padding: 8px 10px; vertical-align: middle;" colspan="2">
+                  <span style="color: #475569; font-weight: 600;">Data zamówienia:</span> <strong style="color: #0f172a; font-size: 12px;" id="prev-order-date">${wzState.orderDate || '-'}</strong>
                 </td>
               </tr>
             </table>
 
             <!-- Goods / Items Table with Pro Header & Zebra Striping -->
-            <table class="w-full border-collapse border-2 border-slate-700 -mt-[2px]">
+            <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #334155; margin-top: -1px;">
               <thead>
-                <tr class="bg-slate-200 text-slate-900 text-xs font-black uppercase tracking-wider">
-                  <th class="border border-slate-600 py-2.5 px-2 text-center w-12">Lp.</th>
-                  <th class="border border-slate-600 py-2.5 px-3 text-left">Nazwa towaru / usługi</th>
-                  <th class="border border-slate-600 py-2.5 px-3 text-center w-24">Ilość</th>
-                  <th class="border border-slate-600 py-2.5 px-3 text-center w-16">Jm</th>
+                <tr style="background-color: #e2e8f0 !important; color: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                  <th style="border: 1px solid #475569; padding: 8px 6px; text-align: center; width: 45px; font-size: 11px; font-weight: 900; text-transform: uppercase;">Lp.</th>
+                  <th style="border: 1px solid #475569; padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 900; text-transform: uppercase;">Nazwa towaru / usługi</th>
+                  <th style="border: 1px solid #475569; padding: 8px 8px; text-align: center; width: 95px; font-size: 11px; font-weight: 900; text-transform: uppercase;">Ilość</th>
+                  <th style="border: 1px solid #475569; padding: 8px 8px; text-align: center; width: 65px; font-size: 11px; font-weight: 900; text-transform: uppercase;">Jm</th>
                 </tr>
               </thead>
               <tbody id="prev-items-tbody">
                 ${wzState.items.map((it, idx) => `
-                  <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/80'}">
-                    <td class="border border-slate-600 py-2 px-2 text-center font-mono font-bold text-slate-600">${idx + 1}</td>
-                    <td class="border border-slate-600 py-2 px-3 font-bold text-slate-950">${it.name || '-'}</td>
-                    <td class="border border-slate-600 py-2 px-3 text-center font-mono font-bold text-sm text-slate-950">${it.quantity}</td>
-                    <td class="border border-slate-600 py-2 px-3 text-center text-slate-700 font-medium">${it.uom || 'szt'}</td>
+                  <tr style="background-color: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'} !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                    <td style="border: 1px solid #475569; padding: 7px 6px; text-align: center; font-family: monospace; font-weight: bold; color: #475569;">${idx + 1}</td>
+                    <td style="border: 1px solid #475569; padding: 7px 10px; font-weight: bold; color: #0f172a;">${it.name || '-'}</td>
+                    <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; font-family: monospace; font-weight: bold; font-size: 13px; color: #0f172a;">${it.quantity}</td>
+                    <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; color: #334155; font-weight: 600;">${it.uom || 'szt'}</td>
                   </tr>
                 `).join('')}
               </tbody>
-              <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-700">
+              <tfoot style="background-color: #f1f5f9 !important; font-weight: bold; border-top: 1.5px solid #334155; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                 <tr>
-                  <td colspan="2" class="border border-slate-600 py-2 px-3 text-right text-xs uppercase tracking-wider text-slate-600">Razem:</td>
-                  <td class="border border-slate-600 py-2 px-3 text-center font-mono font-bold text-sm text-slate-950" id="prev-total-qty">${getTotalQuantity()}</td>
-                  <td class="border border-slate-600 py-2 px-3 text-center text-xs text-slate-600" id="prev-total-uom">${wzState.items[0]?.uom || 'szt'}</td>
+                  <td colspan="2" style="border: 1px solid #475569; padding: 7px 10px; text-align: right; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">Razem:</td>
+                  <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; font-family: monospace; font-weight: 900; font-size: 14px; color: #0f172a;" id="prev-total-qty">${getTotalQuantity()}</td>
+                  <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; font-size: 11px; color: #475569;" id="prev-total-uom">${wzState.items[0]?.uom || 'szt'}</td>
                 </tr>
               </tfoot>
             </table>
 
             <!-- Signatures Section -->
-            <div class="mt-14 grid grid-cols-2 gap-8 px-4">
-              <div class="flex flex-col items-start">
-                <div class="w-4/5 border-t-2 border-slate-700 mb-1.5"></div>
-                <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Odebrał(a)</div>
-                <div class="text-[9.5px] text-slate-400 mt-0.5">Podpis osoby upoważnionej</div>
+            <div style="margin-top: 45px; display: flex; justify-content: space-between; padding: 0 15px;">
+              <div style="width: 42%;">
+                <div style="border-top: 1.5px solid #334155; width: 100%; margin-bottom: 6px;"></div>
+                <div style="font-size: 11px; font-weight: bold; color: #334155; text-transform: uppercase; letter-spacing: 0.5px;">Odebrał(a)</div>
+                <div style="font-size: 9.5px; color: #64748b; margin-top: 2px;">Podpis osoby upoważnionej</div>
               </div>
-              <div class="flex flex-col items-start">
-                <div class="w-4/5 border-t-2 border-slate-700 mb-1.5"></div>
-                <div class="text-[11px] text-slate-700"><span class="font-bold uppercase tracking-wider">Wystawił(a):</span> <strong class="text-slate-950 font-bold" id="prev-issuer-signature">${wzState.issuerName}</strong></div>
-                <div class="text-[9.5px] text-slate-400 mt-0.5">Podpis wystawcy dokumentu</div>
+              <div style="width: 42%;">
+                <div style="border-top: 1.5px solid #334155; width: 100%; margin-bottom: 6px;"></div>
+                <div style="font-size: 11px; color: #334155;"><span style="font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Wystawił(a):</span> <strong style="color: #0f172a; font-weight: bold;" id="prev-issuer-signature">${wzState.issuerName}</strong></div>
+                <div style="font-size: 9.5px; color: #64748b; margin-top: 2px;">Podpis wystawcy dokumentu</div>
               </div>
             </div>
 
             <!-- Footer note -->
-            <div class="mt-12 pt-3 border-t border-slate-200 flex justify-between text-[9.5px] text-slate-400 font-medium">
+            <div style="margin-top: 35px; padding-top: 8px; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between; font-size: 9.5px; color: #64748b; font-weight: 500;">
               <span>System Bluemake Industrial Sync • Odoo 19</span>
               <span>Dokument WZ • Oryginał / Kopia</span>
             </div>
@@ -641,49 +656,49 @@ export function renderWzGeneratorView(container, navigateTo) {
       </main>
 
       <!-- ═════════════════════════════════════════════════════════════════════
-           MODAL: ODOO PRODUCTS BROWSER / SELECTOR
+           MODAL: ODOO PRODUCTS BROWSER / SELECTOR (DARK THEMED)
            ═════════════════════════════════════════════════════════════════════ -->
       ${showOdooPickerModal ? `
-        <div id="odoo-picker-modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3">
-          <div class="bg-white rounded-2xl max-w-3xl w-full p-5 shadow-2xl flex flex-col gap-3 max-h-[85vh]">
-            <div class="flex justify-between items-center border-b border-gray-200 pb-2">
+        <div id="odoo-picker-modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+          <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-5 shadow-2xl flex flex-col gap-3 max-h-[85vh] text-slate-100">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
               <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-indigo-600 text-2xl">inventory_2</span>
-                <h2 class="font-bold text-gray-900 text-base">Wybierz produkt z bazy Odoo (Pozycja ${targetPickerItemIdx !== null ? targetPickerItemIdx + 1 : 1})</h2>
+                <span class="material-symbols-outlined text-indigo-400 text-2xl">inventory_2</span>
+                <h2 class="font-bold text-white text-base">Wybierz produkt z bazy Odoo (Pozycja ${targetPickerItemIdx !== null ? targetPickerItemIdx + 1 : 1})</h2>
               </div>
-              <button id="close-odoo-picker-btn" class="p-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
+              <button id="close-odoo-picker-btn" class="p-1 text-slate-400 hover:text-white rounded-full hover:bg-slate-800">
                 <span class="material-symbols-outlined">close</span>
               </button>
             </div>
 
             <!-- Search input inside modal -->
             <div class="relative">
-              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-              <input id="picker-search-input" type="text" placeholder="Szukaj po numerze SKU, nazwie detalu, gatunku..." autofocus class="w-full pl-10 pr-4 py-2 border-2 border-indigo-200 focus:border-indigo-600 rounded-xl text-sm font-bold" />
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+              <input id="picker-search-input" type="text" placeholder="Szukaj po numerze SKU, nazwie detalu, gatunku..." autofocus class="w-full pl-10 pr-4 py-2.5 bg-slate-950 border-2 border-slate-700 focus:border-indigo-500 rounded-xl text-sm font-bold text-white placeholder:text-slate-500 outline-none" />
             </div>
 
             <!-- Products List -->
             <div id="picker-products-list" class="flex-1 overflow-y-auto flex flex-col gap-1.5 max-h-[50vh]">
               ${odooProductsList.map(p => `
-                <div class="picker-prod-card flex justify-between items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-colors cursor-pointer" 
+                <div class="picker-prod-card flex justify-between items-center p-2.5 bg-slate-800/80 border border-slate-700 rounded-xl hover:bg-slate-800 hover:border-indigo-400 transition-colors cursor-pointer" 
                   data-sku="${p.sku}" data-name="${p.name}" data-id="${p.id}" data-qty="${p.quantity || 0}" data-loc="${p.locationId || 5}" data-uom="${p.uom || 'szt'}">
                   <div>
                     <div class="flex items-center gap-2">
-                      <span class="font-mono font-bold bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded text-xs">${p.sku}</span>
-                      <span class="font-bold text-xs text-slate-800">${p.name}</span>
+                      <span class="font-mono font-bold bg-indigo-950 text-indigo-300 border border-indigo-700/60 px-2 py-0.5 rounded text-xs">${p.sku}</span>
+                      <span class="font-bold text-xs text-white">${p.name}</span>
                     </div>
-                    <div class="text-[11px] text-slate-500 mt-0.5">Lokacja: ${p.location || 'Magazyn'} • Kategoria: ID ${p.categoryId || '-'}</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">Lokacja: ${p.location || 'Magazyn'} • Kategoria: ID ${p.categoryId || '-'}</div>
                   </div>
                   <div class="flex items-center gap-3">
-                    <span class="font-mono font-bold text-xs text-slate-700">Stan: ${Number(p.quantity || 0).toFixed(1)} ${p.uom || 'szt'}</span>
-                    <button type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Wybierz</button>
+                    <span class="font-mono font-bold text-xs text-slate-300">Stan: ${Number(p.quantity || 0).toFixed(1)} ${p.uom || 'szt'}</span>
+                    <button type="button" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Wybierz</button>
                   </div>
                 </div>
               `).join('')}
             </div>
 
-            <div class="flex justify-end pt-2 border-t border-gray-100">
-              <button id="btn-close-picker-bottom" class="bg-gray-200 hover:bg-gray-300 font-bold px-4 py-2 rounded-xl text-xs text-gray-800">
+            <div class="flex justify-end pt-2 border-t border-slate-800">
+              <button id="btn-close-picker-bottom" class="bg-slate-800 hover:bg-slate-700 font-bold px-4 py-2 rounded-xl text-xs text-slate-200">
                 Anuluj
               </button>
             </div>
@@ -692,48 +707,48 @@ export function renderWzGeneratorView(container, navigateTo) {
       ` : ''}
 
       <!-- ═════════════════════════════════════════════════════════════════════
-           HISTORY MODAL
+           HISTORY MODAL (DARK THEMED)
            ═════════════════════════════════════════════════════════════════════ -->
       ${showHistoryModal ? `
-        <div id="history-modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3">
-          <div class="bg-white rounded-2xl max-w-3xl w-full p-5 shadow-2xl flex flex-col gap-4 max-h-[85vh]">
-            <div class="flex justify-between items-center border-b border-gray-200 pb-2">
+        <div id="history-modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+          <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-5 shadow-2xl flex flex-col gap-4 max-h-[85vh] text-slate-100">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
               <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-amber-600 text-2xl">history</span>
-                <h2 class="font-bold text-gray-900 text-base">Baza Wystawionych Dokumentów WZ (${getWzHistory().length})</h2>
+                <span class="material-symbols-outlined text-amber-400 text-2xl">history</span>
+                <h2 class="font-bold text-white text-base">Baza Wystawionych Dokumentów WZ (${getWzHistory().length})</h2>
               </div>
-              <button id="close-history-modal-btn" class="p-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
+              <button id="close-history-modal-btn" class="p-1 text-slate-400 hover:text-white rounded-full hover:bg-slate-800">
                 <span class="material-symbols-outlined">close</span>
               </button>
             </div>
 
             <div class="flex-1 overflow-y-auto flex flex-col gap-2.5">
               ${getWzHistory().length === 0 ? `
-                <div class="text-center py-10 text-gray-400 text-xs font-bold flex flex-col items-center gap-2">
-                  <span class="material-symbols-outlined text-4xl text-gray-300">folder_open</span>
+                <div class="text-center py-10 text-slate-500 text-xs font-bold flex flex-col items-center gap-2">
+                  <span class="material-symbols-outlined text-4xl text-slate-600">folder_open</span>
                   <span>Brak zapisanych dokumentów WZ. Utwórz WZ i kliknij „Generuj WZ”.</span>
                 </div>
               ` : getWzHistory().map(w => `
-                <div class="flex flex-wrap justify-between items-center p-3.5 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-slate-100/80 transition-all gap-2">
+                <div class="flex flex-wrap justify-between items-center p-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl hover:bg-slate-800 transition-all gap-2">
                   <div class="flex flex-col gap-0.5">
                     <div class="flex items-center gap-2">
-                      <span class="font-bold text-sm text-slate-950">${w.formattedNumber || `Nr ${w.wzNum}/${w.wzMonth}/${w.wzYear}${w.wzSuffix || '/BM'}`}</span>
-                      <span class="text-[10px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">${w.issueDate}</span>
+                      <span class="font-bold text-sm text-white">${w.formattedNumber || `Nr ${w.wzNum}/${w.wzMonth}/${w.wzYear}${w.wzSuffix || '/BM'}`}</span>
+                      <span class="text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-700/60 px-2 py-0.5 rounded-full">${w.issueDate}</span>
                     </div>
-                    <div class="text-xs text-slate-700 font-semibold">${w.customer?.name || 'Brak odbiorcy'} • Zam: <span class="font-mono text-slate-900">${w.orderNumber}</span></div>
-                    <div class="text-[11px] text-slate-500">
+                    <div class="text-xs text-slate-300 font-semibold">${w.customer?.name || 'Brak odbiorcy'} • Zam: <span class="font-mono text-white">${w.orderNumber}</span></div>
+                    <div class="text-[11px] text-slate-400">
                       Pozycje (${w.items?.length || 0}): ${w.items?.map(i => `${i.name} (${i.quantity}${i.uom})`).slice(0, 3).join(', ')}${w.items?.length > 3 ? '...' : ''}
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
-                    <button class="btn-load-wz bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm" data-id="${w.id}">
+                    <button class="btn-load-wz bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm" data-id="${w.id}">
                       Wczytaj
                     </button>
-                    <button class="btn-history-pdf bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm flex items-center gap-1" data-id="${w.id}" title="Pobierz plik PDF">
+                    <button class="btn-history-pdf bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm flex items-center gap-1" data-id="${w.id}" title="Pobierz plik PDF">
                       <span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>
                       <span>PDF</span>
                     </button>
-                    <button class="btn-del-wz text-rose-600 hover:bg-rose-50 p-2 rounded-xl" data-id="${w.id}" title="Usuń z bazy">
+                    <button class="btn-del-wz text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 p-2 rounded-xl" data-id="${w.id}" title="Usuń z bazy">
                       <span class="material-symbols-outlined text-[18px]">delete</span>
                     </button>
                   </div>
@@ -741,8 +756,8 @@ export function renderWzGeneratorView(container, navigateTo) {
               `).join('')}
             </div>
 
-            <div class="flex justify-end pt-2 border-t border-gray-100">
-              <button id="btn-close-hist-bottom" class="bg-gray-200 hover:bg-gray-300 font-bold px-4 py-2 rounded-xl text-xs text-gray-800">
+            <div class="flex justify-end pt-2 border-t border-slate-800">
+              <button id="btn-close-hist-bottom" class="bg-slate-800 hover:bg-slate-700 font-bold px-4 py-2 rounded-xl text-xs text-slate-200">
                 Zamknij
               </button>
             </div>
@@ -1328,11 +1343,11 @@ export function renderWzGeneratorView(container, navigateTo) {
     const tbody = container.querySelector('#prev-items-tbody');
     if (tbody) {
       tbody.innerHTML = wzState.items.map((it, idx) => `
-        <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/80'}">
-          <td class="border border-slate-600 py-2 px-2 text-center font-mono font-bold text-slate-600">${idx + 1}</td>
-          <td class="border border-slate-600 py-2 px-3 font-bold text-slate-950">${it.name || '-'}</td>
-          <td class="border border-slate-600 py-2 px-3 text-center font-mono font-bold text-sm text-slate-950">${it.quantity}</td>
-          <td class="border border-slate-600 py-2 px-3 text-center text-slate-700 font-medium">${it.uom || 'szt'}</td>
+        <tr style="background-color: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'} !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+          <td style="border: 1px solid #475569; padding: 7px 6px; text-align: center; font-family: monospace; font-weight: bold; color: #475569;">${idx + 1}</td>
+          <td style="border: 1px solid #475569; padding: 7px 10px; font-weight: bold; color: #0f172a;">${it.name || '-'}</td>
+          <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; font-family: monospace; font-weight: bold; font-size: 13px; color: #0f172a;">${it.quantity}</td>
+          <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; color: #334155; font-weight: 600;">${it.uom || 'szt'}</td>
         </tr>
       `).join('');
     }

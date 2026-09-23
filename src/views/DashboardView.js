@@ -324,7 +324,7 @@ export function renderDashboardView(container, navigateTo) {
     const activeClasses = 'bg-primary text-on-primary shadow-sm';
     const inactiveClasses = 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest';
     const activeLowClasses = 'bg-rose-600 text-white shadow-md font-bold';
-    const inactiveLowClasses = 'bg-rose-100 text-rose-800 border border-rose-300 hover:bg-rose-200';
+    const inactiveLowClasses = 'bg-rose-950/60 text-rose-300 border border-rose-800/60 hover:bg-rose-900/80';
 
     btnRaw.className = `px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${activeFilter === 'RAW' ? activeClasses : inactiveClasses}`;
     btnFinished.className = `px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${activeFilter === 'FINISHED' ? activeClasses : inactiveClasses}`;
@@ -347,11 +347,11 @@ export function renderDashboardView(container, navigateTo) {
       const isLow = Number(p.quantity) < 5.0;
 
       return `
-        <div class="bg-surface-container-lowest border ${isLow ? 'border-rose-500/70 bg-rose-50/20' : 'border-outline-variant/40'} rounded p-3 shadow-sm hover:border-primary/50 transition-colors flex flex-row items-center justify-between gap-3">
+        <div class="bg-surface-container-lowest border ${isLow ? 'border-rose-500/70 bg-rose-950/20' : 'border-outline-variant/40'} rounded p-3 shadow-sm hover:border-primary/50 transition-colors flex flex-row items-center justify-between gap-3">
           <div class="flex flex-col gap-0.5 flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-surface-container text-primary border border-outline-variant/30 flex-shrink-0">${p.sku}</span>
-              <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${p.categoryId === 4 ? 'bg-[#ff6b00]/10 text-[#ff6b00] border border-[#ff6b00]/30' : 'bg-primary/10 text-primary border border-primary/20'}">
+              <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${p.categoryId === 4 ? 'bg-[#ff6b00]/20 text-[#ff6b00] border border-[#ff6b00]/40' : 'bg-primary/20 text-primary border border-primary/30'}">
                 ${p.categoryName || (p.categoryId === 4 ? 'SUROWIEC' : 'PRODUKT')}
               </span>
               ${isLow ? `
@@ -364,17 +364,17 @@ export function renderDashboardView(container, navigateTo) {
             <div class="text-xs text-on-surface-variant flex items-center gap-2">
               <span>Strefa 5</span>
               <span>•</span>
-              <span class="font-bold ${isLow ? 'text-rose-600 font-extrabold' : 'text-primary'}">Stan: ${Number(p.quantity).toFixed(1)}${p.uom}</span>
+              <span class="font-bold ${isLow ? 'text-rose-400 font-extrabold' : 'text-primary'}">Stan: ${Number(p.quantity).toFixed(1)}${p.uom}</span>
             </div>
           </div>
 
           <div class="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
             ${isLow ? `
-              <button data-product-id="${p.id}" title="Wyślij powiadomienie o niskim stanie do M. Klimkowskiego / P. Pereta w Odoo" class="alert-low-stock-btn px-2 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-label-caps text-xs rounded transition-all uppercase font-bold flex items-center gap-1 shadow-sm active:scale-95">
+              <button data-product-id="${p.id}" title="Wyślij powiadomienie o niskim stanie do M. Klimkowskiego / P. Pereta w Odoo" class="alert-low-stock-btn px-2 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-label-caps text-xs rounded transition-all uppercase font-bold flex items-center gap-1 shadow-sm active:scale-95">
                 <span class="material-symbols-outlined text-[15px]">campaign</span> ZGŁOŚ
               </button>
             ` : ''}
-            <button data-product-id="${p.id}" title="Drukuj etykietę QR 50x30mm dla tego produktu" class="print-single-qr-btn px-2.5 py-1.5 bg-indigo-100 text-indigo-950 hover:bg-indigo-200 border border-indigo-300 font-label-caps text-xs rounded transition-colors uppercase font-bold flex items-center gap-1">
+            <button data-product-id="${p.id}" title="Drukuj etykietę QR 50x30mm dla tego produktu" class="print-single-qr-btn px-2.5 py-1.5 bg-indigo-950/70 text-indigo-300 hover:bg-indigo-900 border border-indigo-700/60 font-label-caps text-xs rounded transition-colors uppercase font-bold flex items-center gap-1">
               <span class="material-symbols-outlined text-[16px]">qr_code_2</span> QR
             </button>
             <button data-product-id="${p.id}" class="update-stock-btn px-3 py-1.5 bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary font-label-caps text-xs rounded transition-colors uppercase font-bold flex items-center gap-1">

@@ -72,8 +72,8 @@ export function openSettingsModal(onSavedCallback) {
 
         <!-- TAB 2: MQTT ZEBRA CLOUD CONFIG -->
         <div id="panel-settings-mqtt" class="hidden flex flex-col gap-3 font-body-md">
-          <div class="bg-indigo-50 border border-indigo-200 p-3 rounded-xl flex items-start gap-2.5 text-xs text-indigo-900">
-            <span class="material-symbols-outlined text-indigo-600 text-lg flex-shrink-0">cloud</span>
+          <div class="bg-indigo-950/60 border border-indigo-700/60 p-3 rounded-xl flex items-start gap-2.5 text-xs text-indigo-200">
+            <span class="material-symbols-outlined text-indigo-400 text-lg flex-shrink-0">cloud</span>
             <div>
               <b>Druk z dowolnego miejsca na świecie (Zebra MQTT / HiveMQ):</b><br/>
               Wpisz dane brokera MQTT. Drukarka Zebra na hali odbiera komendy ZPL przez swój temat (Topic) i drukuje natychmiast po 1 kliknięciu.
@@ -83,8 +83,8 @@ export function openSettingsModal(onSavedCallback) {
           <label class="flex items-center gap-3 p-3 bg-surface-container rounded-xl border border-outline-variant cursor-pointer">
             <input id="cfg-mqtt-enabled" type="checkbox" ${mqttCfg.enabled ? 'checked' : ''} class="w-5 h-5 rounded text-primary focus:ring-primary accent-primary cursor-pointer" />
             <div class="flex flex-col">
-              <span class="text-xs font-bold text-gray-900 uppercase">Włącz bezpośredni druk przez MQTT (1-Klik)</span>
-              <span class="text-[11px] text-gray-500">Kliknięcie „Drukuj” wysyła ZPL prosto do Zebry przez chmurę</span>
+              <span class="text-xs font-bold text-white uppercase">Włącz bezpośredni druk przez MQTT (1-Klik)</span>
+              <span class="text-[11px] text-slate-400">Kliknięcie „Drukuj” wysyła ZPL prosto do Zebry przez chmurę</span>
             </div>
           </label>
 

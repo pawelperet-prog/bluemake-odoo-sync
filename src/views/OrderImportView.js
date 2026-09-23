@@ -66,16 +66,16 @@ export function renderOrderImportView(container, navigateTo) {
       <main class="w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 flex flex-col gap-4 mt-14 mb-20">
         
         <!-- Dropzone / PDF Upload Card -->
-        <div id="pdf-dropzone" class="border-2 border-dashed border-indigo-300 hover:border-indigo-600 bg-indigo-50/40 hover:bg-indigo-50/70 rounded-2xl p-4 sm:p-6 text-center cursor-pointer transition-all duration-200 shadow-sm flex flex-col items-center justify-center gap-2">
+        <div id="pdf-dropzone" class="border-2 border-dashed border-indigo-500/50 hover:border-indigo-400 bg-indigo-950/30 hover:bg-indigo-950/50 rounded-2xl p-4 sm:p-6 text-center cursor-pointer transition-all duration-200 shadow-lg flex flex-col items-center justify-center gap-2">
           <input type="file" id="pdf-file-input" accept="application/pdf" class="hidden" />
-          <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-inner">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-900/60 border border-indigo-700/60 text-indigo-300 flex items-center justify-center shadow-inner">
             <span class="material-symbols-outlined text-3xl">upload_file</span>
           </div>
           <div>
-            <h3 class="font-bold text-indigo-950 text-sm sm:text-base">Przeciągnij i upuść plik PDF zamówienia od klienta (1, 2 lub 3+ strony)</h3>
-            <p class="text-xs text-indigo-700 mt-0.5">Obsługuje formaty Comarch ERP XL, Subiekt, SAP, zlecenia magazynowe i faktury</p>
+            <h3 class="font-bold text-white text-sm sm:text-base">Przeciągnij i upuść plik PDF zamówienia od klienta (1, 2 lub 3+ strony)</h3>
+            <p class="text-xs text-indigo-300 mt-0.5">Obsługuje formaty Comarch ERP XL, Subiekt, SAP, zlecenia magazynowe i faktury</p>
           </div>
-          <button type="button" class="mt-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition-transform active:scale-95 shadow-md pointer-events-none">
+          <button type="button" class="mt-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition-transform active:scale-95 shadow-md pointer-events-none">
             WYBIERZ PLIK PDF Z DYSKU
           </button>
         </div>
@@ -88,13 +88,13 @@ export function renderOrderImportView(container, navigateTo) {
               <span class="font-bold text-primary text-sm uppercase tracking-wide">Dane Nagłówka Zamówienia</span>
             </div>
             ${currentOrder.odooOrderName ? `
-              <div class="flex items-center gap-1.5 bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold px-3 py-1 rounded-full">
-                <span class="material-symbols-outlined text-[16px] text-emerald-600">cloud_done</span>
+              <div class="flex items-center gap-1.5 bg-emerald-950 text-emerald-300 border border-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
+                <span class="material-symbols-outlined text-[16px] text-emerald-400">cloud_done</span>
                 <span>ZSYNCHRONIZOWANO Z ODOO: <strong>${currentOrder.odooOrderName}</strong></span>
               </div>
             ` : `
-              <div class="flex items-center gap-1.5 bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold px-3 py-1 rounded-full">
-                <span class="material-symbols-outlined text-[16px] text-amber-600">edit_document</span>
+              <div class="flex items-center gap-1.5 bg-amber-950 text-amber-300 border border-amber-700 text-xs font-bold px-3 py-1 rounded-full">
+                <span class="material-symbols-outlined text-[16px] text-amber-400">edit_document</span>
                 <span>SZKIC / DO WYSŁANIA</span>
               </div>
             `}
@@ -103,17 +103,17 @@ export function renderOrderImportView(container, navigateTo) {
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="flex flex-col gap-1">
               <label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Nr Zamówienia / Ref:</label>
-              <input id="input-order-ref" type="text" value="${currentOrder.orderRef || ''}" placeholder="np. ZZ-330/10/2025/EC lub 24/08/2026" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-primary focus:ring-2 focus:ring-primary outline-none font-mono" />
+              <input id="input-order-ref" type="text" value="${currentOrder.orderRef || ''}" placeholder="np. ZZ-330/10/2025/EC lub 24/08/2026" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-white placeholder:text-slate-500 focus:ring-2 focus:ring-primary outline-none font-mono" />
             </div>
 
             <div class="flex flex-col gap-1">
               <label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Data Wystawienia:</label>
-              <input id="input-order-date" type="date" value="${currentOrder.orderDate || ''}" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-primary focus:ring-2 focus:ring-primary outline-none" />
+              <input id="input-order-date" type="date" value="${currentOrder.orderDate || ''}" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-white focus:ring-2 focus:ring-primary outline-none" />
             </div>
 
             <div class="flex flex-col gap-1">
               <label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Termin Realizacji:</label>
-              <input id="input-delivery-date" type="date" value="${currentOrder.deliveryDate || ''}" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-primary focus:ring-2 focus:ring-primary outline-none" />
+              <input id="input-delivery-date" type="date" value="${currentOrder.deliveryDate || ''}" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-white focus:ring-2 focus:ring-primary outline-none" />
             </div>
           </div>
         </div>
@@ -133,9 +133,9 @@ export function renderOrderImportView(container, navigateTo) {
 
           ${currentOrder.items.length === 0 ? `
             <div class="text-center py-10 text-on-surface-variant flex flex-col items-center gap-2">
-              <span class="material-symbols-outlined text-4xl text-gray-400">post_add</span>
+              <span class="material-symbols-outlined text-4xl text-slate-600">post_add</span>
               <p class="text-sm font-bold">Brak pozycji w zamówieniu.</p>
-              <p class="text-xs text-gray-500">Przeciągnij plik PDF powyżej lub kliknij „Dodaj pozycję”, aby wpisać ręcznie.</p>
+              <p class="text-xs text-slate-500">Przeciągnij plik PDF powyżej lub kliknij „Dodaj pozycję”, aby wpisać ręcznie.</p>
             </div>
           ` : `
             <div class="overflow-x-auto">
@@ -146,7 +146,7 @@ export function renderOrderImportView(container, navigateTo) {
                     <th class="py-2.5 px-2 w-24 font-mono">SKU</th>
                     <th class="py-2.5 px-2">RYSUNEK / NAZWA DETALU</th>
                     <th class="py-2.5 px-2 w-20 text-center">ZAMÓWIONE</th>
-                    <th class="py-2.5 px-2 w-28 text-center bg-indigo-50/60 text-indigo-950 font-black">DO WYSYŁKI</th>
+                    <th class="py-2.5 px-2 w-28 text-center bg-indigo-950/40 text-indigo-300 font-black">DO WYSYŁKI</th>
                     <th class="py-2.5 px-2 w-24 text-right">CENA NETTO</th>
                     <th class="py-2.5 px-2 w-24 text-right">WARTOŚĆ</th>
                     <th class="py-2.5 px-2 w-28 text-center">TYP / PROTOTYP</th>
@@ -159,42 +159,42 @@ export function renderOrderImportView(container, navigateTo) {
                     const rowNetto = ((item.shippedQty || item.orderedQty || 0) * (item.unitPrice || 0)).toFixed(2);
                     return `
                       <tr class="hover:bg-surface-container/30 transition-colors" data-row-idx="${idx}">
-                        <td class="py-2 px-2 text-center font-bold text-gray-500">${idx + 1}</td>
+                        <td class="py-2 px-2 text-center font-bold text-slate-400">${idx + 1}</td>
                         <td class="py-2 px-2">
-                          <input type="text" class="row-sku w-full bg-surface-container border border-outline-variant/60 rounded px-1.5 py-1 font-mono font-bold text-xs" value="${item.sku || ''}" />
+                          <input type="text" class="row-sku w-full bg-surface-container border border-outline-variant/60 rounded px-1.5 py-1 font-mono font-bold text-xs text-white" value="${item.sku || ''}" />
                         </td>
                         <td class="py-2 px-2">
-                          <input type="text" class="row-name w-full bg-surface-container border border-outline-variant/60 rounded px-1.5 py-1 font-bold text-xs" value="${item.name || ''}" />
+                          <input type="text" class="row-name w-full bg-surface-container border border-outline-variant/60 rounded px-1.5 py-1 font-bold text-xs text-white" value="${item.name || ''}" />
                         </td>
                         <td class="py-2 px-2 text-center">
-                          <span class="font-bold text-gray-600">${item.orderedQty || 0} ${item.uom || 'szt'}</span>
+                          <span class="font-bold text-slate-300">${item.orderedQty || 0} ${item.uom || 'szt'}</span>
                         </td>
-                        <td class="py-2 px-2 text-center bg-indigo-50/40">
-                          <input type="number" step="1" min="0" class="row-shipped-qty w-20 text-center bg-white border-2 border-indigo-400 focus:border-indigo-600 rounded-lg px-1.5 py-1 font-black text-sm text-indigo-950 outline-none" value="${item.shippedQty !== undefined ? item.shippedQty : item.orderedQty}" title="Wpisz faktyczną ilość wyprodukowaną / do wysyłki (np. 55 zamiast 50)" />
+                        <td class="py-2 px-2 text-center bg-indigo-950/20">
+                          <input type="number" step="1" min="0" class="row-shipped-qty w-20 text-center bg-slate-950 border-2 border-indigo-500 focus:border-indigo-400 rounded-lg px-1.5 py-1 font-black text-sm text-white outline-none" value="${item.shippedQty !== undefined ? item.shippedQty : item.orderedQty}" title="Wpisz faktyczną ilość wyprodukowaną / do wysyłki (np. 55 zamiast 50)" />
                         </td>
                         <td class="py-2 px-2 text-right">
-                          <input type="number" step="0.01" class="row-price w-20 text-right bg-surface-container border border-outline-variant/60 rounded px-1.5 py-1 font-bold text-xs" value="${item.unitPrice || 0}" />
+                          <input type="number" step="0.01" class="row-price w-20 text-right bg-surface-container border border-outline-variant/60 rounded px-1.5 py-1 font-bold text-xs text-white" value="${item.unitPrice || 0}" />
                         </td>
                         <td class="py-2 px-2 text-right font-bold text-primary font-mono">${rowNetto} zł</td>
                         <td class="py-2 px-2 text-center">
-                          <button type="button" class="btn-toggle-proto px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all ${item.isPrototype ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-gray-100 text-gray-700 border-gray-300'}">
+                          <button type="button" class="btn-toggle-proto px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all ${item.isPrototype ? 'bg-amber-950 text-amber-300 border-amber-700/60' : 'bg-slate-800 text-slate-300 border-slate-700'}">
                             ${item.isPrototype ? '🧪 PROTOTYP' : '🏷️ STAŁY'}
                           </button>
                         </td>
                         <td class="py-2 px-2 text-center">
                           ${item.existsInOdoo ? `
-                            <span class="inline-flex items-center gap-1 text-[11px] font-bold ${item.stockStatus === 'OK' ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-rose-700 bg-rose-50 border border-rose-200'} px-2 py-0.5 rounded">
+                            <span class="inline-flex items-center gap-1 text-[11px] font-bold ${item.stockStatus === 'OK' ? 'text-emerald-300 bg-emerald-950/70 border border-emerald-700/60' : 'text-rose-300 bg-rose-950/70 border border-rose-700/60'} px-2 py-0.5 rounded">
                               ${item.stockStatus === 'OK' ? '🟢' : '🔴'} ${item.inStock} ${item.uom || 'szt'}
                             </span>
                           ` : `
-                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
-                              ✨ NOWY W ODOO
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-950/70 border border-amber-700/60 px-1.5 py-0.5 rounded">
+                              ⚠️ Brak w Odoo
                             </span>
                           `}
                         </td>
                         <td class="py-2 px-2 text-center">
-                          <button type="button" class="btn-remove-row text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50">
-                            <span class="material-symbols-outlined text-[18px]">delete</span>
+                          <button type="button" class="btn-del-row text-rose-400 hover:text-rose-300 p-1 hover:bg-rose-950/50 rounded" title="Usuń pozycję">
+                            <span class="material-symbols-outlined text-[16px]">delete</span>
                           </button>
                         </td>
                       </tr>

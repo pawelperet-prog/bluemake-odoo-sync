@@ -61,7 +61,7 @@ export function renderValuationView(container, navigateTo) {
         </div>
         <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm">
           <span class="font-label-caps text-xs text-on-surface-variant font-bold block uppercase">Łączna Waga Magazynu</span>
-          <span id="summary-weight" class="font-headline-lg font-black text-emerald-700 text-2xl">0 kg</span>
+          <span id="summary-weight" class="font-headline-lg font-black text-emerald-400 text-2xl">0 kg</span>
         </div>
         <div class="bg-primary/10 border-2 border-primary rounded-lg p-4 shadow-md">
           <span class="font-label-caps text-xs text-primary font-bold block uppercase">ŁĄCZNA WARTOŚĆ SUROWCÓW</span>
@@ -81,7 +81,7 @@ export function renderValuationView(container, navigateTo) {
             <button id="type-plaskownik" class="px-3 py-1 text-xs font-bold rounded-full bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest">PŁASKOWNIKI</button>
           </div>
 
-          <button id="btn-fill-market-sec" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold px-3 py-1 rounded text-xs flex items-center gap-1">
+          <button id="btn-fill-market-sec" class="bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 border border-amber-700/60 font-bold px-3 py-1 rounded text-xs flex items-center gap-1 transition-colors">
             <span class="material-symbols-outlined text-[15px]">bolt</span> Użyj Średnich Cen Rynkowych
           </button>
         </div>
@@ -90,12 +90,12 @@ export function renderValuationView(container, navigateTo) {
         <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-outline-variant/30">
           <span class="text-xs font-bold text-on-surface-variant uppercase mr-1">Gatunek:</span>
           <button data-grade="ALL" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-primary text-on-primary">WSZYSTKIE</button>
-          <button data-grade="S355" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-amber-100 text-amber-900 border-amber-300">S355 (~4.50zł)</button>
-          <button data-grade="1.4301" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-blue-100 text-blue-900 border-blue-300">1.4301 (~17.50zł)</button>
-          <button data-grade="HM" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-emerald-100 text-emerald-900 border-emerald-300">HM (~5.80zł)</button>
-          <button data-grade="HMT" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-purple-100 text-purple-900 border-purple-300">HMT (~6.20zł)</button>
-          <button data-grade="S235" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-sky-100 text-sky-900 border-sky-300">S235 (~4.15zł)</button>
-          <button data-grade="C45" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-teal-100 text-teal-900 border-teal-300">C45 (~5.10zł)</button>
+          <button data-grade="S355" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-amber-950/70 text-amber-300 border-amber-700/60">S355 (~4.50zł)</button>
+          <button data-grade="1.4301" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-blue-950/70 text-blue-300 border-blue-700/60">1.4301 (~17.50zł)</button>
+          <button data-grade="HM" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-emerald-950/70 text-emerald-300 border-emerald-700/60">HM (~5.80zł)</button>
+          <button data-grade="HMT" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-purple-950/70 text-purple-300 border-purple-700/60">HMT (~6.20zł)</button>
+          <button data-grade="S235" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-sky-950/70 text-sky-300 border-sky-700/60">S235 (~4.15zł)</button>
+          <button data-grade="C45" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-teal-950/70 text-teal-300 border-teal-700/60">C45 (~5.10zł)</button>
         </div>
       </div>
 

@@ -70,8 +70,8 @@ ${r?`📝 <strong>Notatka:</strong> <em>${r}</em><br/>`:""}
 
         <!-- TAB 2: MQTT ZEBRA CLOUD CONFIG -->
         <div id="panel-settings-mqtt" class="hidden flex flex-col gap-3 font-body-md">
-          <div class="bg-indigo-50 border border-indigo-200 p-3 rounded-xl flex items-start gap-2.5 text-xs text-indigo-900">
-            <span class="material-symbols-outlined text-indigo-600 text-lg flex-shrink-0">cloud</span>
+          <div class="bg-indigo-950/60 border border-indigo-700/60 p-3 rounded-xl flex items-start gap-2.5 text-xs text-indigo-200">
+            <span class="material-symbols-outlined text-indigo-400 text-lg flex-shrink-0">cloud</span>
             <div>
               <b>Druk z dowolnego miejsca na świecie (Zebra MQTT / HiveMQ):</b><br/>
               Wpisz dane brokera MQTT. Drukarka Zebra na hali odbiera komendy ZPL przez swój temat (Topic) i drukuje natychmiast po 1 kliknięciu.
@@ -81,8 +81,8 @@ ${r?`📝 <strong>Notatka:</strong> <em>${r}</em><br/>`:""}
           <label class="flex items-center gap-3 p-3 bg-surface-container rounded-xl border border-outline-variant cursor-pointer">
             <input id="cfg-mqtt-enabled" type="checkbox" ${F.enabled?"checked":""} class="w-5 h-5 rounded text-primary focus:ring-primary accent-primary cursor-pointer" />
             <div class="flex flex-col">
-              <span class="text-xs font-bold text-gray-900 uppercase">Włącz bezpośredni druk przez MQTT (1-Klik)</span>
-              <span class="text-[11px] text-gray-500">Kliknięcie „Drukuj” wysyła ZPL prosto do Zebry przez chmurę</span>
+              <span class="text-xs font-bold text-white uppercase">Włącz bezpośredni druk przez MQTT (1-Klik)</span>
+              <span class="text-[11px] text-slate-400">Kliknięcie „Drukuj” wysyła ZPL prosto do Zebry przez chmurę</span>
             </div>
           </label>
 
@@ -555,69 +555,69 @@ ${r?`📝 <strong>Notatka:</strong> <em>${r}</em><br/>`:""}
 
           <!-- TAB 1: PRĘT (Round Bar Inputs) -->
           <div id="panel-rod" class="tab-panel flex flex-col gap-3">
-            <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-lg flex items-center gap-2 text-xs font-semibold text-amber-900">
-              <span class="material-symbols-outlined text-amber-600">info</span>
+            <div class="bg-amber-950/40 border border-amber-500/40 p-3 rounded-lg flex items-center gap-2 text-xs font-semibold text-amber-200">
+              <span class="material-symbols-outlined text-amber-400">info</span>
               <span>Wprowadź średnicę pręta. Długość podajesz w metrach [m] (jako ilość w Odoo).</span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Średnica Ø [mm] *</label>
-                <input id="rod-diameter" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg" required />
+                <input id="rod-diameter" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-white" required />
               </div>
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Długość w (ilościach) [m] *</label>
-                <input id="rod-length-meters" type="number" step="0.1" min="0.1" value="12.0" placeholder="np. 12.5" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-emerald-700" required />
+                <input id="rod-length-meters" type="number" step="0.1" min="0.1" value="12.0" placeholder="np. 12.5" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-emerald-400" required />
               </div>
             </div>
           </div>
 
           <!-- TAB 2: PŁASKOWNIK (Flat Bar Inputs) -->
           <div id="panel-flat" class="tab-panel hidden flex flex-col gap-3">
-            <div class="bg-blue-500/10 border border-blue-500/30 p-3 rounded-lg flex items-center gap-2 text-xs font-semibold text-blue-900">
-              <span class="material-symbols-outlined text-blue-600">info</span>
+            <div class="bg-blue-950/40 border border-blue-500/40 p-3 rounded-lg flex items-center gap-2 text-xs font-semibold text-blue-200">
+              <span class="material-symbols-outlined text-blue-400">info</span>
               <span>Wprowadź 2 wymiary przekroju. Długość podajesz w metrach [m] (jako ilość w Odoo).</span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Szerokość [mm] *</label>
-                <input id="flat-width" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg" />
+                <input id="flat-width" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-white" />
               </div>
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Wysokość / Grubość [mm] *</label>
-                <input id="flat-height" type="number" step="1" min="1" placeholder="np. 10" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg" />
+                <input id="flat-height" type="number" step="1" min="1" placeholder="np. 10" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-white" />
               </div>
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Długość w (ilościach) [m] *</label>
-                <input id="flat-length-meters" type="number" step="0.1" min="0.1" value="6.0" placeholder="np. 6.0" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-emerald-700" />
+                <input id="flat-length-meters" type="number" step="0.1" min="0.1" value="6.0" placeholder="np. 6.0" class="w-full bg-surface-container border border-outline-variant rounded px-3 py-2 text-body-md font-mono font-bold text-lg text-emerald-400" />
               </div>
             </div>
           </div>
 
           <!-- TAB 3: PŁASKOWNIK ŚCINKI (Flat Bar Scraps Inputs) -->
           <div id="panel-scrap" class="tab-panel hidden flex flex-col gap-3">
-            <div class="bg-purple-500/10 border border-purple-500/30 p-3 rounded-lg flex items-center gap-2 text-xs font-semibold text-purple-900">
-              <span class="material-symbols-outlined text-purple-600">info</span>
+            <div class="bg-purple-950/40 border border-purple-500/40 p-3 rounded-lg flex items-center gap-2 text-xs font-semibold text-purple-200">
+              <span class="material-symbols-outlined text-purple-400">info</span>
               <span>Wprowadź 3 wymiary ścinka (Dł x Szer x Wys). Ilość podajesz w sztukach [szt].</span>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Długość [mm] *</label>
-                <input id="scrap-length" type="number" step="1" min="1" placeholder="np. 450" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold" />
+                <input id="scrap-length" type="number" step="1" min="1" placeholder="np. 450" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold text-white" />
               </div>
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Szerokość [mm] *</label>
-                <input id="scrap-width" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold" />
+                <input id="scrap-width" type="number" step="1" min="1" placeholder="np. 50" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold text-white" />
               </div>
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Wysokość [mm] *</label>
-                <input id="scrap-height" type="number" step="1" min="1" placeholder="np. 10" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold" />
+                <input id="scrap-height" type="number" step="1" min="1" placeholder="np. 10" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold text-white" />
               </div>
               <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1 font-bold text-xs">Ilość [szt] *</label>
-                <input id="scrap-qty-pcs" type="number" step="1" min="1" value="1" placeholder="np. 5" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold text-purple-700" />
+                <input id="scrap-qty-pcs" type="number" step="1" min="1" value="1" placeholder="np. 5" class="w-full bg-surface-container border border-outline-variant rounded px-2 py-2 text-body-md font-mono font-bold text-purple-300" />
               </div>
             </div>
           </div>
@@ -800,32 +800,32 @@ ${r?`📝 <strong>Notatka:</strong> <em>${r}</em><br/>`:""}
       <div class="bg-surface-container-lowest border-2 border-rose-500/80 rounded-2xl p-5 max-w-lg w-full shadow-2xl flex flex-col gap-4 max-h-[92vh] overflow-y-auto">
         
         <!-- Header -->
-        <div class="flex justify-between items-start border-b border-rose-200 pb-3">
+        <div class="flex justify-between items-start border-b border-rose-800/60 pb-3">
           <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-rose-100 border border-rose-300 flex items-center justify-center text-rose-600 flex-shrink-0">
+            <div class="w-12 h-12 rounded-xl bg-rose-950 border border-rose-700 flex items-center justify-center text-rose-400 flex-shrink-0">
               <span class="material-symbols-outlined text-3xl">campaign</span>
             </div>
             <div>
-              <h2 class="font-headline-md text-base font-bold text-rose-900 leading-tight">🚨 Zgłoszenie na Czat Odoo</h2>
-              <p class="text-xs text-rose-700 mt-0.5">Powiadomienie do kanałów Odoo Discuss (Stan &lt; 5.0m)</p>
+              <h2 class="font-headline-md text-base font-bold text-white leading-tight">🚨 Zgłoszenie na Czat Odoo</h2>
+              <p class="text-xs text-rose-300 mt-0.5">Powiadomienie do kanałów Odoo Discuss (Stan &lt; 5.0m)</p>
             </div>
           </div>
-          <button id="close-alert-modal-btn" class="text-on-surface-variant hover:text-primary p-1 rounded-full hover:bg-surface-container-high transition-colors">
+          <button id="close-alert-modal-btn" class="text-slate-400 hover:text-white p-1 rounded-full hover:bg-slate-800 transition-colors">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
 
         <!-- Product Summary Box -->
-        <div class="bg-rose-50/70 border border-rose-200 rounded-xl p-3.5 flex flex-col gap-2">
+        <div class="bg-rose-950/40 border border-rose-800/60 rounded-xl p-3.5 flex flex-col gap-2">
           <div class="flex justify-between items-center">
-            <span class="font-mono text-sm font-bold bg-white px-2.5 py-0.5 rounded border border-rose-300 text-rose-900">${F.sku}</span>
+            <span class="font-mono text-sm font-bold bg-slate-950 px-2.5 py-0.5 rounded border border-rose-700 text-rose-300">${F.sku}</span>
             <div class="flex items-center gap-1.5 bg-rose-600 text-white font-bold text-xs px-2.5 py-0.5 rounded-full">
               <span>STAN:</span>
               <span class="text-sm">${Z} ${F.uom||"m"}</span>
             </div>
           </div>
-          <p class="font-bold text-sm text-gray-900 leading-tight">${F.name}</p>
-          <div class="flex justify-between text-xs text-gray-500 pt-1 border-t border-rose-200/60">
+          <p class="font-bold text-sm text-white leading-tight">${F.name}</p>
+          <div class="flex justify-between text-xs text-slate-400 pt-1 border-t border-rose-900/60">
             <span>Odoo ID: ${F.id}</span>
             <span>Lokalizacja: ${F.location||"Magazyn"}</span>
           </div>
@@ -833,15 +833,15 @@ ${r?`📝 <strong>Notatka:</strong> <em>${r}</em><br/>`:""}
 
         <!-- Odoo Discuss Channels Selection -->
         <div class="flex flex-col gap-2">
-          <label class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1">
-            <span class="material-symbols-outlined text-[16px] text-indigo-600">forum</span>
+          <label class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px] text-indigo-400">forum</span>
             Wybierz kanały czatu w Odoo:
           </label>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             ${ODOO_DISCUSS_CHANNELS.map(x=>`
               <label class="flex items-center gap-2 p-2.5 bg-surface-container rounded-lg border border-outline-variant/50 hover:border-indigo-500 cursor-pointer transition-all">
                 <input type="checkbox" name="alert-channel" value="${x.id}" ${x.checked?"checked":""} class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600" />
-                <span class="text-xs font-bold text-gray-900">${x.name}</span>
+                <span class="text-xs font-bold text-white">${x.name}</span>
               </label>
             `).join("")}
           </div>
@@ -849,19 +849,19 @@ ${r?`📝 <strong>Notatka:</strong> <em>${r}</em><br/>`:""}
 
         <!-- Recipients Mentions Selection -->
         <div class="flex flex-col gap-2">
-          <label class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1">
-            <span class="material-symbols-outlined text-[16px] text-rose-600">alternate_email</span>
+          <label class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+            <span class="material-symbols-outlined text-[16px] text-rose-400">alternate_email</span>
             Oznacz osoby w wiadomości (@wzmianka):
           </label>
           <div class="flex flex-col gap-2 bg-surface-container p-2.5 rounded-xl border border-outline-variant/40">
             ${ODOO_MANAGERS.map(x=>`
-              <label class="flex items-center gap-3 p-2 bg-white rounded-lg border border-outline-variant/50 hover:border-rose-500 cursor-pointer transition-all">
+              <label class="flex items-center gap-3 p-2 bg-slate-900 rounded-lg border border-outline-variant/50 hover:border-rose-500 cursor-pointer transition-all">
                 <input type="checkbox" name="alert-recipient" value="${x.partnerId}" checked class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 cursor-pointer accent-rose-600" />
                 <div class="flex flex-col min-w-0 flex-1">
-                  <span class="text-xs font-bold text-gray-900">${x.name}</span>
-                  <span class="text-[11px] text-gray-500 font-mono">${x.email}</span>
+                  <span class="text-xs font-bold text-white">${x.name}</span>
+                  <span class="text-[11px] text-slate-400 font-mono">${x.email}</span>
                 </div>
-                <span class="material-symbols-outlined text-rose-500 text-[18px]">account_circle</span>
+                <span class="material-symbols-outlined text-rose-400 text-[18px]">account_circle</span>
               </label>
             `).join("")}
           </div>
@@ -869,10 +869,10 @@ ${r?`📝 <strong>Notatka:</strong> <em>${r}</em><br/>`:""}
 
         <!-- Optional Operator Note -->
         <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-bold text-gray-700 uppercase tracking-wider">
+          <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">
             Opcjonalna notatka / powód zgłoszenia:
           </label>
-          <textarea id="alert-custom-note" rows="2" placeholder="np. Pilne zapotrzebowanie – zostało mało na następną zmianę / projekt #402" class="w-full bg-white border border-gray-300 rounded-xl p-3 text-sm text-gray-900 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none"></textarea>
+          <textarea id="alert-custom-note" rows="2" placeholder="np. Pilne zapotrzebowanie – zostało mało na następną zmianę / projekt #402" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-sm text-white placeholder:text-slate-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none"></textarea>
         </div>
 
         <!-- Status / Error Banner -->
@@ -1201,16 +1201,16 @@ ${r?`📝 <strong>Notatka:</strong> <em>${r}</em><br/>`:""}
             </button>
           </div>
         </div>
-      `,de.querySelector("#btn-retry-conn").addEventListener("click",()=>r()),de.querySelector("#btn-offline-cfg").addEventListener("click",()=>openSettingsModal(()=>r()));return}const $=c.querySelector("#search-input").value.toLowerCase().trim();let ne=Z.filter(ee=>ee.sku.toLowerCase().includes($)||ee.name.toLowerCase().includes($)?F!==null?ee.categoryId===F:S==="RAW"?ee.isRawMaterial:S==="FINISHED"?ee.isFinishedProduct:S==="LOW"?Number(ee.quantity)<5:!0:!1);y(ne)}function m(){const de=c.querySelector("#filter-raw"),$=c.querySelector("#filter-finished"),ne=c.querySelector("#filter-low"),ee=c.querySelector("#filter-all"),Fe="bg-primary text-on-primary shadow-sm",re="bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest",xe="bg-rose-600 text-white shadow-md font-bold",ve="bg-rose-100 text-rose-800 border border-rose-300 hover:bg-rose-200";de.className=`px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${S==="RAW"?Fe:re}`,$.className=`px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${S==="FINISHED"?Fe:re}`,ne.className=`px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${S==="LOW"?xe:ve}`,ee.className=`px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${S==="ALL"?Fe:re}`}function y(de){const $=c.querySelector("#product-list");if(!de||de.length===0){$.innerHTML=`
+      `,de.querySelector("#btn-retry-conn").addEventListener("click",()=>r()),de.querySelector("#btn-offline-cfg").addEventListener("click",()=>openSettingsModal(()=>r()));return}const $=c.querySelector("#search-input").value.toLowerCase().trim();let ne=Z.filter(ee=>ee.sku.toLowerCase().includes($)||ee.name.toLowerCase().includes($)?F!==null?ee.categoryId===F:S==="RAW"?ee.isRawMaterial:S==="FINISHED"?ee.isFinishedProduct:S==="LOW"?Number(ee.quantity)<5:!0:!1);y(ne)}function m(){const de=c.querySelector("#filter-raw"),$=c.querySelector("#filter-finished"),ne=c.querySelector("#filter-low"),ee=c.querySelector("#filter-all"),Fe="bg-primary text-on-primary shadow-sm",re="bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest",xe="bg-rose-600 text-white shadow-md font-bold",ve="bg-rose-950/60 text-rose-300 border border-rose-800/60 hover:bg-rose-900/80";de.className=`px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${S==="RAW"?Fe:re}`,$.className=`px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${S==="FINISHED"?Fe:re}`,ne.className=`px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${S==="LOW"?xe:ve}`,ee.className=`px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors flex items-center gap-1 ${S==="ALL"?Fe:re}`}function y(de){const $=c.querySelector("#product-list");if(!de||de.length===0){$.innerHTML=`
         <div class="col-span-full text-center py-12 text-on-surface-variant">
           <p class="font-headline-md">Brak pozycji w wybranej kategorii</p>
         </div>
       `;return}$.innerHTML=de.map(ne=>{const ee=Number(ne.quantity)<5;return`
-        <div class="bg-surface-container-lowest border ${ee?"border-rose-500/70 bg-rose-50/20":"border-outline-variant/40"} rounded p-3 shadow-sm hover:border-primary/50 transition-colors flex flex-row items-center justify-between gap-3">
+        <div class="bg-surface-container-lowest border ${ee?"border-rose-500/70 bg-rose-950/20":"border-outline-variant/40"} rounded p-3 shadow-sm hover:border-primary/50 transition-colors flex flex-row items-center justify-between gap-3">
           <div class="flex flex-col gap-0.5 flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-surface-container text-primary border border-outline-variant/30 flex-shrink-0">${ne.sku}</span>
-              <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${ne.categoryId===4?"bg-[#ff6b00]/10 text-[#ff6b00] border border-[#ff6b00]/30":"bg-primary/10 text-primary border border-primary/20"}">
+              <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${ne.categoryId===4?"bg-[#ff6b00]/20 text-[#ff6b00] border border-[#ff6b00]/40":"bg-primary/20 text-primary border border-primary/30"}">
                 ${ne.categoryName||(ne.categoryId===4?"SUROWIEC":"PRODUKT")}
               </span>
               ${ee?`
@@ -1223,17 +1223,17 @@ ${r?`📝 <strong>Notatka:</strong> <em>${r}</em><br/>`:""}
             <div class="text-xs text-on-surface-variant flex items-center gap-2">
               <span>Strefa 5</span>
               <span>•</span>
-              <span class="font-bold ${ee?"text-rose-600 font-extrabold":"text-primary"}">Stan: ${Number(ne.quantity).toFixed(1)}${ne.uom}</span>
+              <span class="font-bold ${ee?"text-rose-400 font-extrabold":"text-primary"}">Stan: ${Number(ne.quantity).toFixed(1)}${ne.uom}</span>
             </div>
           </div>
 
           <div class="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
             ${ee?`
-              <button data-product-id="${ne.id}" title="Wyślij powiadomienie o niskim stanie do M. Klimkowskiego / P. Pereta w Odoo" class="alert-low-stock-btn px-2 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-label-caps text-xs rounded transition-all uppercase font-bold flex items-center gap-1 shadow-sm active:scale-95">
+              <button data-product-id="${ne.id}" title="Wyślij powiadomienie o niskim stanie do M. Klimkowskiego / P. Pereta w Odoo" class="alert-low-stock-btn px-2 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-label-caps text-xs rounded transition-all uppercase font-bold flex items-center gap-1 shadow-sm active:scale-95">
                 <span class="material-symbols-outlined text-[15px]">campaign</span> ZGŁOŚ
               </button>
             `:""}
-            <button data-product-id="${ne.id}" title="Drukuj etykietę QR 50x30mm dla tego produktu" class="print-single-qr-btn px-2.5 py-1.5 bg-indigo-100 text-indigo-950 hover:bg-indigo-200 border border-indigo-300 font-label-caps text-xs rounded transition-colors uppercase font-bold flex items-center gap-1">
+            <button data-product-id="${ne.id}" title="Drukuj etykietę QR 50x30mm dla tego produktu" class="print-single-qr-btn px-2.5 py-1.5 bg-indigo-950/70 text-indigo-300 hover:bg-indigo-900 border border-indigo-700/60 font-label-caps text-xs rounded transition-colors uppercase font-bold flex items-center gap-1">
               <span class="material-symbols-outlined text-[16px]">qr_code_2</span> QR
             </button>
             <button data-product-id="${ne.id}" class="update-stock-btn px-3 py-1.5 bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary font-label-caps text-xs rounded transition-colors uppercase font-bold flex items-center gap-1">
@@ -2344,7 +2344,7 @@ ${r?`📝 <strong>Notatka:</strong> <em>${r}</em><br/>`:""}
         </div>
         <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 shadow-sm">
           <span class="font-label-caps text-xs text-on-surface-variant font-bold block uppercase">Łączna Waga Magazynu</span>
-          <span id="summary-weight" class="font-headline-lg font-black text-emerald-700 text-2xl">0 kg</span>
+          <span id="summary-weight" class="font-headline-lg font-black text-emerald-400 text-2xl">0 kg</span>
         </div>
         <div class="bg-primary/10 border-2 border-primary rounded-lg p-4 shadow-md">
           <span class="font-label-caps text-xs text-primary font-bold block uppercase">ŁĄCZNA WARTOŚĆ SUROWCÓW</span>
@@ -2364,7 +2364,7 @@ ${r?`📝 <strong>Notatka:</strong> <em>${r}</em><br/>`:""}
             <button id="type-plaskownik" class="px-3 py-1 text-xs font-bold rounded-full bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest">PŁASKOWNIKI</button>
           </div>
 
-          <button id="btn-fill-market-sec" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold px-3 py-1 rounded text-xs flex items-center gap-1">
+          <button id="btn-fill-market-sec" class="bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 border border-amber-700/60 font-bold px-3 py-1 rounded text-xs flex items-center gap-1 transition-colors">
             <span class="material-symbols-outlined text-[15px]">bolt</span> Użyj Średnich Cen Rynkowych
           </button>
         </div>
@@ -2373,12 +2373,12 @@ ${r?`📝 <strong>Notatka:</strong> <em>${r}</em><br/>`:""}
         <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-outline-variant/30">
           <span class="text-xs font-bold text-on-surface-variant uppercase mr-1">Gatunek:</span>
           <button data-grade="ALL" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-primary text-on-primary">WSZYSTKIE</button>
-          <button data-grade="S355" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-amber-100 text-amber-900 border-amber-300">S355 (~4.50zł)</button>
-          <button data-grade="1.4301" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-blue-100 text-blue-900 border-blue-300">1.4301 (~17.50zł)</button>
-          <button data-grade="HM" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-emerald-100 text-emerald-900 border-emerald-300">HM (~5.80zł)</button>
-          <button data-grade="HMT" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-purple-100 text-purple-900 border-purple-300">HMT (~6.20zł)</button>
-          <button data-grade="S235" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-sky-100 text-sky-900 border-sky-300">S235 (~4.15zł)</button>
-          <button data-grade="C45" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-teal-100 text-teal-900 border-teal-300">C45 (~5.10zł)</button>
+          <button data-grade="S355" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-amber-950/70 text-amber-300 border-amber-700/60">S355 (~4.50zł)</button>
+          <button data-grade="1.4301" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-blue-950/70 text-blue-300 border-blue-700/60">1.4301 (~17.50zł)</button>
+          <button data-grade="HM" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-emerald-950/70 text-emerald-300 border-emerald-700/60">HM (~5.80zł)</button>
+          <button data-grade="HMT" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-purple-950/70 text-purple-300 border-purple-700/60">HMT (~6.20zł)</button>
+          <button data-grade="S235" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-sky-950/70 text-sky-300 border-sky-700/60">S235 (~4.15zł)</button>
+          <button data-grade="C45" class="grade-pill-btn px-2.5 py-0.5 text-[11px] font-mono font-bold rounded border bg-teal-950/70 text-teal-300 border-teal-700/60">C45 (~5.10zł)</button>
         </div>
       </div>
 
@@ -2679,16 +2679,16 @@ ${Ae}
       <main class="w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 flex flex-col gap-4 mt-14 mb-20">
         
         <!-- Dropzone / PDF Upload Card -->
-        <div id="pdf-dropzone" class="border-2 border-dashed border-indigo-300 hover:border-indigo-600 bg-indigo-50/40 hover:bg-indigo-50/70 rounded-2xl p-4 sm:p-6 text-center cursor-pointer transition-all duration-200 shadow-sm flex flex-col items-center justify-center gap-2">
+        <div id="pdf-dropzone" class="border-2 border-dashed border-indigo-500/50 hover:border-indigo-400 bg-indigo-950/30 hover:bg-indigo-950/50 rounded-2xl p-4 sm:p-6 text-center cursor-pointer transition-all duration-200 shadow-lg flex flex-col items-center justify-center gap-2">
           <input type="file" id="pdf-file-input" accept="application/pdf" class="hidden" />
-          <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-inner">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-900/60 border border-indigo-700/60 text-indigo-300 flex items-center justify-center shadow-inner">
             <span class="material-symbols-outlined text-3xl">upload_file</span>
           </div>
           <div>
-            <h3 class="font-bold text-indigo-950 text-sm sm:text-base">Przeciągnij i upuść plik PDF zamówienia od klienta (1, 2 lub 3+ strony)</h3>
-            <p class="text-xs text-indigo-700 mt-0.5">Obsługuje formaty Comarch ERP XL, Subiekt, SAP, zlecenia magazynowe i faktury</p>
+            <h3 class="font-bold text-white text-sm sm:text-base">Przeciągnij i upuść plik PDF zamówienia od klienta (1, 2 lub 3+ strony)</h3>
+            <p class="text-xs text-indigo-300 mt-0.5">Obsługuje formaty Comarch ERP XL, Subiekt, SAP, zlecenia magazynowe i faktury</p>
           </div>
-          <button type="button" class="mt-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition-transform active:scale-95 shadow-md pointer-events-none">
+          <button type="button" class="mt-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition-transform active:scale-95 shadow-md pointer-events-none">
             WYBIERZ PLIK PDF Z DYSKU
           </button>
         </div>
@@ -2701,13 +2701,13 @@ ${Ae}
               <span class="font-bold text-primary text-sm uppercase tracking-wide">Dane Nagłówka Zamówienia</span>
             </div>
             ${S.odooOrderName?`
-              <div class="flex items-center gap-1.5 bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-bold px-3 py-1 rounded-full">
-                <span class="material-symbols-outlined text-[16px] text-emerald-600">cloud_done</span>
+              <div class="flex items-center gap-1.5 bg-emerald-950 text-emerald-300 border border-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
+                <span class="material-symbols-outlined text-[16px] text-emerald-400">cloud_done</span>
                 <span>ZSYNCHRONIZOWANO Z ODOO: <strong>${S.odooOrderName}</strong></span>
               </div>
             `:`
-              <div class="flex items-center gap-1.5 bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold px-3 py-1 rounded-full">
-                <span class="material-symbols-outlined text-[16px] text-amber-600">edit_document</span>
+              <div class="flex items-center gap-1.5 bg-amber-950 text-amber-300 border border-amber-700 text-xs font-bold px-3 py-1 rounded-full">
+                <span class="material-symbols-outlined text-[16px] text-amber-400">edit_document</span>
                 <span>SZKIC / DO WYSŁANIA</span>
               </div>
             `}
@@ -2716,17 +2716,17 @@ ${Ae}
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="flex flex-col gap-1">
               <label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Nr Zamówienia / Ref:</label>
-              <input id="input-order-ref" type="text" value="${S.orderRef||""}" placeholder="np. ZZ-330/10/2025/EC lub 24/08/2026" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-primary focus:ring-2 focus:ring-primary outline-none font-mono" />
+              <input id="input-order-ref" type="text" value="${S.orderRef||""}" placeholder="np. ZZ-330/10/2025/EC lub 24/08/2026" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-white placeholder:text-slate-500 focus:ring-2 focus:ring-primary outline-none font-mono" />
             </div>
 
             <div class="flex flex-col gap-1">
               <label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Data Wystawienia:</label>
-              <input id="input-order-date" type="date" value="${S.orderDate||""}" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-primary focus:ring-2 focus:ring-primary outline-none" />
+              <input id="input-order-date" type="date" value="${S.orderDate||""}" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-white focus:ring-2 focus:ring-primary outline-none" />
             </div>
 
             <div class="flex flex-col gap-1">
               <label class="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider">Termin Realizacji:</label>
-              <input id="input-delivery-date" type="date" value="${S.deliveryDate||""}" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-primary focus:ring-2 focus:ring-primary outline-none" />
+              <input id="input-delivery-date" type="date" value="${S.deliveryDate||""}" class="bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm font-bold text-white focus:ring-2 focus:ring-primary outline-none" />
             </div>
           </div>
         </div>
@@ -2746,9 +2746,9 @@ ${Ae}
 
           ${S.items.length===0?`
             <div class="text-center py-10 text-on-surface-variant flex flex-col items-center gap-2">
-              <span class="material-symbols-outlined text-4xl text-gray-400">post_add</span>
+              <span class="material-symbols-outlined text-4xl text-slate-600">post_add</span>
               <p class="text-sm font-bold">Brak pozycji w zamówieniu.</p>
-              <p class="text-xs text-gray-500">Przeciągnij plik PDF powyżej lub kliknij „Dodaj pozycję”, aby wpisać ręcznie.</p>
+              <p class="text-xs text-slate-500">Przeciągnij plik PDF powyżej lub kliknij „Dodaj pozycję”, aby wpisać ręcznie.</p>
             </div>
           `:`
             <div class="overflow-x-auto">
@@ -2759,7 +2759,7 @@ ${Ae}
                     <th class="py-2.5 px-2 w-24 font-mono">SKU</th>
                     <th class="py-2.5 px-2">RYSUNEK / NAZWA DETALU</th>
                     <th class="py-2.5 px-2 w-20 text-center">ZAMÓWIONE</th>
-                    <th class="py-2.5 px-2 w-28 text-center bg-indigo-50/60 text-indigo-950 font-black">DO WYSYŁKI</th>
+                    <th class="py-2.5 px-2 w-28 text-center bg-indigo-950/40 text-indigo-300 font-black">DO WYSYŁKI</th>
                     <th class="py-2.5 px-2 w-24 text-right">CENA NETTO</th>
                     <th class="py-2.5 px-2 w-24 text-right">WARTOŚĆ</th>
                     <th class="py-2.5 px-2 w-28 text-center">TYP / PROTOTYP</th>
@@ -2770,42 +2770,42 @@ ${Ae}
                 <tbody class="divide-y divide-outline-variant/40">
                   ${S.items.map((o,l)=>{const m=((o.shippedQty||o.orderedQty||0)*(o.unitPrice||0)).toFixed(2);return`
                       <tr class="hover:bg-surface-container/30 transition-colors" data-row-idx="${l}">
-                        <td class="py-2 px-2 text-center font-bold text-gray-500">${l+1}</td>
+                        <td class="py-2 px-2 text-center font-bold text-slate-400">${l+1}</td>
                         <td class="py-2 px-2">
-                          <input type="text" class="row-sku w-full bg-surface-container border border-outline-variant/60 rounded px-1.5 py-1 font-mono font-bold text-xs" value="${o.sku||""}" />
+                          <input type="text" class="row-sku w-full bg-surface-container border border-outline-variant/60 rounded px-1.5 py-1 font-mono font-bold text-xs text-white" value="${o.sku||""}" />
                         </td>
                         <td class="py-2 px-2">
-                          <input type="text" class="row-name w-full bg-surface-container border border-outline-variant/60 rounded px-1.5 py-1 font-bold text-xs" value="${o.name||""}" />
+                          <input type="text" class="row-name w-full bg-surface-container border border-outline-variant/60 rounded px-1.5 py-1 font-bold text-xs text-white" value="${o.name||""}" />
                         </td>
                         <td class="py-2 px-2 text-center">
-                          <span class="font-bold text-gray-600">${o.orderedQty||0} ${o.uom||"szt"}</span>
+                          <span class="font-bold text-slate-300">${o.orderedQty||0} ${o.uom||"szt"}</span>
                         </td>
-                        <td class="py-2 px-2 text-center bg-indigo-50/40">
-                          <input type="number" step="1" min="0" class="row-shipped-qty w-20 text-center bg-white border-2 border-indigo-400 focus:border-indigo-600 rounded-lg px-1.5 py-1 font-black text-sm text-indigo-950 outline-none" value="${o.shippedQty!==void 0?o.shippedQty:o.orderedQty}" title="Wpisz faktyczną ilość wyprodukowaną / do wysyłki (np. 55 zamiast 50)" />
+                        <td class="py-2 px-2 text-center bg-indigo-950/20">
+                          <input type="number" step="1" min="0" class="row-shipped-qty w-20 text-center bg-slate-950 border-2 border-indigo-500 focus:border-indigo-400 rounded-lg px-1.5 py-1 font-black text-sm text-white outline-none" value="${o.shippedQty!==void 0?o.shippedQty:o.orderedQty}" title="Wpisz faktyczną ilość wyprodukowaną / do wysyłki (np. 55 zamiast 50)" />
                         </td>
                         <td class="py-2 px-2 text-right">
-                          <input type="number" step="0.01" class="row-price w-20 text-right bg-surface-container border border-outline-variant/60 rounded px-1.5 py-1 font-bold text-xs" value="${o.unitPrice||0}" />
+                          <input type="number" step="0.01" class="row-price w-20 text-right bg-surface-container border border-outline-variant/60 rounded px-1.5 py-1 font-bold text-xs text-white" value="${o.unitPrice||0}" />
                         </td>
                         <td class="py-2 px-2 text-right font-bold text-primary font-mono">${m} zł</td>
                         <td class="py-2 px-2 text-center">
-                          <button type="button" class="btn-toggle-proto px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all ${o.isPrototype?"bg-amber-100 text-amber-900 border-amber-300":"bg-gray-100 text-gray-700 border-gray-300"}">
+                          <button type="button" class="btn-toggle-proto px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all ${o.isPrototype?"bg-amber-950 text-amber-300 border-amber-700/60":"bg-slate-800 text-slate-300 border-slate-700"}">
                             ${o.isPrototype?"🧪 PROTOTYP":"🏷️ STAŁY"}
                           </button>
                         </td>
                         <td class="py-2 px-2 text-center">
                           ${o.existsInOdoo?`
-                            <span class="inline-flex items-center gap-1 text-[11px] font-bold ${o.stockStatus==="OK"?"text-emerald-700 bg-emerald-50 border border-emerald-200":"text-rose-700 bg-rose-50 border border-rose-200"} px-2 py-0.5 rounded">
+                            <span class="inline-flex items-center gap-1 text-[11px] font-bold ${o.stockStatus==="OK"?"text-emerald-300 bg-emerald-950/70 border border-emerald-700/60":"text-rose-300 bg-rose-950/70 border border-rose-700/60"} px-2 py-0.5 rounded">
                               ${o.stockStatus==="OK"?"🟢":"🔴"} ${o.inStock} ${o.uom||"szt"}
                             </span>
                           `:`
-                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
-                              ✨ NOWY W ODOO
+                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-950/70 border border-amber-700/60 px-1.5 py-0.5 rounded">
+                              ⚠️ Brak w Odoo
                             </span>
                           `}
                         </td>
                         <td class="py-2 px-2 text-center">
-                          <button type="button" class="btn-remove-row text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50">
-                            <span class="material-symbols-outlined text-[18px]">delete</span>
+                          <button type="button" class="btn-del-row text-rose-400 hover:text-rose-300 p-1 hover:bg-rose-950/50 rounded" title="Usuń pozycję">
+                            <span class="material-symbols-outlined text-[16px]">delete</span>
                           </button>
                         </td>
                       </tr>
@@ -3448,7 +3448,7 @@ end`};A.events.push(["putFont",function(X){(function(be){var le=be.font,ce=be.ou
 `},$=function(re){return 48<=re.charCodeAt(0)&&re.charCodeAt(0)<=57},ne=function(re){function xe(){var ve=re.call(this)||this;return ve.curNumber="",ve.curCommandType=-1,ve.curCommandRelative=!1,ve.canParseCommandOrComma=!0,ve.curNumberHasExp=!1,ve.curNumberHasExpDigits=!1,ve.curNumberHasDecimal=!1,ve.curArgs=[],ve}return l(xe,re),xe.prototype.finish=function(ve){if(ve===void 0&&(ve=[]),this.parse(" ",ve),this.curArgs.length!==0||!this.canParseCommandOrComma)throw new SyntaxError("Unterminated command at the path end.");return ve},xe.prototype.parse=function(ve,we){var Ce=this;we===void 0&&(we=[]);for(var Ie=function(ge){we.push(ge),Ce.curArgs.length=0,Ce.canParseCommandOrComma=!0},Pe=0;Pe<ve.length;Pe++){var ie=ve[Pe],se=!(this.curCommandType!==ee.ARC||this.curArgs.length!==3&&this.curArgs.length!==4||this.curNumber.length!==1||this.curNumber!=="0"&&this.curNumber!=="1"),J=$(ie)&&(this.curNumber==="0"&&ie==="0"||se);if(!$(ie)||J)if(ie!=="e"&&ie!=="E")if(ie!=="-"&&ie!=="+"||!this.curNumberHasExp||this.curNumberHasExpDigits)if(ie!=="."||this.curNumberHasExp||this.curNumberHasDecimal||se){if(this.curNumber&&this.curCommandType!==-1){var he=Number(this.curNumber);if(isNaN(he))throw new SyntaxError("Invalid number ending at "+Pe);if(this.curCommandType===ee.ARC){if(this.curArgs.length===0||this.curArgs.length===1){if(0>he)throw new SyntaxError('Expected positive number, got "'+he+'" at index "'+Pe+'"')}else if((this.curArgs.length===3||this.curArgs.length===4)&&this.curNumber!=="0"&&this.curNumber!=="1")throw new SyntaxError('Expected a flag, got "'+this.curNumber+'" at index "'+Pe+'"')}this.curArgs.push(he),this.curArgs.length===Fe[this.curCommandType]&&(ee.HORIZ_LINE_TO===this.curCommandType?Ie({type:ee.HORIZ_LINE_TO,relative:this.curCommandRelative,x:he}):ee.VERT_LINE_TO===this.curCommandType?Ie({type:ee.VERT_LINE_TO,relative:this.curCommandRelative,y:he}):this.curCommandType===ee.MOVE_TO||this.curCommandType===ee.LINE_TO||this.curCommandType===ee.SMOOTH_QUAD_TO?(Ie({type:this.curCommandType,relative:this.curCommandRelative,x:this.curArgs[0],y:this.curArgs[1]}),ee.MOVE_TO===this.curCommandType&&(this.curCommandType=ee.LINE_TO)):this.curCommandType===ee.CURVE_TO?Ie({type:ee.CURVE_TO,relative:this.curCommandRelative,x1:this.curArgs[0],y1:this.curArgs[1],x2:this.curArgs[2],y2:this.curArgs[3],x:this.curArgs[4],y:this.curArgs[5]}):this.curCommandType===ee.SMOOTH_CURVE_TO?Ie({type:ee.SMOOTH_CURVE_TO,relative:this.curCommandRelative,x2:this.curArgs[0],y2:this.curArgs[1],x:this.curArgs[2],y:this.curArgs[3]}):this.curCommandType===ee.QUAD_TO?Ie({type:ee.QUAD_TO,relative:this.curCommandRelative,x1:this.curArgs[0],y1:this.curArgs[1],x:this.curArgs[2],y:this.curArgs[3]}):this.curCommandType===ee.ARC&&Ie({type:ee.ARC,relative:this.curCommandRelative,rX:this.curArgs[0],rY:this.curArgs[1],xRot:this.curArgs[2],lArcFlag:this.curArgs[3],sweepFlag:this.curArgs[4],x:this.curArgs[5],y:this.curArgs[6]})),this.curNumber="",this.curNumberHasExpDigits=!1,this.curNumberHasExp=!1,this.curNumberHasDecimal=!1,this.canParseCommandOrComma=!0}if(!de(ie))if(ie===","&&this.canParseCommandOrComma)this.canParseCommandOrComma=!1;else if(ie!=="+"&&ie!=="-"&&ie!==".")if(J)this.curNumber=ie,this.curNumberHasDecimal=!1;else{if(this.curArgs.length!==0)throw new SyntaxError("Unterminated command at index "+Pe+".");if(!this.canParseCommandOrComma)throw new SyntaxError('Unexpected character "'+ie+'" at index '+Pe+". Command cannot follow comma");if(this.canParseCommandOrComma=!1,ie!=="z"&&ie!=="Z")if(ie==="h"||ie==="H")this.curCommandType=ee.HORIZ_LINE_TO,this.curCommandRelative=ie==="h";else if(ie==="v"||ie==="V")this.curCommandType=ee.VERT_LINE_TO,this.curCommandRelative=ie==="v";else if(ie==="m"||ie==="M")this.curCommandType=ee.MOVE_TO,this.curCommandRelative=ie==="m";else if(ie==="l"||ie==="L")this.curCommandType=ee.LINE_TO,this.curCommandRelative=ie==="l";else if(ie==="c"||ie==="C")this.curCommandType=ee.CURVE_TO,this.curCommandRelative=ie==="c";else if(ie==="s"||ie==="S")this.curCommandType=ee.SMOOTH_CURVE_TO,this.curCommandRelative=ie==="s";else if(ie==="q"||ie==="Q")this.curCommandType=ee.QUAD_TO,this.curCommandRelative=ie==="q";else if(ie==="t"||ie==="T")this.curCommandType=ee.SMOOTH_QUAD_TO,this.curCommandRelative=ie==="t";else{if(ie!=="a"&&ie!=="A")throw new SyntaxError('Unexpected character "'+ie+'" at index '+Pe+".");this.curCommandType=ee.ARC,this.curCommandRelative=ie==="a"}else we.push({type:ee.CLOSE_PATH}),this.canParseCommandOrComma=!0,this.curCommandType=-1}else this.curNumber=ie,this.curNumberHasDecimal=ie==="."}else this.curNumber+=ie,this.curNumberHasDecimal=!0;else this.curNumber+=ie;else this.curNumber+=ie,this.curNumberHasExp=!0;else this.curNumber+=ie,this.curNumberHasExpDigits=this.curNumberHasExp}return we},xe.prototype.transform=function(ve){return Object.create(this,{parse:{value:function(we,Ce){Ce===void 0&&(Ce=[]);for(var Ie=0,Pe=Object.getPrototypeOf(this).parse.call(this,we);Ie<Pe.length;Ie++){var ie=Pe[Ie],se=ve(ie);Array.isArray(se)?Ce.push.apply(Ce,se):Ce.push(se)}return Ce}}})},xe}(K),ee=function(re){function xe(ve){var we=re.call(this)||this;return we.commands=typeof ve=="string"?xe.parse(ve):ve,we}return l(xe,re),xe.prototype.encode=function(){return xe.encode(this.commands)},xe.prototype.getBounds=function(){var ve=P.CALCULATE_BOUNDS();return this.transform(ve),ve},xe.prototype.transform=function(ve){for(var we=[],Ce=0,Ie=this.commands;Ce<Ie.length;Ce++){var Pe=ve(Ie[Ce]);Array.isArray(Pe)?we.push.apply(we,Pe):we.push(Pe)}return this.commands=we,this},xe.encode=function(ve){return m(ve)},xe.parse=function(ve){var we=new ne,Ce=[];return we.parse(ve,Ce),we.finish(Ce),Ce},xe.CLOSE_PATH=1,xe.MOVE_TO=2,xe.HORIZ_LINE_TO=4,xe.VERT_LINE_TO=8,xe.LINE_TO=16,xe.CURVE_TO=32,xe.SMOOTH_CURVE_TO=64,xe.QUAD_TO=128,xe.SMOOTH_QUAD_TO=256,xe.ARC=512,xe.LINE_COMMANDS=xe.LINE_TO|xe.HORIZ_LINE_TO|xe.VERT_LINE_TO,xe.DRAWING_COMMANDS=xe.HORIZ_LINE_TO|xe.VERT_LINE_TO|xe.LINE_TO|xe.CURVE_TO|xe.SMOOTH_CURVE_TO|xe.QUAD_TO|xe.SMOOTH_QUAD_TO|xe.ARC,xe}(K),Fe=((z={})[ee.MOVE_TO]=2,z[ee.LINE_TO]=2,z[ee.HORIZ_LINE_TO]=1,z[ee.VERT_LINE_TO]=1,z[ee.CLOSE_PATH]=0,z[ee.QUAD_TO]=4,z[ee.SMOOTH_QUAD_TO]=2,z[ee.CURVE_TO]=6,z[ee.SMOOTH_CURVE_TO]=4,z[ee.ARC]=7,z)},"./src/plugin/hyperlinks.js":function(T,k,r){r.r(k),r("./node_modules/core-js/modules/es.object.to-string.js"),r("./node_modules/core-js/modules/es.string.link.js"),r("./node_modules/core-js/modules/esnext.iterator.constructor.js"),r("./node_modules/core-js/modules/esnext.iterator.for-each.js"),r("./node_modules/core-js/modules/web.dom-collections.for-each.js");var o=r("./src/worker.js"),l=r("./src/utils.js"),m=[],y={toContainer:o.default.prototype.toContainer,toPdf:o.default.prototype.toPdf};o.default.prototype.toContainer=function(){return y.toContainer.call(this).then(function(){if(this.opt.enableLinks){var h=this.prop.container,b=h.querySelectorAll("a"),P=(0,l.unitConvert)(h.getBoundingClientRect(),this.prop.pageSize.k);m=[],Array.prototype.forEach.call(b,function(H){for(var W=H.getClientRects(),R=0;R<W.length;R++){var j=(0,l.unitConvert)(W[R],this.prop.pageSize.k);j.left-=P.left,j.top-=P.top;var I=Math.floor(j.top/this.prop.pageSize.inner.height)+1,z=this.opt.margin[0]+j.top%this.prop.pageSize.inner.height,K=this.opt.margin[1]+j.left;m.push({page:I,top:z,left:K,clientRect:j,link:H})}},this)}})},o.default.prototype.toPdf=function(){return y.toPdf.call(this).then(function(){if(this.opt.enableLinks){m.forEach(function(b){this.prop.pdf.setPage(b.page),this.prop.pdf.link(b.left,b.top,b.clientRect.width,b.clientRect.height,{url:b.link.href})},this);var h=this.prop.pdf.internal.getNumberOfPages();this.prop.pdf.setPage(h)}})}},"./src/plugin/jspdf-plugin.js":function(T,k,r){r.r(k),r("./node_modules/core-js/modules/es.symbol.js"),r("./node_modules/core-js/modules/es.symbol.description.js"),r("./node_modules/core-js/modules/es.symbol.iterator.js"),r("./node_modules/core-js/modules/es.array.iterator.js"),r("./node_modules/core-js/modules/es.object.to-string.js"),r("./node_modules/core-js/modules/es.string.iterator.js"),r("./node_modules/core-js/modules/web.dom-collections.iterator.js");var o=r("./node_modules/jspdf/dist/jspdf.es.min.js");function l(m){"@babel/helpers - typeof";return l=typeof Symbol=="function"&&typeof Symbol.iterator=="symbol"?function(y){return typeof y}:function(y){return y&&typeof Symbol=="function"&&y.constructor===Symbol&&y!==Symbol.prototype?"symbol":typeof y},l(m)}o.jsPDF.getPageSize=function(m,y,x){if(l(m)==="object"){var C=m;m=C.orientation,y=C.unit||y,x=C.format||x}y=y||"mm",x=x||"a4",m=(""+(m||"P")).toLowerCase();var h=(""+x).toLowerCase(),b={a0:[2383.94,3370.39],a1:[1683.78,2383.94],a2:[1190.55,1683.78],a3:[841.89,1190.55],a4:[595.28,841.89],a5:[419.53,595.28],a6:[297.64,419.53],a7:[209.76,297.64],a8:[147.4,209.76],a9:[104.88,147.4],a10:[73.7,104.88],b0:[2834.65,4008.19],b1:[2004.09,2834.65],b2:[1417.32,2004.09],b3:[1000.63,1417.32],b4:[708.66,1000.63],b5:[498.9,708.66],b6:[354.33,498.9],b7:[249.45,354.33],b8:[175.75,249.45],b9:[124.72,175.75],b10:[87.87,124.72],c0:[2599.37,3676.54],c1:[1836.85,2599.37],c2:[1298.27,1836.85],c3:[918.43,1298.27],c4:[649.13,918.43],c5:[459.21,649.13],c6:[323.15,459.21],c7:[229.61,323.15],c8:[161.57,229.61],c9:[113.39,161.57],c10:[79.37,113.39],dl:[311.81,623.62],letter:[612,792],"government-letter":[576,756],legal:[612,1008],"junior-legal":[576,360],ledger:[1224,792],tabloid:[792,1224],"credit-card":[153,243]};switch(y){case"pt":var P=1;break;case"mm":var P=72/25.4;break;case"cm":var P=72/2.54;break;case"in":var P=72;break;case"px":var P=72/96;break;case"pc":var P=12;break;case"em":var P=12;break;case"ex":var P=6;break;default:throw"Invalid unit: "+y}if(b.hasOwnProperty(h))var H=b[h][1]/P,W=b[h][0]/P;else try{var H=x[1],W=x[0]}catch{throw new Error("Invalid format: "+x)}if(m==="p"||m==="portrait"){if(m="p",W>H){var R=W;W=H,H=R}}else if(m==="l"||m==="landscape"){if(m="l",H>W){var R=W;W=H,H=R}}else throw"Invalid orientation: "+m;var j={width:W,height:H,unit:y,k:P};return j},k.default=o.jsPDF},"./src/plugin/pagebreaks.js":function(T,k,r){r.r(k),r("./node_modules/core-js/modules/es.array.concat.js"),r("./node_modules/core-js/modules/es.array.join.js"),r("./node_modules/core-js/modules/es.array.slice.js"),r("./node_modules/core-js/modules/es.object.keys.js"),r("./node_modules/core-js/modules/es.object.to-string.js"),r("./node_modules/core-js/modules/esnext.iterator.constructor.js"),r("./node_modules/core-js/modules/esnext.iterator.for-each.js"),r("./node_modules/core-js/modules/web.dom-collections.for-each.js");var o=r("./src/worker.js"),l=r("./src/utils.js"),m={toContainer:o.default.prototype.toContainer};o.default.template.opt.pagebreak={mode:["css","legacy"],before:[],after:[],avoid:[]},o.default.prototype.toContainer=function(){return m.toContainer.call(this).then(function(){var C=this.prop.container,h=this.prop.pageSize.inner.px.height,b=[].concat(this.opt.pagebreak.mode),P={avoidAll:b.indexOf("avoid-all")!==-1,css:b.indexOf("css")!==-1,legacy:b.indexOf("legacy")!==-1},H={},W=this;["before","after","avoid"].forEach(function(I){var z=P.avoidAll&&I==="avoid";H[I]=z?[]:[].concat(W.opt.pagebreak[I]||[]),H[I].length>0&&(H[I]=Array.prototype.slice.call(C.querySelectorAll(H[I].join(", "))))});var R=C.querySelectorAll(".html2pdf__page-break");R=Array.prototype.slice.call(R);var j=C.querySelectorAll("*");Array.prototype.forEach.call(j,function(z){var K={before:!1,after:P.legacy&&R.indexOf(z)!==-1,avoid:P.avoidAll};if(P.css){var de=window.getComputedStyle(z),$=["always","page","left","right"],ne=["avoid","avoid-page"];K={before:K.before||$.indexOf(de.breakBefore||de.pageBreakBefore)!==-1,after:K.after||$.indexOf(de.breakAfter||de.pageBreakAfter)!==-1,avoid:K.avoid||ne.indexOf(de.breakInside||de.pageBreakInside)!==-1}}Object.keys(K).forEach(function(we){K[we]=K[we]||H[we].indexOf(z)!==-1});var ee=z.getBoundingClientRect();if(K.avoid&&!K.before){var Fe=Math.floor(ee.top/h),re=Math.floor(ee.bottom/h),xe=Math.abs(ee.bottom-ee.top)/h;re!==Fe&&xe<=1&&(K.before=!0)}if(K.before){var ve=(0,l.createElement)("div",{style:{display:"block",height:h-ee.top%h+"px"}});z.parentNode.insertBefore(ve,z)}if(K.after){var ve=(0,l.createElement)("div",{style:{display:"block",height:h-ee.bottom%h+"px"}});z.parentNode.insertBefore(ve,z.nextSibling)}})})}},"./src/snapdom/clone.js":function(T,k,r){r.r(k),r.d(k,{deepCloneBasic:function(){return x}}),r("./node_modules/core-js/modules/es.symbol.js"),r("./node_modules/core-js/modules/es.symbol.description.js"),r("./node_modules/core-js/modules/es.symbol.iterator.js"),r("./node_modules/core-js/modules/es.array.concat.js"),r("./node_modules/core-js/modules/es.array.from.js"),r("./node_modules/core-js/modules/es.array.iterator.js"),r("./node_modules/core-js/modules/es.array.slice.js"),r("./node_modules/core-js/modules/es.function.name.js"),r("./node_modules/core-js/modules/es.object.to-string.js"),r("./node_modules/core-js/modules/es.regexp.exec.js"),r("./node_modules/core-js/modules/es.regexp.test.js"),r("./node_modules/core-js/modules/es.regexp.to-string.js"),r("./node_modules/core-js/modules/es.set.js"),r("./node_modules/core-js/modules/es.string.iterator.js"),r("./node_modules/core-js/modules/esnext.set.add-all.js"),r("./node_modules/core-js/modules/esnext.set.delete-all.js"),r("./node_modules/core-js/modules/esnext.set.difference.js"),r("./node_modules/core-js/modules/esnext.set.every.js"),r("./node_modules/core-js/modules/esnext.set.filter.js"),r("./node_modules/core-js/modules/esnext.set.find.js"),r("./node_modules/core-js/modules/esnext.set.intersection.js"),r("./node_modules/core-js/modules/esnext.set.is-disjoint-from.js"),r("./node_modules/core-js/modules/esnext.set.is-subset-of.js"),r("./node_modules/core-js/modules/esnext.set.is-superset-of.js"),r("./node_modules/core-js/modules/esnext.set.join.js"),r("./node_modules/core-js/modules/esnext.set.map.js"),r("./node_modules/core-js/modules/esnext.set.reduce.js"),r("./node_modules/core-js/modules/esnext.set.some.js"),r("./node_modules/core-js/modules/esnext.set.symmetric-difference.js"),r("./node_modules/core-js/modules/esnext.set.union.js"),r("./node_modules/core-js/modules/web.dom-collections.iterator.js");function o(C,h){var b=typeof Symbol<"u"&&C[Symbol.iterator]||C["@@iterator"];if(!b){if(Array.isArray(C)||(b=l(C))||h){b&&(C=b);var P=0,H=function(){};return{s:H,n:function(){return P>=C.length?{done:!0}:{done:!1,value:C[P++]}},e:function(z){throw z},f:H}}throw new TypeError(`Invalid attempt to iterate non-iterable instance.
 In order to be iterable, non-array objects must have a [Symbol.iterator]() method.`)}var W,R=!0,j=!1;return{s:function(){b=b.call(C)},n:function(){var z=b.next();return R=z.done,z},e:function(z){j=!0,W=z},f:function(){try{R||b.return==null||b.return()}finally{if(j)throw W}}}}function l(C,h){if(C){if(typeof C=="string")return m(C,h);var b={}.toString.call(C).slice(8,-1);return b==="Object"&&C.constructor&&(b=C.constructor.name),b==="Map"||b==="Set"?Array.from(C):b==="Arguments"||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(b)?m(C,h):void 0}}function m(C,h){(h==null||h>C.length)&&(h=C.length);for(var b=0,P=Array(h);b<h;b++)P[b]=C[b];return P}function y(C,h){try{var b=C.currentSrc||C.src||"";if(!b)return;h.setAttribute("src",b),h.removeAttribute("srcset"),h.removeAttribute("sizes"),h.loading="eager",h.decoding="sync"}catch{}}function x(C){if(!C)throw new Error("Invalid node");var h=new Set,b=null;if(C.nodeType===Node.TEXT_NODE||C.nodeType!==Node.ELEMENT_NODE)return C.cloneNode(!0);if(C.tagName==="IFRAME"){var P=document.createElement("div");return P.style.cssText="width:".concat(C.offsetWidth,"px;height:").concat(C.offsetHeight,"px;background-image:repeating-linear-gradient(45deg,#ddd,#ddd 5px,#f9f9f9 5px,#f9f9f9 10px);display:flex;align-items:center;justify-content:center;font-size:12px;color:#555;border:1px solid #aaa;"),P}if(C.tagName==="CANVAS"){var H=C.toDataURL(),W=document.createElement("img");return W.src=H,W.width=C.width,W.height=C.height,W}var R;try{R=C.cloneNode(!1),C.tagName==="IMG"&&y(C,R)}catch(lt){throw console.error("[Snapdom] Failed to clone node:",C,lt),lt}if(C instanceof HTMLTextAreaElement){R.textContent=C.value,R.value=C.value;var j=C.getBoundingClientRect();return R.style.boxSizing="border-box",R.style.width="".concat(j.width,"px"),R.style.height="".concat(j.height,"px"),R}if(C instanceof HTMLInputElement&&(C.hasAttribute("value")&&(R.value=C.value,R.setAttribute("value",C.value)),C.checked!==void 0&&(R.checked=C.checked,C.checked&&R.setAttribute("checked",""),C.indeterminate&&(R.indeterminate=C.indeterminate))),C instanceof HTMLSelectElement&&(b=C.value),C.shadowRoot){var I=Array.from(C.shadowRoot.querySelectorAll("slot")).length>0;if(!I){var z=document.createDocumentFragment(),K=o(C.shadowRoot.childNodes),de;try{for(K.s();!(de=K.n()).done;){var $=de.value;if(!($.nodeType===Node.ELEMENT_NODE&&$.tagName==="STYLE")){var ne=x($);ne&&z.appendChild(ne)}}}catch(lt){K.e(lt)}finally{K.f()}R.appendChild(z)}}if(C.tagName==="SLOT"){var ee,Fe=((ee=C.assignedNodes)===null||ee===void 0?void 0:ee.call(C,{flatten:!0}))||[],re=Fe.length>0?Fe:Array.from(C.childNodes),xe=document.createDocumentFragment(),ve=o(re),we;try{for(ve.s();!(we=ve.n()).done;){var Ce=we.value,Ie=x(Ce);Ie&&xe.appendChild(Ie)}}catch(lt){ve.e(lt)}finally{ve.f()}return xe}var Pe=o(C.childNodes),ie;try{for(Pe.s();!(ie=Pe.n()).done;){var se=ie.value;if(!h.has(se)){var J=x(se);J&&R.appendChild(J)}}}catch(lt){Pe.e(lt)}finally{Pe.f()}if(b!==null&&R instanceof HTMLSelectElement){R.value=b;var he=o(R.options),ge;try{for(he.s();!(ge=he.n()).done;){var Te=ge.value;Te.value===b?Te.setAttribute("selected",""):Te.removeAttribute("selected")}}catch(lt){he.e(lt)}finally{he.f()}}var Be=C.scrollLeft,We=C.scrollTop,Xe=Be||We;if(Xe&&R instanceof HTMLElement){R.style.overflow="hidden",R.style.scrollbarWidth="none",R.style.msOverflowStyle="none";var De=document.createElement("div");for(De.style.transform="translate(".concat(-Be,"px, ").concat(-We,"px)"),De.style.willChange="transform",De.style.display="inline-block",De.style.width="100%";R.firstChild;)De.appendChild(R.firstChild);R.appendChild(De)}return R}},"./src/utils.js":function(T,k,r){r.r(k),r.d(k,{createElement:function(){return y},objType:function(){return m},toPx:function(){return C},unitConvert:function(){return x}}),r("./node_modules/core-js/modules/es.symbol.js"),r("./node_modules/core-js/modules/es.symbol.description.js"),r("./node_modules/core-js/modules/es.symbol.iterator.js"),r("./node_modules/core-js/modules/es.array.iterator.js"),r("./node_modules/core-js/modules/es.number.constructor.js"),r("./node_modules/core-js/modules/es.object.to-string.js"),r("./node_modules/core-js/modules/es.string.iterator.js"),r("./node_modules/core-js/modules/web.dom-collections.iterator.js");var o=r("./node_modules/dompurify/dist/purify.es.mjs");function l(h){"@babel/helpers - typeof";return l=typeof Symbol=="function"&&typeof Symbol.iterator=="symbol"?function(b){return typeof b}:function(b){return b&&typeof Symbol=="function"&&b.constructor===Symbol&&b!==Symbol.prototype?"symbol":typeof b},l(h)}var m=function(b){var P=l(b);return P==="undefined"?"undefined":P==="string"||b instanceof String?"string":P==="number"||b instanceof Number?"number":P==="function"||b instanceof Function?"function":b&&b.constructor===Array?"array":b&&b.nodeType===1?"element":P==="object"?"object":"unknown"},y=function(b,P){var H=document.createElement(b);P.className&&(H.className=P.className),P.innerHTML&&(H.innerHTML=o.default.sanitize(P.innerHTML));for(var W in P.style)H.style[W]=P.style[W];return H},x=function(b,P){if(m(b)==="number")return b*72/96/P;var H={};for(var W in b)H[W]=b[W]*72/96/P;return H},C=function(b,P){return Math.floor(b*P/72*96)}},"./src/worker.js":function(T,k,r){r.r(k),r("./node_modules/core-js/modules/es.array.concat.js"),r("./node_modules/core-js/modules/es.array.map.js"),r("./node_modules/core-js/modules/es.function.name.js"),r("./node_modules/core-js/modules/es.json.stringify.js"),r("./node_modules/core-js/modules/es.object.assign.js"),r("./node_modules/core-js/modules/es.object.keys.js"),r("./node_modules/core-js/modules/es.object.to-string.js"),r("./node_modules/core-js/modules/es.promise.js"),r("./node_modules/core-js/modules/es.regexp.to-string.js"),r("./node_modules/core-js/modules/esnext.iterator.constructor.js"),r("./node_modules/core-js/modules/esnext.iterator.for-each.js"),r("./node_modules/core-js/modules/esnext.iterator.map.js"),r("./node_modules/core-js/modules/web.dom-collections.for-each.js"),r("./node_modules/core-js/modules/web.timers.js");var o=r("./node_modules/jspdf/dist/jspdf.es.min.js"),l=r("html2canvas"),m=r.n(l),y=r("./src/snapdom/clone.js"),x=r("./src/utils.js"),C=function h(b){var P=Object.assign(h.convert(Promise.resolve()),JSON.parse(JSON.stringify(h.template))),H=h.convert(Promise.resolve(),P);return H=H.setProgress(1,h,1,[h]),H=H.set(b),H};C.prototype=Object.create(Promise.prototype),C.prototype.constructor=C,C.convert=function(b,P){return b.__proto__=P||C.prototype,b},C.template={prop:{src:null,container:null,overlay:null,canvas:null,img:null,pdf:null,pageSize:null},progress:{val:0,state:null,n:0,stack:[]},opt:{filename:"file.pdf",margin:[0,0,0,0],image:{type:"jpeg",quality:.95},enableLinks:!0,html2canvas:{},jsPDF:{}}},C.prototype.from=function(b,P){function H(W){switch((0,x.objType)(W)){case"string":return"string";case"element":return W.nodeName.toLowerCase&&W.nodeName.toLowerCase()==="canvas"?"canvas":"element";default:return"unknown"}}return this.then(function(){switch(P=P||H(b),P){case"string":return this.set({src:(0,x.createElement)("div",{innerHTML:b})});case"element":return this.set({src:b});case"canvas":return this.set({canvas:b});case"img":return this.set({img:b});default:return this.error("Unknown source type.")}})},C.prototype.to=function(b){switch(b){case"container":return this.toContainer();case"canvas":return this.toCanvas();case"img":return this.toImg();case"pdf":return this.toPdf();default:return this.error("Invalid target.")}},C.prototype.toContainer=function(){var b=[function(){return this.prop.src||this.error("Cannot duplicate - no source HTML.")},function(){return this.prop.pageSize||this.setPageSize()}];return this.thenList(b).then(function(){var H={position:"fixed",overflow:"hidden",zIndex:1e3,left:0,right:0,bottom:0,top:0,backgroundColor:"rgba(0,0,0,0.8)"},W={position:"absolute",width:this.prop.pageSize.inner.width+this.prop.pageSize.unit,left:0,right:0,top:0,height:"auto",margin:"auto",backgroundColor:"white"};H.opacity=0;var R=(0,y.deepCloneBasic)(this.prop.src);return this.prop.overlay=(0,x.createElement)("div",{className:"html2pdf__overlay",style:H}),this.prop.container=(0,x.createElement)("div",{className:"html2pdf__container",style:W}),this.prop.container.appendChild(R),this.prop.overlay.appendChild(this.prop.container),document.body.appendChild(this.prop.overlay),new Promise(function(j){return setTimeout(j,10)})})},C.prototype.toCanvas=function(){var b=[function(){return document.body.contains(this.prop.container)||this.toContainer()}];return this.thenList(b).then(function(){var H=Object.assign({},this.opt.html2canvas);return delete H.onrendered,m()(this.prop.container,H)}).then(function(H){var W=this.opt.html2canvas.onrendered||function(){};W(H),this.prop.canvas=H,document.body.removeChild(this.prop.overlay)})},C.prototype.toImg=function(){var b=[function(){return this.prop.canvas||this.toCanvas()}];return this.thenList(b).then(function(){var H=this.prop.canvas.toDataURL("image/"+this.opt.image.type,this.opt.image.quality);this.prop.img=document.createElement("img"),this.prop.img.src=H})},C.prototype.toPdf=function(){var b=[function(){return this.prop.canvas||this.toCanvas()},function(){return this.prop.pageSize||this.setPageSize()}];return this.thenList(b).then(function(){var H=this.prop.canvas,W=this.opt,R=H.height,j=Math.floor(H.width*this.prop.pageSize.inner.ratio),I=Math.ceil(R/j),z=this.prop.pageSize.inner.height,K=document.createElement("canvas"),de=K.getContext("2d");K.width=H.width,K.height=j,this.prop.pdf=this.prop.pdf||new o.jsPDF(W.jsPDF);for(var $=0;$<I;$++){$===I-1&&R%j!==0&&(K.height=R%j,z=K.height*this.prop.pageSize.inner.width/K.width);var ne=K.width,ee=K.height;de.fillStyle="white",de.fillRect(0,0,ne,ee),de.drawImage(H,0,$*j,ne,ee,0,0,ne,ee),$&&this.prop.pdf.addPage();var Fe=K.toDataURL("image/"+W.image.type,W.image.quality);this.prop.pdf.addImage(Fe,W.image.type,W.margin[1],W.margin[0],this.prop.pageSize.inner.width,z)}})},C.prototype.output=function(b,P,H){return H=H||"pdf",H.toLowerCase()==="img"||H.toLowerCase()==="image"?this.outputImg(b,P):this.outputPdf(b,P)},C.prototype.outputPdf=function(b,P){var H=[function(){return this.prop.pdf||this.toPdf()}];return this.thenList(H).then(function(){return this.prop.pdf.output(b,P)})},C.prototype.outputImg=function(b,P){var H=[function(){return this.prop.img||this.toImg()}];return this.thenList(H).then(function(){switch(b){case void 0:case"img":return this.prop.img;case"datauristring":case"dataurlstring":return this.prop.img.src;case"datauri":case"dataurl":return document.location.href=this.prop.img.src;default:throw'Image output type "'+b+'" is not supported.'}})},C.prototype.save=function(b){var P=[function(){return this.prop.pdf||this.toPdf()}];return this.thenList(P).set(b?{filename:b}:null).then(function(){this.prop.pdf.save(this.opt.filename)})},C.prototype.set=function(b){if((0,x.objType)(b)!=="object")return this;var P=Object.keys(b||{}).map(function(H){switch(H){case"margin":return this.setMargin.bind(this,b.margin);case"jsPDF":return function(){return this.opt.jsPDF=b.jsPDF,this.setPageSize()};case"pageSize":return this.setPageSize.bind(this,b.pageSize);default:return H in C.template.prop?function(){this.prop[H]=b[H]}:function(){this.opt[H]=b[H]}}},this);return this.then(function(){return this.thenList(P)})},C.prototype.get=function(b,P){return this.then(function(){var W=b in C.template.prop?this.prop[b]:this.opt[b];return P?P(W):W})},C.prototype.setMargin=function(b){return this.then(function(){switch((0,x.objType)(b)){case"number":b=[b,b,b,b];case"array":if(b.length===2&&(b=[b[0],b[1],b[0],b[1]]),b.length===4)break;default:return this.error("Invalid margin array.")}this.opt.margin=b}).then(this.setPageSize)},C.prototype.setPageSize=function(b){return this.then(function(){b=b||o.jsPDF.getPageSize(this.opt.jsPDF),b.hasOwnProperty("inner")||(b.inner={width:b.width-this.opt.margin[1]-this.opt.margin[3],height:b.height-this.opt.margin[0]-this.opt.margin[2]},b.inner.px={width:(0,x.toPx)(b.inner.width,b.k),height:(0,x.toPx)(b.inner.height,b.k)},b.inner.ratio=b.inner.height/b.inner.width),this.prop.pageSize=b})},C.prototype.setProgress=function(b,P,H,W){return b!=null&&(this.progress.val=b),P!=null&&(this.progress.state=P),H!=null&&(this.progress.n=H),W!=null&&(this.progress.stack=W),this.progress.ratio=this.progress.val/this.progress.state,this},C.prototype.updateProgress=function(b,P,H,W){return this.setProgress(b?this.progress.val+b:null,P||null,H?this.progress.n+H:null,W?this.progress.stack.concat(W):null)},C.prototype.then=function(b,P){var H=this;return this.thenCore(b,P,function(R,j){return H.updateProgress(null,null,1,[R]),Promise.prototype.then.call(this,function(z){return H.updateProgress(null,R),z}).then(R,j).then(function(z){return H.updateProgress(1),z})})},C.prototype.thenCore=function(b,P,H){H=H||Promise.prototype.then;var W=this;b&&(b=b.bind(W)),P&&(P=P.bind(W));var R=Promise.toString().indexOf("[native code]")!==-1&&Promise.name==="Promise",j=R?W:C.convert(Object.assign({},W),Promise.prototype),I=H.call(j,b,P);return C.convert(I,W.__proto__)},C.prototype.thenExternal=function(b,P){return Promise.prototype.then.call(this,b,P)},C.prototype.thenList=function(b){var P=this;return b.forEach(function(W){P=P.thenCore(W)}),P},C.prototype.catch=function(h){h&&(h=h.bind(this));var b=Promise.prototype.catch.call(this,h);return C.convert(b,this)},C.prototype.catchExternal=function(b){return Promise.prototype.catch.call(this,b)},C.prototype.error=function(b){return this.then(function(){throw new Error(b)})},C.prototype.using=C.prototype.set,C.prototype.saveAs=C.prototype.save,C.prototype.export=C.prototype.output,C.prototype.run=C.prototype.then,k.default=C},html2canvas:function(T){T.exports=S}},U={};function Z(T){var k=U[T];if(k!==void 0)return k.exports;if(F[T]===void 0){var r=new Error("Cannot find module '"+T+"'");throw r.code="MODULE_NOT_FOUND",r}var o=U[T]={exports:{}};return F[T].call(o.exports,o,o.exports,Z),o.exports}(function(){Z.n=function(T){var k=T&&T.__esModule?function(){return T.default}:function(){return T};return Z.d(k,{a:k}),k}})(),function(){var T=Object.getPrototypeOf?function(r){return Object.getPrototypeOf(r)}:function(r){return r.__proto__},k;Z.t=function(r,o){if(o&1&&(r=this(r)),o&8||typeof r=="object"&&r&&(o&4&&r.__esModule||o&16&&typeof r.then=="function"))return r;var l=Object.create(null);Z.r(l);var m={};k=k||[null,T({}),T([]),T(T)];for(var y=o&2&&r;(typeof y=="object"||typeof y=="function")&&!~k.indexOf(y);y=T(y))Object.getOwnPropertyNames(y).forEach(function(x){m[x]=function(){return r[x]}});return m.default=function(){return r},Z.d(l,m),l}}(),function(){Z.d=function(T,k){for(var r in k)Z.o(k,r)&&!Z.o(T,r)&&Object.defineProperty(T,r,{enumerable:!0,get:k[r]})}}(),function(){Z.o=function(T,k){return Object.prototype.hasOwnProperty.call(T,k)}}(),function(){Z.r=function(T){typeof Symbol<"u"&&Symbol.toStringTag&&Object.defineProperty(T,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(T,"__esModule",{value:!0})}}();var Ae={};return function(){/*!**********************!*\
   !*** ./src/index.js ***!
-  \**********************/Z.r(Ae);var T=Z("./src/worker.js");Z("./src/plugin/jspdf-plugin.js"),Z("./src/plugin/pagebreaks.js"),Z("./src/plugin/hyperlinks.js");var k=function r(o,l){var m=new r.Worker(l);return o?m.from(o).save():m};k.Worker=T.default,Ae.default=k}(),Ae=Ae.default,Ae}()})})(html2pdf$1);var html2pdfExports=html2pdf$1.exports;const html2pdf=getDefaultExportFromCjs(html2pdfExports),STORAGE_KEY_WZ_HISTORY="bluemake_wz_history_v2",STORAGE_KEY_WZ_COUNTERS="bluemake_wz_monthly_counters_v2",STORAGE_KEY_WZ_CUSTOMERS="bluemake_wz_customers_v2",DEFAULT_SUPPLIER={name:"BLUEMAKE Sp. z o.o.",address:"ul. Tuwima 39, 39-300 Mielec",nip:"8172210070",email:"m.klimkowski@bluemake.eu, www.bluemake.eu"},DEFAULT_CUSTOMERS=[{id:"cust_ec_eng",name:"EC Engineering Sp. z o.o.",address:"ul. Armii Krajowej 28, 30-150 Kraków",nip:"PL9452024663",regon:"35690824",contact:"office@ec-e.pl, www.ec-e.pl"},{id:"cust_husqvarna",name:"Husqvarna Poland Sp. z o.o.",address:"ul. Wysockiego 15A, 03-371 Warszawa",nip:"5240103440",regon:"010156942",contact:"kontakt@husqvarna.pl"}];function getSavedCustomers(){try{const c=localStorage.getItem(STORAGE_KEY_WZ_CUSTOMERS);if(c){const u=JSON.parse(c);if(Array.isArray(u)&&u.length>0)return u}}catch(c){console.error("Error loading WZ customers:",c)}return localStorage.setItem(STORAGE_KEY_WZ_CUSTOMERS,JSON.stringify(DEFAULT_CUSTOMERS)),DEFAULT_CUSTOMERS}function saveCustomer(c){const u=getSavedCustomers(),S=u.findIndex(F=>F.id===c.id||c.nip&&F.nip===c.nip);return S>=0?u[S]={...u[S],...c}:u.unshift({...c,id:c.id||`cust_${Date.now()}`}),localStorage.setItem(STORAGE_KEY_WZ_CUSTOMERS,JSON.stringify(u)),u}function getWzHistory(){try{const c=localStorage.getItem(STORAGE_KEY_WZ_HISTORY);return c?JSON.parse(c):[]}catch(c){return console.error("Error loading WZ history:",c),[]}}function saveWzDocument(c){const u=getWzHistory(),S=u.findIndex(U=>U.id===c.id),F={...c,savedAt:new Date().toISOString(),formattedNumber:`Nr ${c.wzNum}/${c.wzMonth}/${c.wzYear}${c.wzSuffix||"/BM"}`};return S>=0?u[S]=F:u.unshift(F),localStorage.setItem(STORAGE_KEY_WZ_HISTORY,JSON.stringify(u)),u}function deleteWzDocument(c){const u=getWzHistory().filter(S=>S.id!==c);return localStorage.setItem(STORAGE_KEY_WZ_HISTORY,JSON.stringify(u)),u}function getNextWzNumber(c=null,u=null){const S=new Date,F=c||String(S.getMonth()+1).padStart(2,"0"),U=u||String(S.getFullYear()),Z=`${U}-${F}`;try{const k=localStorage.getItem(STORAGE_KEY_WZ_COUNTERS);if(k){const r=JSON.parse(k);if(r[Z]!==void 0&&r[Z]!==null)return{num:r[Z],month:F,year:U,suffix:"/BM"}}}catch{}const T=getWzHistory().filter(k=>k.wzMonth===F&&k.wzYear===U);return T.length>0?{num:Math.max(...T.map(r=>parseInt(r.wzNum,10)||0))+1,month:F,year:U,suffix:"/BM"}:{num:1,month:F,year:U,suffix:"/BM"}}function incrementWzCounter(c,u,S){const F=String(u).padStart(2,"0"),Z=`${String(S)}-${F}`;let Ae={};try{const r=localStorage.getItem(STORAGE_KEY_WZ_COUNTERS);r&&(Ae=JSON.parse(r))}catch{}const T=Ae[Z]||parseInt(c,10)||1,k=Math.max((parseInt(c,10)||1)+1,T+1);return Ae[Z]=k,localStorage.setItem(STORAGE_KEY_WZ_COUNTERS,JSON.stringify(Ae)),k}function renderWzGeneratorView(c,u){const S=getCurrentOperator(),F=new Date,U=String(F.getMonth()+1).padStart(2,"0"),Z=String(F.getFullYear()),Ae=F.toISOString().split("T")[0],T=new Date(F.getTime()-10*24*60*60*1e3).toISOString().split("T")[0],k=getNextWzNumber(U,Z),r=getSavedCustomers(),o=r[0]||{name:"EC Engineering Sp. z o.o.",address:"ul. Armii Krajowej 28, 30-150 Kraków",nip:"PL9452024663",regon:"35690824",contact:"office@ec-e.pl, www.ec-e.pl"};let l={id:`WZ_${Date.now()}`,wzNum:String(k.num),wzMonth:k.month,wzYear:k.year,wzSuffix:"/BM",issueDate:Ae,issuePlace:"MIELEC",orderNumber:`ZZ-72/${k.month}/${k.year}/EC`,orderDate:T,issuerName:S?S.name==="Mateusz"?"Mateusz Klimkowski":S.name==="Paweł"?"Paweł Peret":S.name:"Mateusz Klimkowski",supplier:{...DEFAULT_SUPPLIER},customer:{...o},items:[{id:1,name:"00229 - EC-VAC 0108000-004-01 - Podkladka gniazdo",sku:"00229",productId:null,currentStock:0,locationId:5,quantity:10,uom:"szt"}]},m=[],y=!1,x=!1,C=null,h=!1,b="",P="info";getProducts().then(ne=>{Array.isArray(ne)&&(m=ne,l.items.forEach(ee=>{const Fe=m.find(re=>re.sku===ee.sku||re.sku===ee.name||ee.name&&ee.name.includes(re.sku));Fe&&(ee.productId=Fe.id,ee.currentStock=Number(Fe.quantity||0),ee.locationId=Fe.locationId||5,ee.uom=Fe.uom||ee.uom||"szt")}),$())}).catch(()=>{});function H(){return`Nr ${l.wzNum}/${l.wzMonth}/${l.wzYear}${l.wzSuffix||"/BM"}`}function W(){const ne=l.customer;let ee=[];ne.name&&ee.push(`<strong class="text-slate-900 font-bold">${ne.name}</strong>`),ne.address&&ee.push(`<span class="text-slate-700">${ne.address}</span>`);let Fe=[];return ne.nip&&Fe.push(`NIP: <strong>${ne.nip}</strong>`),ne.regon&&Fe.push(`REGON: ${ne.regon}`),Fe.length>0&&ee.push(`<span class="text-slate-600 text-[11px]">${Fe.join(", ")}</span>`),ne.contact&&ee.push(`<span class="text-slate-500 text-[11px]">${ne.contact}</span>`),ee.join("<br/>")}function R(){const ne=l.supplier;let ee=[];ne.name&&ee.push(`<strong class="text-slate-900 font-bold">${ne.name}</strong>`),ne.address&&ee.push(`<span class="text-slate-700">${ne.address}</span>`);let Fe=[];return ne.nip&&Fe.push(`NIP: <strong>${ne.nip}</strong>`),ne.regon&&Fe.push(`REGON: ${ne.regon}`),Fe.length>0&&ee.push(`<span class="text-slate-600 text-[11px]">${Fe.join(", ")}</span>`),ne.email&&ee.push(`<span class="text-slate-500 text-[11px]">${ne.email}</span>`),ee.join("<br/>")}function j(){return l.items.reduce((ne,ee)=>ne+(Number(ee.quantity)||0),0)}async function I(ne=l){const ee=document.getElementById("printable-wz-sheet");if(!ee)return;const Fe=`WZ_${ne.wzNum}_${ne.wzMonth}_${ne.wzYear}_BM.pdf`,re={margin:[6,6,6,6],filename:Fe,image:{type:"jpeg",quality:.98},html2canvas:{scale:2,useCORS:!0,logging:!1},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}};try{return await html2pdf().set(re).from(ee).save(),!0}catch(xe){return console.error("Error generating PDF with html2pdf:",xe),window.print(),!1}}function z(){var ve;const ne=l.items.map((we,Ce)=>`
+  \**********************/Z.r(Ae);var T=Z("./src/worker.js");Z("./src/plugin/jspdf-plugin.js"),Z("./src/plugin/pagebreaks.js"),Z("./src/plugin/hyperlinks.js");var k=function r(o,l){var m=new r.Worker(l);return o?m.from(o).save():m};k.Worker=T.default,Ae.default=k}(),Ae=Ae.default,Ae}()})})(html2pdf$1);var html2pdfExports=html2pdf$1.exports;const html2pdf=getDefaultExportFromCjs(html2pdfExports),STORAGE_KEY_WZ_HISTORY="bluemake_wz_history_v2",STORAGE_KEY_WZ_COUNTERS="bluemake_wz_monthly_counters_v2",STORAGE_KEY_WZ_CUSTOMERS="bluemake_wz_customers_v2",DEFAULT_SUPPLIER={name:"BLUEMAKE Sp. z o.o.",address:"ul. Tuwima 39, 39-300 Mielec",nip:"8172210070",email:"m.klimkowski@bluemake.eu, www.bluemake.eu"},DEFAULT_CUSTOMERS=[{id:"cust_ec_eng",name:"EC Engineering Sp. z o.o.",address:"ul. Armii Krajowej 28, 30-150 Kraków",nip:"PL9452024663",regon:"35690824",contact:"office@ec-e.pl, www.ec-e.pl"},{id:"cust_husqvarna",name:"Husqvarna Poland Sp. z o.o.",address:"ul. Wysockiego 15A, 03-371 Warszawa",nip:"5240103440",regon:"010156942",contact:"kontakt@husqvarna.pl"}];function getSavedCustomers(){try{const c=localStorage.getItem(STORAGE_KEY_WZ_CUSTOMERS);if(c){const u=JSON.parse(c);if(Array.isArray(u)&&u.length>0)return u}}catch(c){console.error("Error loading WZ customers:",c)}return localStorage.setItem(STORAGE_KEY_WZ_CUSTOMERS,JSON.stringify(DEFAULT_CUSTOMERS)),DEFAULT_CUSTOMERS}function saveCustomer(c){const u=getSavedCustomers(),S=u.findIndex(F=>F.id===c.id||c.nip&&F.nip===c.nip);return S>=0?u[S]={...u[S],...c}:u.unshift({...c,id:c.id||`cust_${Date.now()}`}),localStorage.setItem(STORAGE_KEY_WZ_CUSTOMERS,JSON.stringify(u)),u}function getWzHistory(){try{const c=localStorage.getItem(STORAGE_KEY_WZ_HISTORY);return c?JSON.parse(c):[]}catch(c){return console.error("Error loading WZ history:",c),[]}}function saveWzDocument(c){const u=getWzHistory(),S=u.findIndex(U=>U.id===c.id),F={...c,savedAt:new Date().toISOString(),formattedNumber:`Nr ${c.wzNum}/${c.wzMonth}/${c.wzYear}${c.wzSuffix||"/BM"}`};return S>=0?u[S]=F:u.unshift(F),localStorage.setItem(STORAGE_KEY_WZ_HISTORY,JSON.stringify(u)),u}function deleteWzDocument(c){const u=getWzHistory().filter(S=>S.id!==c);return localStorage.setItem(STORAGE_KEY_WZ_HISTORY,JSON.stringify(u)),u}function getNextWzNumber(c=null,u=null){const S=new Date,F=c||String(S.getMonth()+1).padStart(2,"0"),U=u||String(S.getFullYear()),Z=`${U}-${F}`;try{const k=localStorage.getItem(STORAGE_KEY_WZ_COUNTERS);if(k){const r=JSON.parse(k);if(r[Z]!==void 0&&r[Z]!==null)return{num:r[Z],month:F,year:U,suffix:"/BM"}}}catch{}const T=getWzHistory().filter(k=>k.wzMonth===F&&k.wzYear===U);return T.length>0?{num:Math.max(...T.map(r=>parseInt(r.wzNum,10)||0))+1,month:F,year:U,suffix:"/BM"}:{num:1,month:F,year:U,suffix:"/BM"}}function incrementWzCounter(c,u,S){const F=String(u).padStart(2,"0"),Z=`${String(S)}-${F}`;let Ae={};try{const r=localStorage.getItem(STORAGE_KEY_WZ_COUNTERS);r&&(Ae=JSON.parse(r))}catch{}const T=Ae[Z]||parseInt(c,10)||1,k=Math.max((parseInt(c,10)||1)+1,T+1);return Ae[Z]=k,localStorage.setItem(STORAGE_KEY_WZ_COUNTERS,JSON.stringify(Ae)),k}function renderWzGeneratorView(c,u){const S=getCurrentOperator(),F=new Date,U=String(F.getMonth()+1).padStart(2,"0"),Z=String(F.getFullYear()),Ae=F.toISOString().split("T")[0],T=new Date(F.getTime()-10*24*60*60*1e3).toISOString().split("T")[0],k=getNextWzNumber(U,Z),r=getSavedCustomers(),o=r[0]||{name:"EC Engineering Sp. z o.o.",address:"ul. Armii Krajowej 28, 30-150 Kraków",nip:"PL9452024663",regon:"35690824",contact:"office@ec-e.pl, www.ec-e.pl"};let l={id:`WZ_${Date.now()}`,wzNum:String(k.num),wzMonth:k.month,wzYear:k.year,wzSuffix:"/BM",issueDate:Ae,issuePlace:"MIELEC",orderNumber:`ZZ-72/${k.month}/${k.year}/EC`,orderDate:T,issuerName:S?S.name==="Mateusz"?"Mateusz Klimkowski":S.name==="Paweł"?"Paweł Peret":S.name:"Mateusz Klimkowski",supplier:{...DEFAULT_SUPPLIER},customer:{...o},items:[{id:1,name:"00229 - EC-VAC 0108000-004-01 - Podkladka gniazdo",sku:"00229",productId:null,currentStock:0,locationId:5,quantity:10,uom:"szt"}]},m=[],y=!1,x=!1,C=null,h=!1,b="",P="info";getProducts().then(ne=>{Array.isArray(ne)&&(m=ne,l.items.forEach(ee=>{const Fe=m.find(re=>re.sku===ee.sku||re.sku===ee.name||ee.name&&ee.name.includes(re.sku));Fe&&(ee.productId=Fe.id,ee.currentStock=Number(Fe.quantity||0),ee.locationId=Fe.locationId||5,ee.uom=Fe.uom||ee.uom||"szt")}),$())}).catch(()=>{});function H(){return`Nr ${l.wzNum}/${l.wzMonth}/${l.wzYear}${l.wzSuffix||"/BM"}`}function W(){const ne=l.customer;let ee=[];ne.name&&ee.push(`<strong class="text-slate-900 font-bold">${ne.name}</strong>`),ne.address&&ee.push(`<span class="text-slate-700">${ne.address}</span>`);let Fe=[];return ne.nip&&Fe.push(`NIP: <strong>${ne.nip}</strong>`),ne.regon&&Fe.push(`REGON: ${ne.regon}`),Fe.length>0&&ee.push(`<span class="text-slate-600 text-[11px]">${Fe.join(", ")}</span>`),ne.contact&&ee.push(`<span class="text-slate-500 text-[11px]">${ne.contact}</span>`),ee.join("<br/>")}function R(){const ne=l.supplier;let ee=[];ne.name&&ee.push(`<strong class="text-slate-900 font-bold">${ne.name}</strong>`),ne.address&&ee.push(`<span class="text-slate-700">${ne.address}</span>`);let Fe=[];return ne.nip&&Fe.push(`NIP: <strong>${ne.nip}</strong>`),ne.regon&&Fe.push(`REGON: ${ne.regon}`),Fe.length>0&&ee.push(`<span class="text-slate-600 text-[11px]">${Fe.join(", ")}</span>`),ne.email&&ee.push(`<span class="text-slate-500 text-[11px]">${ne.email}</span>`),ee.join("<br/>")}function j(){return l.items.reduce((ne,ee)=>ne+(Number(ee.quantity)||0),0)}async function I(ne=l){const ee=document.getElementById("printable-wz-sheet");if(!ee)return;const Fe=`WZ_${ne.wzNum}_${ne.wzMonth}_${ne.wzYear}_BM.pdf`,re={margin:[6,6,6,6],filename:Fe,image:{type:"jpeg",quality:.98},html2canvas:{scale:2,useCORS:!0,logging:!1,backgroundColor:"#ffffff"},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}};try{return await html2pdf().set(re).from(ee).save(),!0}catch(xe){return console.error("Error generating PDF with html2pdf:",xe),window.print(),!1}}function z(){var ve;const ne=l.items.map((we,Ce)=>`
       <tr style="background-color: ${Ce%2===0?"#ffffff":"#f8fafc"};">
         <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; font-weight: bold; font-family: monospace;">${Ce+1}</td>
         <td style="border: 1px solid #475569; padding: 7px 10px; font-weight: bold; color: #0f172a;">${we.name||""}</td>
@@ -3563,38 +3563,53 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
 </html>`,Fe=new Blob([ee],{type:"text/html;charset=utf-8"}),re=URL.createObjectURL(Fe),xe=document.createElement("a");xe.href=re,xe.download=`WZ_${l.wzNum}_${l.wzMonth}_${l.wzYear}_BM.html`,document.body.appendChild(xe),xe.click(),setTimeout(()=>{document.body.removeChild(xe),URL.revokeObjectURL(re)},500)}function K(){var ne;c.innerHTML=`
       <style>
         @media print {
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          body {
+            background: #ffffff !important;
+            color: #000000 !important;
+          }
           body * { visibility: hidden; }
-          #printable-wz-sheet, #printable-wz-sheet * { visibility: visible; }
+          #printable-wz-sheet, #printable-wz-sheet * {
+            visibility: visible;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           #printable-wz-sheet {
             position: absolute;
             left: 0;
             top: 0;
             width: 100% !important;
             margin: 0 !important;
-            padding: 0 !important;
+            padding: 8mm !important;
             box-shadow: none !important;
             border: none !important;
+            background-color: #ffffff !important;
+            color: #0f172a !important;
           }
           header, #wz-creator-controls, #history-modal-backdrop, #odoo-picker-modal-backdrop { display: none !important; }
         }
       </style>
 
       <!-- Top Bar -->
-      <header class="fixed top-0 left-0 w-full z-40 bg-surface border-b border-outline-variant h-14 flex justify-between items-center px-4">
+      <header class="fixed top-0 left-0 w-full z-40 bg-slate-900 border-b border-slate-800 h-14 flex justify-between items-center px-4">
         <div class="flex items-center gap-3">
-          <button id="btn-back-mag" class="flex items-center gap-1 text-primary hover:bg-surface-container-high px-2.5 py-1.5 rounded-lg font-bold text-xs transition-transform active:scale-95">
+          <button id="btn-back-mag" class="flex items-center gap-1 text-slate-300 hover:text-white hover:bg-slate-800 px-2.5 py-1.5 rounded-lg font-bold text-xs transition-transform active:scale-95">
             <span class="material-symbols-outlined text-[18px]">arrow_back</span>
             <span>MAGAZYN</span>
           </button>
-          <div class="h-4 w-px bg-outline-variant"></div>
+          <div class="h-4 w-px bg-slate-800"></div>
           <div class="flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-amber-600 text-[22px]">description</span>
-            <h1 class="font-bold text-primary text-sm sm:text-base">Kreator Dokumentów WZ</h1>
+            <span class="material-symbols-outlined text-amber-500 text-[22px]">description</span>
+            <h1 class="font-bold text-white text-sm sm:text-base">Kreator Dokumentów WZ</h1>
           </div>
         </div>
 
         <div class="flex items-center gap-2">
-          <button id="btn-toggle-wz-history" class="flex items-center gap-1 bg-surface-container-high hover:bg-surface-container-highest text-primary border border-outline-variant font-bold text-xs px-3 py-1.5 rounded-lg transition-all shadow-sm">
+          <button id="btn-toggle-wz-history" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs px-3 py-1.5 rounded-lg transition-all shadow-sm">
             <span class="material-symbols-outlined text-[16px]">history</span>
             <span>HISTORIA WZ</span>
             <span class="bg-amber-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono">${getWzHistory().length}</span>
@@ -3606,47 +3621,47 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
         
         <!-- Status Toast Banner -->
         ${b?`
-          <div class="p-3.5 rounded-2xl flex items-center justify-between gap-2 shadow-md ${P==="success"?"bg-emerald-100 border-2 border-emerald-400 text-emerald-950":"bg-blue-100 border-2 border-blue-400 text-blue-950"}">
+          <div class="p-3.5 rounded-2xl flex items-center justify-between gap-2 shadow-md ${P==="success"?"bg-emerald-950/80 border border-emerald-600 text-emerald-200":P==="error"?"bg-rose-950/80 border border-rose-600 text-rose-200":"bg-blue-950/80 border border-blue-600 text-blue-200"}">
             <div class="flex items-center gap-2 font-bold text-xs sm:text-sm">
-              <span class="material-symbols-outlined ${P==="success"?"text-emerald-600":"text-blue-600"}">
-                ${P==="success"?"check_circle":"info"}
+              <span class="material-symbols-outlined ${P==="success"?"text-emerald-400":P==="error"?"text-rose-400":"text-blue-400"}">
+                ${P==="success"?"check_circle":P==="error"?"error":"info"}
               </span>
               <span>${b}</span>
             </div>
-            <button id="btn-dismiss-status" class="text-xs font-bold px-2 py-1 hover:bg-black/10 rounded-lg">✕</button>
+            <button id="btn-dismiss-status" class="text-xs font-bold px-2 py-1 hover:bg-white/10 rounded-lg">✕</button>
           </div>
         `:""}
 
         <!-- ═════════════════════════════════════════════════════════════════════
-             CREATOR CONTROLS BAR (Styled identically to user photo!)
+             CREATOR CONTROLS BAR (MODERN DARK INDUSTRIAL THEME)
              ═════════════════════════════════════════════════════════════════════ -->
-        <div id="wz-creator-controls" class="bg-surface-container-lowest border-2 border-outline-variant/80 rounded-2xl p-4 sm:p-5 shadow-md flex flex-col gap-4">
+        <div id="wz-creator-controls" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl flex flex-col gap-4 text-slate-100">
           
           <!-- Top Row Form Inputs -->
           <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center text-xs">
             
             <!-- Nr WZ: [ 1 ] / [ 09 ] / [ 2026 ] /BM -->
-            <div class="md:col-span-4 flex items-center gap-1 bg-slate-50 border border-slate-300 p-2 rounded-xl">
-              <span class="font-bold text-slate-700 whitespace-nowrap">Nr WZ:</span>
-              <input id="input-wz-num" type="number" min="1" value="${l.wzNum}" class="w-12 text-center bg-white border border-slate-300 rounded font-bold font-mono py-1 px-1 focus:ring-1 focus:ring-primary" />
-              <span class="font-bold text-slate-400">/</span>
-              <input id="input-wz-month" type="text" maxlength="2" value="${l.wzMonth}" class="w-10 text-center bg-white border border-slate-300 rounded font-bold font-mono py-1 px-1 focus:ring-1 focus:ring-primary" />
-              <span class="font-bold text-slate-400">/</span>
-              <input id="input-wz-year" type="text" maxlength="4" value="${l.wzYear}" class="w-14 text-center bg-white border border-slate-300 rounded font-bold font-mono py-1 px-1 focus:ring-1 focus:ring-primary" />
-              <input id="input-wz-suffix" type="text" value="${l.wzSuffix}" class="w-16 text-center bg-white border border-slate-300 rounded font-bold font-mono py-1 px-1 focus:ring-1 focus:ring-primary" />
+            <div class="md:col-span-4 flex items-center gap-1 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
+              <span class="font-bold text-slate-300 whitespace-nowrap">Nr WZ:</span>
+              <input id="input-wz-num" type="number" min="1" value="${l.wzNum}" class="w-12 text-center bg-slate-950 border border-slate-700 rounded font-bold font-mono py-1 px-1 text-white focus:ring-1 focus:ring-blue-500" />
+              <span class="font-bold text-slate-500">/</span>
+              <input id="input-wz-month" type="text" maxlength="2" value="${l.wzMonth}" class="w-10 text-center bg-slate-950 border border-slate-700 rounded font-bold font-mono py-1 px-1 text-white focus:ring-1 focus:ring-blue-500" />
+              <span class="font-bold text-slate-500">/</span>
+              <input id="input-wz-year" type="text" maxlength="4" value="${l.wzYear}" class="w-14 text-center bg-slate-950 border border-slate-700 rounded font-bold font-mono py-1 px-1 text-white focus:ring-1 focus:ring-blue-500" />
+              <input id="input-wz-suffix" type="text" value="${l.wzSuffix}" class="w-16 text-center bg-slate-950 border border-slate-700 rounded font-bold font-mono py-1 px-1 text-white focus:ring-1 focus:ring-blue-500" />
             </div>
 
             <!-- Data wystawienia & Miejsce -->
-            <div class="md:col-span-4 flex items-center gap-1.5 bg-slate-50 border border-slate-300 p-2 rounded-xl">
-              <span class="font-bold text-slate-700 whitespace-nowrap">Data:</span>
-              <input id="input-issue-date" type="date" value="${l.issueDate}" class="flex-1 bg-white border border-slate-300 rounded font-bold py-1 px-2 focus:ring-1 focus:ring-primary" />
-              <input id="input-issue-place" type="text" value="${l.issuePlace}" placeholder="MIELEC" class="w-20 bg-white border border-slate-300 rounded font-bold uppercase py-1 px-1.5 text-center focus:ring-1 focus:ring-primary" />
+            <div class="md:col-span-4 flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
+              <span class="font-bold text-slate-300 whitespace-nowrap">Data:</span>
+              <input id="input-issue-date" type="date" value="${l.issueDate}" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold py-1 px-2 text-white focus:ring-1 focus:ring-blue-500" />
+              <input id="input-issue-place" type="text" value="${l.issuePlace}" placeholder="MIELEC" class="w-20 bg-slate-950 border border-slate-700 rounded font-bold uppercase py-1 px-1.5 text-center text-white focus:ring-1 focus:ring-blue-500" />
             </div>
 
             <!-- Nr zamówienia & Data zamówienia -->
-            <div class="md:col-span-4 flex items-center gap-1.5 bg-slate-50 border border-slate-300 p-2 rounded-xl">
-              <span class="font-bold text-slate-700 whitespace-nowrap">Nr zam.:</span>
-              <input id="input-order-num" type="text" value="${l.orderNumber}" placeholder="ZZ-72/09/2026/EC" class="flex-1 bg-white border border-slate-300 rounded font-bold font-mono py-1 px-2 focus:ring-1 focus:ring-primary" />
+            <div class="md:col-span-4 flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
+              <span class="font-bold text-slate-300 whitespace-nowrap">Nr zam.:</span>
+              <input id="input-order-num" type="text" value="${l.orderNumber}" placeholder="ZZ-72/09/2026/EC" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold font-mono py-1 px-2 text-white focus:ring-1 focus:ring-blue-500" />
             </div>
 
           </div>
@@ -3655,15 +3670,15 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
           <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center text-xs">
             
             <!-- Data zamówienia -->
-            <div class="md:col-span-3 flex items-center gap-1.5 bg-slate-50 border border-slate-300 p-2 rounded-xl">
-              <span class="font-bold text-slate-700 whitespace-nowrap">Data zam.:</span>
-              <input id="input-order-date" type="date" value="${l.orderDate}" class="flex-1 bg-white border border-slate-300 rounded font-bold py-1 px-2 focus:ring-1 focus:ring-primary" />
+            <div class="md:col-span-3 flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
+              <span class="font-bold text-slate-300 whitespace-nowrap">Data zam.:</span>
+              <input id="input-order-date" type="date" value="${l.orderDate}" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold py-1 px-2 text-white focus:ring-1 focus:ring-blue-500" />
             </div>
 
             <!-- Wystawiający (Kto wystawia WZ) -->
-            <div class="md:col-span-4 flex items-center gap-1.5 bg-slate-50 border border-slate-300 p-2 rounded-xl">
-              <span class="font-bold text-slate-700 whitespace-nowrap">Wystawił:</span>
-              <select id="select-issuer-name" class="flex-1 bg-white border border-slate-300 rounded font-bold py-1 px-2 focus:ring-1 focus:ring-primary">
+            <div class="md:col-span-4 flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
+              <span class="font-bold text-slate-300 whitespace-nowrap">Wystawił:</span>
+              <select id="select-issuer-name" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold py-1 px-2 text-white focus:ring-1 focus:ring-blue-500">
                 <option value="Mateusz Klimkowski" ${l.issuerName==="Mateusz Klimkowski"?"selected":""}>Mateusz Klimkowski</option>
                 <option value="Paweł Peret" ${l.issuerName==="Paweł Peret"?"selected":""}>Paweł Peret</option>
                 <option value="Szymon" ${l.issuerName==="Szymon"?"selected":""}>Szymon</option>
@@ -3673,15 +3688,15 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
             </div>
 
             <!-- Odbiorca (Klient) Preset Selector -->
-            <div class="md:col-span-5 flex items-center gap-1.5 bg-slate-50 border border-slate-300 p-2 rounded-xl">
-              <span class="font-bold text-slate-700 whitespace-nowrap">Odbiorca:</span>
-              <select id="select-customer-preset" class="flex-1 bg-white border border-slate-300 rounded font-bold py-1 px-2 focus:ring-1 focus:ring-primary">
+            <div class="md:col-span-5 flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
+              <span class="font-bold text-slate-300 whitespace-nowrap">Odbiorca:</span>
+              <select id="select-customer-preset" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold py-1 px-2 text-white focus:ring-1 focus:ring-blue-500">
                 ${r.map(ee=>`
                   <option value="${ee.id}" ${l.customer.name===ee.name?"selected":""}>${ee.name}</option>
                 `).join("")}
                 <option value="NEW">+ Dodaj nowego kontrahenta</option>
               </select>
-              <button id="btn-edit-customer" title="Edytuj dane odbiorcy" class="bg-slate-200 hover:bg-slate-300 p-1 rounded">
+              <button id="btn-edit-customer" title="Edytuj dane odbiorcy" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-1.5 rounded-lg transition-colors">
                 <span class="material-symbols-outlined text-[16px]">edit</span>
               </button>
             </div>
@@ -3689,51 +3704,51 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
           </div>
 
           <!-- Customer Edit Drawer (Collapsible) -->
-          <div id="customer-edit-box" class="hidden bg-amber-50/70 border border-amber-300 p-3 rounded-xl flex flex-col gap-2 text-xs">
-            <span class="font-bold text-amber-900 uppercase">Edycja danych odbiorcy na dokumencie WZ:</span>
+          <div id="customer-edit-box" class="hidden bg-amber-950/40 border border-amber-500/50 p-3 rounded-xl flex flex-col gap-2 text-xs">
+            <span class="font-bold text-amber-300 uppercase tracking-wide">Edycja danych odbiorcy na dokumencie WZ:</span>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <input id="edit-cust-name" type="text" placeholder="Nazwa firmy" value="${l.customer.name||""}" class="bg-white border border-amber-300 p-1.5 rounded font-bold" />
-              <input id="edit-cust-address" type="text" placeholder="Adres (Ulica, Kod, Miasto)" value="${l.customer.address||""}" class="bg-white border border-amber-300 p-1.5 rounded" />
-              <input id="edit-cust-nip" type="text" placeholder="NIP (np. PL9452024663)" value="${l.customer.nip||""}" class="bg-white border border-amber-300 p-1.5 rounded font-mono" />
-              <input id="edit-cust-contact" type="text" placeholder="Kontakt / email / www" value="${l.customer.contact||""}" class="bg-white border border-amber-300 p-1.5 rounded" />
+              <input id="edit-cust-name" type="text" placeholder="Nazwa firmy" value="${l.customer.name||""}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded font-bold text-white" />
+              <input id="edit-cust-address" type="text" placeholder="Adres (Ulica, Kod, Miasto)" value="${l.customer.address||""}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded text-white" />
+              <input id="edit-cust-nip" type="text" placeholder="NIP (np. PL9452024663)" value="${l.customer.nip||""}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded font-mono text-white" />
+              <input id="edit-cust-contact" type="text" placeholder="Kontakt / email / www" value="${l.customer.contact||""}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded text-white" />
             </div>
             <div class="flex justify-end gap-2 mt-1">
-              <button id="btn-save-cust-preset" class="bg-amber-700 hover:bg-amber-800 text-white font-bold py-1 px-3 rounded text-xs">Zapisz do listy odbiorców</button>
+              <button id="btn-save-cust-preset" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black py-1.5 px-3 rounded-lg text-xs transition-colors">Zapisz do listy odbiorców</button>
             </div>
           </div>
 
           <!-- Items Row Controls: [ Usuń ] [ Licznik ] [ + Dodaj ] + Action Buttons -->
-          <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-200">
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800">
             
             <!-- Items counter and add/remove buttons -->
-            <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-300 text-xs">
-              <span class="font-bold text-slate-700 px-1">Pozycje:</span>
-              <button id="btn-remove-last-item" class="bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold px-2.5 py-1 rounded-lg transition-all active:scale-95 flex items-center gap-0.5">
+            <div class="flex items-center gap-2 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700 text-xs">
+              <span class="font-bold text-slate-300 px-1">Pozycje:</span>
+              <button id="btn-remove-last-item" class="bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 font-bold px-2.5 py-1 rounded-lg transition-all active:scale-95 flex items-center gap-0.5">
                 <span class="material-symbols-outlined text-[14px]">remove</span>
                 <span>Usuń</span>
               </button>
-              <span id="items-count-badge" class="font-mono font-bold bg-white border border-slate-300 px-2.5 py-0.5 rounded-md text-slate-900">${l.items.length}</span>
-              <button id="btn-add-new-item" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold px-2.5 py-1 rounded-lg transition-all active:scale-95 flex items-center gap-0.5">
+              <span id="items-count-badge" class="font-mono font-bold bg-slate-950 border border-slate-700 px-2.5 py-0.5 rounded-md text-white">${l.items.length}</span>
+              <button id="btn-add-new-item" class="bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/60 font-bold px-2.5 py-1 rounded-lg transition-all active:scale-95 flex items-center gap-0.5">
                 <span class="material-symbols-outlined text-[14px]">add</span>
                 <span>+ Dodaj</span>
               </button>
             </div>
 
-            <!-- Action Buttons (Exact Green, Blue, Dark, Blue as in photo!) -->
+            <!-- Action Buttons -->
             <div class="flex flex-wrap items-center gap-2">
-              <button id="btn-save-wz-state" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
+              <button id="btn-save-wz-state" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[16px]">${h?"sync":"cloud_sync"}</span>
                 <span>${h?"SYNCHRONIZACJA ODOO & PDF...":"💾 Generuj WZ (Odejmij Stan & Pobierz PDF)"}</span>
               </button>
-              <button id="btn-download-wz-html" class="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
+              <button id="btn-download-wz-html" class="bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[16px]">html</span>
                 <span>Pobierz HTML</span>
               </button>
-              <button id="btn-reset-new-wz" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
+              <button id="btn-reset-new-wz" class="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[16px]">add_circle</span>
                 <span>Nowa WZ</span>
               </button>
-              <button id="btn-print-wz-doc" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-1.5 active:scale-95 transition-all">
+              <button id="btn-print-wz-doc" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/20 flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[18px]">print</span>
                 <span>Drukuj WZ</span>
               </button>
@@ -3742,10 +3757,10 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
           </div>
 
           <!-- Items Interactive Edit Form List with Autocomplete & Direct Odoo Picker -->
-          <div class="flex flex-col gap-2 pt-2 border-t border-slate-200">
+          <div class="flex flex-col gap-2 pt-2 border-t border-slate-800">
             <div class="flex justify-between items-center">
-              <span class="font-bold text-slate-700 text-xs uppercase tracking-wide">Pozycje towarowe (Wpisz numer / SKU lub wybierz z bazy):</span>
-              <span class="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
+              <span class="font-bold text-slate-300 text-xs uppercase tracking-wide">Pozycje towarowe (Wpisz numer / SKU lub wybierz z bazy):</span>
+              <span class="text-[11px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-700/50 flex items-center gap-1">
                 <span class="material-symbols-outlined text-[14px]">inventory_2</span>
                 Automatyczne odejmowanie ze stanu Odoo 19 przy zapisie
               </span>
@@ -3753,8 +3768,8 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
 
             <div class="flex flex-col gap-2" id="wz-items-inputs-container">
               ${l.items.map((ee,Fe)=>`
-                <div class="flex flex-wrap items-center gap-2 bg-slate-50 border border-slate-300 p-2.5 rounded-xl relative" data-item-idx="${Fe}">
-                  <span class="font-mono font-bold text-slate-500 w-6 text-center">${Fe+1}.</span>
+                <div class="flex flex-wrap items-center gap-2 bg-slate-800/80 border border-slate-700 p-2.5 rounded-xl relative" data-item-idx="${Fe}">
+                  <span class="font-mono font-bold text-slate-400 w-6 text-center">${Fe+1}.</span>
                   
                   <!-- SKU / Product Name Input with Auto-Suggest Dropdown -->
                   <div class="flex-1 min-w-[260px] relative">
@@ -3764,12 +3779,12 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                         value="${ee.name||""}" 
                         placeholder="Wpisz numer (np. 00229) lub nazwę detalu" 
                         autocomplete="off"
-                        class="w-full bg-white border border-slate-300 rounded font-bold px-3 py-1.5 text-xs text-slate-900 item-name-input focus:ring-2 focus:ring-primary" 
+                        class="w-full bg-slate-950 border border-slate-700 rounded font-bold px-3 py-1.5 text-xs text-white item-name-input focus:ring-2 focus:ring-blue-500" 
                         data-idx="${Fe}" 
                       />
                       <button 
                         type="button" 
-                        class="btn-open-odoo-picker bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-1.5 rounded text-[11px] font-bold whitespace-nowrap flex items-center gap-1 active:scale-95" 
+                        class="btn-open-odoo-picker bg-indigo-950/70 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-700/60 px-2 py-1.5 rounded text-[11px] font-bold whitespace-nowrap flex items-center gap-1 active:scale-95" 
                         data-idx="${Fe}" 
                         title="Otwórz pełną listę produktów z Odoo"
                       >
@@ -3779,26 +3794,26 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                     </div>
 
                     <!-- Floating Autocomplete Suggestion Dropdown Box -->
-                    <div id="autocomplete-box-${Fe}" class="autocomplete-dropdown hidden absolute top-full left-0 w-full bg-white border-2 border-indigo-500 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto mt-1 p-1"></div>
+                    <div id="autocomplete-box-${Fe}" class="autocomplete-dropdown hidden absolute top-full left-0 w-full bg-slate-900 border-2 border-indigo-500 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto mt-1 p-1 text-white"></div>
                   </div>
 
                   <!-- Quantity -->
                   <div class="flex items-center gap-1">
-                    <span class="text-xs text-slate-500 font-bold">Ilość:</span>
+                    <span class="text-xs text-slate-400 font-bold">Ilość:</span>
                     <input 
                       type="number" 
                       step="1" 
                       min="1" 
                       value="${ee.quantity}" 
-                      class="w-20 bg-white border border-slate-300 rounded font-bold font-mono px-2 py-1.5 text-xs text-center text-slate-900 item-qty-input focus:ring-2 focus:ring-primary" 
+                      class="w-20 bg-slate-950 border border-slate-700 rounded font-bold font-mono px-2 py-1.5 text-xs text-center text-white item-qty-input focus:ring-2 focus:ring-blue-500" 
                       data-idx="${Fe}" 
                     />
                   </div>
 
                   <!-- Unit of Measure -->
                   <div class="flex items-center gap-1">
-                    <span class="text-xs text-slate-500 font-bold">Jm:</span>
-                    <select class="bg-white border border-slate-300 rounded font-bold px-2 py-1.5 text-xs text-slate-900 item-uom-select focus:ring-2 focus:ring-primary" data-idx="${Fe}">
+                    <span class="text-xs text-slate-400 font-bold">Jm:</span>
+                    <select class="bg-slate-950 border border-slate-700 rounded font-bold px-2 py-1.5 text-xs text-white item-uom-select focus:ring-2 focus:ring-blue-500" data-idx="${Fe}">
                       <option value="szt" ${ee.uom==="szt"?"selected":""}>szt</option>
                       <option value="m" ${ee.uom==="m"?"selected":""}>m</option>
                       <option value="kpl" ${ee.uom==="kpl"?"selected":""}>kpl</option>
@@ -3808,13 +3823,13 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
 
                   <!-- Stock badge if matched with Odoo -->
                   ${ee.productId?`
-                    <span class="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-1 rounded-lg">
+                    <span class="text-[10px] font-mono font-bold bg-emerald-950/70 text-emerald-300 border border-emerald-700/60 px-2 py-1 rounded-lg">
                       Stan Odoo: ${ee.currentStock} ${ee.uom}
                     </span>
                   `:""}
 
                   <!-- Delete button -->
-                  <button type="button" class="text-rose-600 hover:text-rose-800 p-1 rounded hover:bg-rose-50 btn-delete-item" data-idx="${Fe}" title="Usuń ten wiersz">
+                  <button type="button" class="text-rose-400 hover:text-rose-300 p-1 rounded hover:bg-rose-950/40 btn-delete-item" data-idx="${Fe}" title="Usuń ten wiersz">
                     <span class="material-symbols-outlined text-[18px]">delete</span>
                   </button>
                 </div>
@@ -3825,99 +3840,99 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
         </div>
 
         <!-- ═════════════════════════════════════════════════════════════════════
-             LIVE PRO A4 WZ DOCUMENT PREVIEW (ELEGANT SLATE SHADES)
+             LIVE PRO A4 WZ DOCUMENT PREVIEW (EXACT SHADES & PERFECT PRINT FIDELITY)
              ═════════════════════════════════════════════════════════════════════ -->
         <div class="flex flex-col items-center">
-          <div class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider flex items-center gap-1">
+          <div class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider flex items-center gap-1">
             <span class="material-symbols-outlined text-[16px]">visibility</span>
-            <span>Podgląd wydruku A4 (Elegancki styl biznesowy PRO)</span>
+            <span>Podgląd wydruku A4 (Elegancki styl biznesowy PRO • 100% zgodność z wydrukiem)</span>
           </div>
 
-          <div id="printable-wz-sheet" class="bg-white text-slate-950 border-2 border-slate-600 p-8 sm:p-12 shadow-2xl rounded-none w-full max-w-[850px] font-sans text-[12.5px] leading-relaxed select-text">
+          <div id="printable-wz-sheet" style="background-color: #ffffff !important; color: #0f172a !important; border: 2px solid #334155 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;" class="p-8 sm:p-12 shadow-2xl rounded-none w-full max-w-[850px] font-sans text-[12.5px] leading-relaxed select-text">
             
             <!-- Header Grid: 3 Clean Boxes -->
-            <table class="w-full border-collapse border-2 border-slate-700 mb-0">
+            <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #334155; margin-bottom: 0;">
               <tr>
-                <td class="border border-slate-600 p-3 text-center w-1/3 align-middle bg-slate-50/70">
-                  <div class="font-extrabold text-sm text-slate-900" id="prev-issue-date-place">${l.issueDate} ${l.issuePlace}</div>
-                  <div class="text-[9.5px] text-slate-500 font-semibold mt-0.5 uppercase tracking-wider">Data i miejsce wystawienia</div>
+                <td style="border: 1px solid #475569; padding: 10px 8px; text-align: center; width: 33.33%; vertical-align: middle; background-color: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                  <div style="font-weight: 800; font-size: 13px; color: #0f172a;" id="prev-issue-date-place">${l.issueDate} ${l.issuePlace}</div>
+                  <div style="font-size: 9.5px; color: #64748b; font-weight: 600; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px;">Data i miejsce wystawienia</div>
                 </td>
-                <td class="border border-slate-600 p-3 text-center w-1/3 align-middle bg-slate-100">
-                  <h2 class="text-base sm:text-lg font-black uppercase tracking-wider text-slate-900 m-0">Wydanie z magazynu (WZ)</h2>
+                <td style="border: 1px solid #475569; padding: 10px 8px; text-align: center; width: 33.33%; vertical-align: middle; background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                  <h2 style="font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0f172a; margin: 0;">Wydanie z magazynu (WZ)</h2>
                 </td>
-                <td class="border border-slate-600 p-3 text-center w-1/3 align-middle bg-slate-50/70">
-                  <div class="font-black text-sm sm:text-base text-slate-950 font-mono" id="prev-wz-full-number">${H()}</div>
+                <td style="border: 1px solid #475569; padding: 10px 8px; text-align: center; width: 33.33%; vertical-align: middle; background-color: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                  <div style="font-weight: 900; font-size: 14.5px; color: #0f172a; font-family: monospace;" id="prev-wz-full-number">${H()}</div>
                 </td>
               </tr>
               <tr>
-                <td class="border border-slate-600 p-3.5 align-top w-1/2">
-                  <div class="bg-slate-100 -m-3.5 mb-2.5 p-1.5 px-3 border-b border-slate-300 font-bold text-[10px] text-slate-700 uppercase tracking-wider">
+                <td style="border: 1px solid #475569; padding: 12px 10px; vertical-align: top; width: 50%;">
+                  <div style="background-color: #f1f5f9 !important; margin: -12px -10px 8px -10px; padding: 5px 10px; border-bottom: 1px solid #cbd5e1; font-weight: 800; font-size: 9.5px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                     Dostawca:
                   </div>
                   <div id="prev-supplier-block">${R()}</div>
                 </td>
-                <td class="border border-slate-600 p-3.5 align-top w-1/2" colspan="2">
-                  <div class="bg-slate-100 -m-3.5 mb-2.5 p-1.5 px-3 border-b border-slate-300 font-bold text-[10px] text-slate-700 uppercase tracking-wider">
+                <td style="border: 1px solid #475569; padding: 12px 10px; vertical-align: top; width: 50%;" colspan="2">
+                  <div style="background-color: #f1f5f9 !important; margin: -12px -10px 8px -10px; padding: 5px 10px; border-bottom: 1px solid #cbd5e1; font-weight: 800; font-size: 9.5px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                     Odbiorca:
                   </div>
                   <div id="prev-customer-block">${W()}</div>
                 </td>
               </tr>
-              <tr class="bg-slate-50/60">
-                <td class="border border-slate-600 p-2.5 align-middle">
-                  <span class="text-slate-600 font-semibold">Numer zamówienia:</span> <strong class="text-slate-900 font-mono text-xs" id="prev-order-num">${l.orderNumber||"-"}</strong>
+              <tr style="background-color: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                <td style="border: 1px solid #475569; padding: 8px 10px; vertical-align: middle;">
+                  <span style="color: #475569; font-weight: 600;">Numer zamówienia:</span> <strong style="color: #0f172a; font-family: monospace; font-size: 12px;" id="prev-order-num">${l.orderNumber||"-"}</strong>
                 </td>
-                <td class="border border-slate-600 p-2.5 align-middle" colspan="2">
-                  <span class="text-slate-600 font-semibold">Data zamówienia:</span> <strong class="text-slate-900 text-xs" id="prev-order-date">${l.orderDate||"-"}</strong>
+                <td style="border: 1px solid #475569; padding: 8px 10px; vertical-align: middle;" colspan="2">
+                  <span style="color: #475569; font-weight: 600;">Data zamówienia:</span> <strong style="color: #0f172a; font-size: 12px;" id="prev-order-date">${l.orderDate||"-"}</strong>
                 </td>
               </tr>
             </table>
 
             <!-- Goods / Items Table with Pro Header & Zebra Striping -->
-            <table class="w-full border-collapse border-2 border-slate-700 -mt-[2px]">
+            <table style="width: 100%; border-collapse: collapse; border: 1.5px solid #334155; margin-top: -1px;">
               <thead>
-                <tr class="bg-slate-200 text-slate-900 text-xs font-black uppercase tracking-wider">
-                  <th class="border border-slate-600 py-2.5 px-2 text-center w-12">Lp.</th>
-                  <th class="border border-slate-600 py-2.5 px-3 text-left">Nazwa towaru / usługi</th>
-                  <th class="border border-slate-600 py-2.5 px-3 text-center w-24">Ilość</th>
-                  <th class="border border-slate-600 py-2.5 px-3 text-center w-16">Jm</th>
+                <tr style="background-color: #e2e8f0 !important; color: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                  <th style="border: 1px solid #475569; padding: 8px 6px; text-align: center; width: 45px; font-size: 11px; font-weight: 900; text-transform: uppercase;">Lp.</th>
+                  <th style="border: 1px solid #475569; padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 900; text-transform: uppercase;">Nazwa towaru / usługi</th>
+                  <th style="border: 1px solid #475569; padding: 8px 8px; text-align: center; width: 95px; font-size: 11px; font-weight: 900; text-transform: uppercase;">Ilość</th>
+                  <th style="border: 1px solid #475569; padding: 8px 8px; text-align: center; width: 65px; font-size: 11px; font-weight: 900; text-transform: uppercase;">Jm</th>
                 </tr>
               </thead>
               <tbody id="prev-items-tbody">
                 ${l.items.map((ee,Fe)=>`
-                  <tr class="${Fe%2===0?"bg-white":"bg-slate-50/80"}">
-                    <td class="border border-slate-600 py-2 px-2 text-center font-mono font-bold text-slate-600">${Fe+1}</td>
-                    <td class="border border-slate-600 py-2 px-3 font-bold text-slate-950">${ee.name||"-"}</td>
-                    <td class="border border-slate-600 py-2 px-3 text-center font-mono font-bold text-sm text-slate-950">${ee.quantity}</td>
-                    <td class="border border-slate-600 py-2 px-3 text-center text-slate-700 font-medium">${ee.uom||"szt"}</td>
+                  <tr style="background-color: ${Fe%2===0?"#ffffff":"#f8fafc"} !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                    <td style="border: 1px solid #475569; padding: 7px 6px; text-align: center; font-family: monospace; font-weight: bold; color: #475569;">${Fe+1}</td>
+                    <td style="border: 1px solid #475569; padding: 7px 10px; font-weight: bold; color: #0f172a;">${ee.name||"-"}</td>
+                    <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; font-family: monospace; font-weight: bold; font-size: 13px; color: #0f172a;">${ee.quantity}</td>
+                    <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; color: #334155; font-weight: 600;">${ee.uom||"szt"}</td>
                   </tr>
                 `).join("")}
               </tbody>
-              <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-700">
+              <tfoot style="background-color: #f1f5f9 !important; font-weight: bold; border-top: 1.5px solid #334155; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                 <tr>
-                  <td colspan="2" class="border border-slate-600 py-2 px-3 text-right text-xs uppercase tracking-wider text-slate-600">Razem:</td>
-                  <td class="border border-slate-600 py-2 px-3 text-center font-mono font-bold text-sm text-slate-950" id="prev-total-qty">${j()}</td>
-                  <td class="border border-slate-600 py-2 px-3 text-center text-xs text-slate-600" id="prev-total-uom">${((ne=l.items[0])==null?void 0:ne.uom)||"szt"}</td>
+                  <td colspan="2" style="border: 1px solid #475569; padding: 7px 10px; text-align: right; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569;">Razem:</td>
+                  <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; font-family: monospace; font-weight: 900; font-size: 14px; color: #0f172a;" id="prev-total-qty">${j()}</td>
+                  <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; font-size: 11px; color: #475569;" id="prev-total-uom">${((ne=l.items[0])==null?void 0:ne.uom)||"szt"}</td>
                 </tr>
               </tfoot>
             </table>
 
             <!-- Signatures Section -->
-            <div class="mt-14 grid grid-cols-2 gap-8 px-4">
-              <div class="flex flex-col items-start">
-                <div class="w-4/5 border-t-2 border-slate-700 mb-1.5"></div>
-                <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Odebrał(a)</div>
-                <div class="text-[9.5px] text-slate-400 mt-0.5">Podpis osoby upoważnionej</div>
+            <div style="margin-top: 45px; display: flex; justify-content: space-between; padding: 0 15px;">
+              <div style="width: 42%;">
+                <div style="border-top: 1.5px solid #334155; width: 100%; margin-bottom: 6px;"></div>
+                <div style="font-size: 11px; font-weight: bold; color: #334155; text-transform: uppercase; letter-spacing: 0.5px;">Odebrał(a)</div>
+                <div style="font-size: 9.5px; color: #64748b; margin-top: 2px;">Podpis osoby upoważnionej</div>
               </div>
-              <div class="flex flex-col items-start">
-                <div class="w-4/5 border-t-2 border-slate-700 mb-1.5"></div>
-                <div class="text-[11px] text-slate-700"><span class="font-bold uppercase tracking-wider">Wystawił(a):</span> <strong class="text-slate-950 font-bold" id="prev-issuer-signature">${l.issuerName}</strong></div>
-                <div class="text-[9.5px] text-slate-400 mt-0.5">Podpis wystawcy dokumentu</div>
+              <div style="width: 42%;">
+                <div style="border-top: 1.5px solid #334155; width: 100%; margin-bottom: 6px;"></div>
+                <div style="font-size: 11px; color: #334155;"><span style="font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Wystawił(a):</span> <strong style="color: #0f172a; font-weight: bold;" id="prev-issuer-signature">${l.issuerName}</strong></div>
+                <div style="font-size: 9.5px; color: #64748b; margin-top: 2px;">Podpis wystawcy dokumentu</div>
               </div>
             </div>
 
             <!-- Footer note -->
-            <div class="mt-12 pt-3 border-t border-slate-200 flex justify-between text-[9.5px] text-slate-400 font-medium">
+            <div style="margin-top: 35px; padding-top: 8px; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between; font-size: 9.5px; color: #64748b; font-weight: 500;">
               <span>System Bluemake Industrial Sync • Odoo 19</span>
               <span>Dokument WZ • Oryginał / Kopia</span>
             </div>
@@ -3928,49 +3943,49 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
       </main>
 
       <!-- ═════════════════════════════════════════════════════════════════════
-           MODAL: ODOO PRODUCTS BROWSER / SELECTOR
+           MODAL: ODOO PRODUCTS BROWSER / SELECTOR (DARK THEMED)
            ═════════════════════════════════════════════════════════════════════ -->
       ${x?`
-        <div id="odoo-picker-modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3">
-          <div class="bg-white rounded-2xl max-w-3xl w-full p-5 shadow-2xl flex flex-col gap-3 max-h-[85vh]">
-            <div class="flex justify-between items-center border-b border-gray-200 pb-2">
+        <div id="odoo-picker-modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+          <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-5 shadow-2xl flex flex-col gap-3 max-h-[85vh] text-slate-100">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
               <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-indigo-600 text-2xl">inventory_2</span>
-                <h2 class="font-bold text-gray-900 text-base">Wybierz produkt z bazy Odoo (Pozycja ${C!==null?C+1:1})</h2>
+                <span class="material-symbols-outlined text-indigo-400 text-2xl">inventory_2</span>
+                <h2 class="font-bold text-white text-base">Wybierz produkt z bazy Odoo (Pozycja ${C!==null?C+1:1})</h2>
               </div>
-              <button id="close-odoo-picker-btn" class="p-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
+              <button id="close-odoo-picker-btn" class="p-1 text-slate-400 hover:text-white rounded-full hover:bg-slate-800">
                 <span class="material-symbols-outlined">close</span>
               </button>
             </div>
 
             <!-- Search input inside modal -->
             <div class="relative">
-              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-              <input id="picker-search-input" type="text" placeholder="Szukaj po numerze SKU, nazwie detalu, gatunku..." autofocus class="w-full pl-10 pr-4 py-2 border-2 border-indigo-200 focus:border-indigo-600 rounded-xl text-sm font-bold" />
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+              <input id="picker-search-input" type="text" placeholder="Szukaj po numerze SKU, nazwie detalu, gatunku..." autofocus class="w-full pl-10 pr-4 py-2.5 bg-slate-950 border-2 border-slate-700 focus:border-indigo-500 rounded-xl text-sm font-bold text-white placeholder:text-slate-500 outline-none" />
             </div>
 
             <!-- Products List -->
             <div id="picker-products-list" class="flex-1 overflow-y-auto flex flex-col gap-1.5 max-h-[50vh]">
               ${m.map(ee=>`
-                <div class="picker-prod-card flex justify-between items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-colors cursor-pointer" 
+                <div class="picker-prod-card flex justify-between items-center p-2.5 bg-slate-800/80 border border-slate-700 rounded-xl hover:bg-slate-800 hover:border-indigo-400 transition-colors cursor-pointer" 
                   data-sku="${ee.sku}" data-name="${ee.name}" data-id="${ee.id}" data-qty="${ee.quantity||0}" data-loc="${ee.locationId||5}" data-uom="${ee.uom||"szt"}">
                   <div>
                     <div class="flex items-center gap-2">
-                      <span class="font-mono font-bold bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded text-xs">${ee.sku}</span>
-                      <span class="font-bold text-xs text-slate-800">${ee.name}</span>
+                      <span class="font-mono font-bold bg-indigo-950 text-indigo-300 border border-indigo-700/60 px-2 py-0.5 rounded text-xs">${ee.sku}</span>
+                      <span class="font-bold text-xs text-white">${ee.name}</span>
                     </div>
-                    <div class="text-[11px] text-slate-500 mt-0.5">Lokacja: ${ee.location||"Magazyn"} • Kategoria: ID ${ee.categoryId||"-"}</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5">Lokacja: ${ee.location||"Magazyn"} • Kategoria: ID ${ee.categoryId||"-"}</div>
                   </div>
                   <div class="flex items-center gap-3">
-                    <span class="font-mono font-bold text-xs text-slate-700">Stan: ${Number(ee.quantity||0).toFixed(1)} ${ee.uom||"szt"}</span>
-                    <button type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Wybierz</button>
+                    <span class="font-mono font-bold text-xs text-slate-300">Stan: ${Number(ee.quantity||0).toFixed(1)} ${ee.uom||"szt"}</span>
+                    <button type="button" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Wybierz</button>
                   </div>
                 </div>
               `).join("")}
             </div>
 
-            <div class="flex justify-end pt-2 border-t border-gray-100">
-              <button id="btn-close-picker-bottom" class="bg-gray-200 hover:bg-gray-300 font-bold px-4 py-2 rounded-xl text-xs text-gray-800">
+            <div class="flex justify-end pt-2 border-t border-slate-800">
+              <button id="btn-close-picker-bottom" class="bg-slate-800 hover:bg-slate-700 font-bold px-4 py-2 rounded-xl text-xs text-slate-200">
                 Anuluj
               </button>
             </div>
@@ -3979,48 +3994,48 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
       `:""}
 
       <!-- ═════════════════════════════════════════════════════════════════════
-           HISTORY MODAL
+           HISTORY MODAL (DARK THEMED)
            ═════════════════════════════════════════════════════════════════════ -->
       ${y?`
-        <div id="history-modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3">
-          <div class="bg-white rounded-2xl max-w-3xl w-full p-5 shadow-2xl flex flex-col gap-4 max-h-[85vh]">
-            <div class="flex justify-between items-center border-b border-gray-200 pb-2">
+        <div id="history-modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+          <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-5 shadow-2xl flex flex-col gap-4 max-h-[85vh] text-slate-100">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
               <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-amber-600 text-2xl">history</span>
-                <h2 class="font-bold text-gray-900 text-base">Baza Wystawionych Dokumentów WZ (${getWzHistory().length})</h2>
+                <span class="material-symbols-outlined text-amber-400 text-2xl">history</span>
+                <h2 class="font-bold text-white text-base">Baza Wystawionych Dokumentów WZ (${getWzHistory().length})</h2>
               </div>
-              <button id="close-history-modal-btn" class="p-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100">
+              <button id="close-history-modal-btn" class="p-1 text-slate-400 hover:text-white rounded-full hover:bg-slate-800">
                 <span class="material-symbols-outlined">close</span>
               </button>
             </div>
 
             <div class="flex-1 overflow-y-auto flex flex-col gap-2.5">
               ${getWzHistory().length===0?`
-                <div class="text-center py-10 text-gray-400 text-xs font-bold flex flex-col items-center gap-2">
-                  <span class="material-symbols-outlined text-4xl text-gray-300">folder_open</span>
+                <div class="text-center py-10 text-slate-500 text-xs font-bold flex flex-col items-center gap-2">
+                  <span class="material-symbols-outlined text-4xl text-slate-600">folder_open</span>
                   <span>Brak zapisanych dokumentów WZ. Utwórz WZ i kliknij „Generuj WZ”.</span>
                 </div>
               `:getWzHistory().map(ee=>{var Fe,re,xe,ve;return`
-                <div class="flex flex-wrap justify-between items-center p-3.5 bg-slate-50 border border-slate-200 rounded-2xl hover:bg-slate-100/80 transition-all gap-2">
+                <div class="flex flex-wrap justify-between items-center p-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl hover:bg-slate-800 transition-all gap-2">
                   <div class="flex flex-col gap-0.5">
                     <div class="flex items-center gap-2">
-                      <span class="font-bold text-sm text-slate-950">${ee.formattedNumber||`Nr ${ee.wzNum}/${ee.wzMonth}/${ee.wzYear}${ee.wzSuffix||"/BM"}`}</span>
-                      <span class="text-[10px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">${ee.issueDate}</span>
+                      <span class="font-bold text-sm text-white">${ee.formattedNumber||`Nr ${ee.wzNum}/${ee.wzMonth}/${ee.wzYear}${ee.wzSuffix||"/BM"}`}</span>
+                      <span class="text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-700/60 px-2 py-0.5 rounded-full">${ee.issueDate}</span>
                     </div>
-                    <div class="text-xs text-slate-700 font-semibold">${((Fe=ee.customer)==null?void 0:Fe.name)||"Brak odbiorcy"} • Zam: <span class="font-mono text-slate-900">${ee.orderNumber}</span></div>
-                    <div class="text-[11px] text-slate-500">
+                    <div class="text-xs text-slate-300 font-semibold">${((Fe=ee.customer)==null?void 0:Fe.name)||"Brak odbiorcy"} • Zam: <span class="font-mono text-white">${ee.orderNumber}</span></div>
+                    <div class="text-[11px] text-slate-400">
                       Pozycje (${((re=ee.items)==null?void 0:re.length)||0}): ${(xe=ee.items)==null?void 0:xe.map(we=>`${we.name} (${we.quantity}${we.uom})`).slice(0,3).join(", ")}${((ve=ee.items)==null?void 0:ve.length)>3?"...":""}
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
-                    <button class="btn-load-wz bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm" data-id="${ee.id}">
+                    <button class="btn-load-wz bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm" data-id="${ee.id}">
                       Wczytaj
                     </button>
-                    <button class="btn-history-pdf bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm flex items-center gap-1" data-id="${ee.id}" title="Pobierz plik PDF">
+                    <button class="btn-history-pdf bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm flex items-center gap-1" data-id="${ee.id}" title="Pobierz plik PDF">
                       <span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>
                       <span>PDF</span>
                     </button>
-                    <button class="btn-del-wz text-rose-600 hover:bg-rose-50 p-2 rounded-xl" data-id="${ee.id}" title="Usuń z bazy">
+                    <button class="btn-del-wz text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 p-2 rounded-xl" data-id="${ee.id}" title="Usuń z bazy">
                       <span class="material-symbols-outlined text-[18px]">delete</span>
                     </button>
                   </div>
@@ -4028,8 +4043,8 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
               `}).join("")}
             </div>
 
-            <div class="flex justify-end pt-2 border-t border-gray-100">
-              <button id="btn-close-hist-bottom" class="bg-gray-200 hover:bg-gray-300 font-bold px-4 py-2 rounded-xl text-xs text-gray-800">
+            <div class="flex justify-end pt-2 border-t border-slate-800">
+              <button id="btn-close-hist-bottom" class="bg-slate-800 hover:bg-slate-700 font-bold px-4 py-2 rounded-xl text-xs text-slate-200">
                 Zamknij
               </button>
             </div>
@@ -4070,11 +4085,11 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
                 </div>
               </div>
             `}).join(""),Zt()});const Zt=()=>{c.querySelectorAll(".picker-prod-card").forEach(cr=>{cr.addEventListener("click",()=>{const Or=cr.getAttribute("data-name"),Gr=cr.getAttribute("data-sku"),$r=Number(cr.getAttribute("data-id")),Ir=Number(cr.getAttribute("data-qty")),Fr=Number(cr.getAttribute("data-loc")),xr=cr.getAttribute("data-uom");C!==null&&l.items[C]&&(l.items[C].name=Or,l.items[C].sku=Gr,l.items[C].productId=$r,l.items[C].currentStock=Ir,l.items[C].locationId=Fr,l.items[C].uom=xr),At()})})};Zt()}c.querySelectorAll(".item-qty-input").forEach($e=>{$e.addEventListener("input",Rt=>{const kt=parseInt(Rt.target.getAttribute("data-idx"),10);l.items[kt]&&(l.items[kt].quantity=parseFloat(Rt.target.value)||0,$())})}),c.querySelectorAll(".item-uom-select").forEach($e=>{$e.addEventListener("change",Rt=>{const kt=parseInt(Rt.target.getAttribute("data-idx"),10);l.items[kt]&&(l.items[kt].uom=Rt.target.value,$())})}),c.querySelectorAll(".btn-delete-item").forEach($e=>{$e.addEventListener("click",Rt=>{const kt=parseInt($e.getAttribute("data-idx"),10);l.items.length>1?(l.items.splice(kt,1),K()):(l.items[0]={id:1,name:"",sku:"",productId:null,currentStock:0,locationId:5,quantity:1,uom:"szt"},K())})});const gt=c.querySelector("#btn-save-wz-state");gt&&gt.addEventListener("click",async()=>{h=!0,gt.innerHTML='<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>ODEJMOWANIE ZE STANU ODOO...</span>',gt.disabled=!0;let $e=0,Rt=[];try{for(const kt of l.items){let Wt=kt.productId,At=kt.currentStock,Zt=kt.locationId||5,cr=kt.sku||kt.name;if(!Wt&&m.length>0){const Or=m.find(Gr=>Gr.sku===kt.name||kt.name&&kt.name.includes(Gr.sku));Or&&(Wt=Or.id,At=Number(Or.quantity||0),Zt=Or.locationId||5,cr=Or.sku)}if(Wt&&kt.quantity>0){const Or=Math.max(0,Number((At-kt.quantity).toFixed(2)));await applyStockAdjustment(Wt,Or,cr,At,Zt),kt.currentStock=Or,$e++,Rt.push(`${cr} (-${kt.quantity} ${kt.uom})`)}}saveWzDocument(l),incrementWzCounter(l.wzNum,l.wzMonth,l.wzYear),gt.innerHTML='<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>POBIERANIE PLIKU PDF...</span>',await I(l),P="success",b=`Wystawiono WZ (${H()})! ${$e>0?`Zaktualizowano stan w Odoo 19 dla: ${Rt.join(", ")}.`:"Zapisano do bazy i pobrano PDF."}`}catch(kt){console.error("Error processing WZ stock adjustment:",kt),P="error",b=`Błąd zapisu w Odoo: ${kt.message||kt}. Pobrano PDF i zapisano kopię lokalną.`,saveWzDocument(l),await I(l)}finally{h=!1,K()}});const ke=c.querySelector("#btn-download-wz-html");ke&&ke.addEventListener("click",z);const Ve=c.querySelector("#btn-reset-new-wz");Ve&&Ve.addEventListener("click",()=>{const $e=getNextWzNumber(l.wzMonth,l.wzYear);l={id:`WZ_${Date.now()}`,wzNum:String($e.num),wzMonth:$e.month,wzYear:$e.year,wzSuffix:"/BM",issueDate:new Date().toISOString().split("T")[0],issuePlace:"MIELEC",orderNumber:`ZZ-73/${$e.month}/${$e.year}/EC`,orderDate:new Date().toISOString().split("T")[0],issuerName:l.issuerName,supplier:{...DEFAULT_SUPPLIER},customer:{...l.customer},items:[{id:1,name:"",sku:"",productId:null,currentStock:0,locationId:5,quantity:1,uom:"szt"}]},b="",K()});const wt=c.querySelector("#btn-print-wz-doc");wt&&wt.addEventListener("click",()=>{window.print()})}function $(){var ie;const ne=c.querySelector("#prev-issue-date-place");ne&&(ne.textContent=`${l.issueDate} ${l.issuePlace}`);const ee=c.querySelector("#prev-wz-full-number");ee&&(ee.textContent=H());const Fe=c.querySelector("#prev-supplier-block");Fe&&(Fe.innerHTML=R());const re=c.querySelector("#prev-customer-block");re&&(re.innerHTML=W());const xe=c.querySelector("#prev-order-num");xe&&(xe.textContent=l.orderNumber||"-");const ve=c.querySelector("#prev-order-date");ve&&(ve.textContent=l.orderDate||"-");const we=c.querySelector("#prev-issuer-signature");we&&(we.textContent=l.issuerName);const Ce=c.querySelector("#prev-items-tbody");Ce&&(Ce.innerHTML=l.items.map((se,J)=>`
-        <tr class="${J%2===0?"bg-white":"bg-slate-50/80"}">
-          <td class="border border-slate-600 py-2 px-2 text-center font-mono font-bold text-slate-600">${J+1}</td>
-          <td class="border border-slate-600 py-2 px-3 font-bold text-slate-950">${se.name||"-"}</td>
-          <td class="border border-slate-600 py-2 px-3 text-center font-mono font-bold text-sm text-slate-950">${se.quantity}</td>
-          <td class="border border-slate-600 py-2 px-3 text-center text-slate-700 font-medium">${se.uom||"szt"}</td>
+        <tr style="background-color: ${J%2===0?"#ffffff":"#f8fafc"} !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+          <td style="border: 1px solid #475569; padding: 7px 6px; text-align: center; font-family: monospace; font-weight: bold; color: #475569;">${J+1}</td>
+          <td style="border: 1px solid #475569; padding: 7px 10px; font-weight: bold; color: #0f172a;">${se.name||"-"}</td>
+          <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; font-family: monospace; font-weight: bold; font-size: 13px; color: #0f172a;">${se.quantity}</td>
+          <td style="border: 1px solid #475569; padding: 7px 8px; text-align: center; color: #334155; font-weight: 600;">${se.uom||"szt"}</td>
         </tr>
       `).join(""));const Ie=c.querySelector("#prev-total-qty");Ie&&(Ie.textContent=j());const Pe=c.querySelector("#prev-total-uom");Pe&&(Pe.textContent=((ie=l.items[0])==null?void 0:ie.uom)||"szt")}K()}const STORAGE_KEY_EMPLOYEES="bluemake_employees_v5",STORAGE_KEY_LEAVE_REQUESTS="bluemake_leave_requests_v5",STORAGE_KEY_EMPLOYEE_HISTORY="bluemake_employee_history_v5",LEAVE_TYPES=[{id:"VACATION",label:"Urlop wypoczynkowy",icon:"beach_access",color:"bg-emerald-100 text-emerald-800 border-emerald-300"},{id:"ON_DEMAND",label:"Urlop na żądanie",icon:"bolt",color:"bg-amber-100 text-amber-800 border-amber-300"},{id:"SPECIAL",label:"Urlop okolicznościowy",icon:"celebration",color:"bg-indigo-100 text-indigo-800 border-indigo-300"},{id:"UNPAID",label:"Urlop bezpłatny",icon:"money_off",color:"bg-gray-100 text-gray-800 border-gray-300"},{id:"SICK",label:"Zwolnienie lekarskie (L4)",icon:"medical_services",color:"bg-rose-100 text-rose-800 border-rose-300"},{id:"CHILD_CARE",label:"Opieka nad dzieckiem",icon:"family_restroom",color:"bg-purple-100 text-purple-800 border-purple-300"},{id:"TRAINING",label:"Urlop szkoleniowy",icon:"school",color:"bg-blue-100 text-blue-800 border-blue-300"}],INITIAL_EMPLOYEES=[{id:"emp_1",odooEmployeeId:2,name:"Paweł Peret",shortName:"Paweł",role:"ADMIN",position:"Zarząd / Automatyka",department:"Zarząd & IT",email:"p.peret@bluemake.eu",phone:"579655914",hireDate:"2023-01-01",annualLeaveLimit:26,overdueLeaveDays:0,manualLeaveAdjustments:0,avatar:"admin_panel_settings",notes:"Odpowiedzialny za automatyzację, systemy Odoo/IT, programowanie oraz nadzór nad infrastrukturą.",commentsList:[{id:"c_1",dateFormatted:"10.01.2026, 08:30:00",author:"Paweł Peret",text:"Zatwierdzono plan wdrożeń i harmonogram pracy na I kwartał 2026."}],assignedMachine:"Stanowisko Automatyki / IT / Magazyn",medicalExamDate:"2025-03-10",medicalExamValidUntil:"2027-03-10",medicalExamNotes:"Zdolny do pracy - stanowisko kierownicze / komputer",safetyTrainingDate:"2024-05-15",safetyTrainingValidUntil:"2029-05-15",forkliftLicense:"UDT II WJO (Ważne do 2029)",craneLicense:"Suwnice z poziomu roboczego (IIS)",sepLicense:"SEP G1 E+D do 1kV",clothesSize:"L / 52",shoesSize:"43",gearIssuedDate:"2026-01-10",iceContact:"Telefon alarmowy: +48 791 228 899"},{id:"emp_2",odooEmployeeId:5,name:"Mateusz Klimkowski",shortName:"Mateusz",role:"ADMIN",position:"Właściciel / Kierownik Produkcji CNC",department:"Produkcja CNC",email:"m.klimkowski@bluemake.eu",phone:"+48 693 881 220",hireDate:"2023-01-01",annualLeaveLimit:26,overdueLeaveDays:0,manualLeaveAdjustments:0,avatar:"manage_accounts",notes:"Kierownik Produkcji. Nadzór nad parkiem maszynowym CNC, technologią frezowania/toczenia i zaopatrzeniem.",commentsList:[{id:"c_2",dateFormatted:"01.07.2026, 09:00:00",author:"Paweł Peret",text:"Wykorzystano główny urlop letni w lipcu 2026 (23 dni robocze)."}],assignedMachine:"Centra Obróbcze CNC / Nadzór Produkcji",medicalExamDate:"2025-02-20",medicalExamValidUntil:"2027-02-20",medicalExamNotes:"Zdolny do pracy - hałas, maszyny w ruchu",safetyTrainingDate:"2024-04-10",safetyTrainingValidUntil:"2029-04-10",forkliftLicense:"UDT II WJO (Ważne)",craneLicense:"Suwnice z poziomu roboczego",sepLicense:"SEP G1",clothesSize:"XL / 54",shoesSize:"44",gearIssuedDate:"2026-01-10",iceContact:"Telefon alarmowy: +48 693 881 220"},{id:"emp_3",odooEmployeeId:3,name:"Szymon Klimkowski",shortName:"Szymon",role:"OPERATOR",position:"Operator CNC / Tokarz",department:"Obróbka Tokarska CNC",email:"szymon@bluemake.eu",phone:"+48 500 112 334",hireDate:"2023-06-01",annualLeaveLimit:20,overdueLeaveDays:0,manualLeaveAdjustments:0,avatar:"precision_manufacturing",notes:"Główny tokarz CNC. Obsługa tokarek numerycznych, dobór narzędzi i oprawek tokarskich.",commentsList:[{id:"c_3",dateFormatted:"15.02.2026, 11:00:00",author:"Mateusz Klimkowski",text:"Wydano nowe rękawice robocze oraz okulary ochronne UVEX."}],assignedMachine:"Tokarki CNC (Doosan Puma / Haas)",medicalExamDate:"2025-06-01",medicalExamValidUntil:"2027-06-01",medicalExamNotes:"Zdolny do pracy - tokarki CNC, chłodziwa",safetyTrainingDate:"2024-06-15",safetyTrainingValidUntil:"2027-06-15",forkliftLicense:"UDT II WJO",craneLicense:"Suwnice / Wciągniki",sepLicense:"",clothesSize:"M / 50",shoesSize:"42",gearIssuedDate:"2026-02-01",iceContact:"Kontakt ICE: +48 500 112 334"},{id:"emp_4",odooEmployeeId:4,name:"Patryk Majka",shortName:"Patryk",role:"OPERATOR",position:"Operator CNC / Frezer",department:"Obróbka Frezarska CNC",email:"majka.patryk0606@gmail.com",phone:"+48 720 818 026",hireDate:"2023-09-01",annualLeaveLimit:20,overdueLeaveDays:0,manualLeaveAdjustments:0,avatar:"inventory",notes:"Główny frezer CNC. Ustawianie i obsługa centrów pionowych 3- i 4-osiowych.",commentsList:[{id:"c_4",dateFormatted:"20.02.2026, 14:00:00",author:"Mateusz Klimkowski",text:"Przeprowadzono instruktaż stanowiskowy dot. nowej głowicy frezarskiej."}],assignedMachine:"Frezarki CNC (Centra Pionowe Haas VF-4 / Mikron)",medicalExamDate:"2025-09-10",medicalExamValidUntil:"2027-09-10",medicalExamNotes:"Zdolny do pracy - centra frezarskie CNC, hałas",safetyTrainingDate:"2024-09-20",safetyTrainingValidUntil:"2027-09-20",forkliftLicense:"UDT II WJO",craneLicense:"Suwnice / Żurawie",sepLicense:"",clothesSize:"L / 52",shoesSize:"43",gearIssuedDate:"2026-02-01",iceContact:"Kontakt ICE: +48 720 818 026"}];function getEmployees(){try{const c=localStorage.getItem(STORAGE_KEY_EMPLOYEES);if(c){const u=JSON.parse(c);if(Array.isArray(u)&&u.length>0)return u}}catch(c){console.error("Error loading employees:",c)}return localStorage.setItem(STORAGE_KEY_EMPLOYEES,JSON.stringify(INITIAL_EMPLOYEES)),INITIAL_EMPLOYEES}function saveEmployees(c){localStorage.setItem(STORAGE_KEY_EMPLOYEES,JSON.stringify(c))}function saveEmployee(c,u=null){var Ae;const S=getEmployees(),F=u||((Ae=getCurrentOperator())==null?void 0:Ae.name)||"Operator",U=!c.id||!S.some(T=>T.id===c.id);let Z;if(U){const T={...c,id:c.id||`emp_${Date.now()}`,shortName:c.shortName||c.name.split(" ")[0],avatar:c.avatar||"person",notes:c.notes||"",commentsList:c.commentsList||[],assignedMachine:c.assignedMachine||""};S.push(T),Z=S,logEmployeeHistory({action:"➕ DODANIE PRACOWNIKA",details:`Dodano nowego pracownika: ${T.name} (${T.position||"Brak stanowiska"})`,employeeId:T.id,employeeName:T.name,operator:F})}else{const T=S.findIndex(r=>r.id===c.id),k=S[T];S[T]={...k,...c,notes:c.notes!==void 0?c.notes:k.notes,commentsList:c.commentsList||k.commentsList||[]},Z=S,logEmployeeHistory({action:"✏️ EDYCJA DANYCH PRACOWNIKA",details:`Zaktualizowano dane pracownika ${c.name} (Komentarze, Badania, BHP, Urlopy)`,employeeId:c.id,employeeName:c.name,operator:F})}return saveEmployees(Z),Z}function addEmployeeComment(c,u,S=null){var k;const F=getEmployees(),U=F.find(r=>r.id===c);if(!U)return{success:!1,error:"Nie znaleziono pracownika"};const Z=String(u).trim();if(!Z)return{success:!1,error:"Treść komentarza nie może być pusta"};const Ae=S||((k=getCurrentOperator())==null?void 0:k.name)||"Operator",T={id:`comm_${Date.now()}`,dateFormatted:new Date().toLocaleString("pl-PL"),author:Ae,text:Z};return Array.isArray(U.commentsList)||(U.commentsList=[]),U.commentsList.unshift(T),saveEmployees(F),logEmployeeHistory({action:"💬 NOWY KOMENTARZ",details:`Dodano komentarz do profilu ${U.name}: "${Z.slice(0,70)}${Z.length>70?"...":""}"`,employeeId:U.id,employeeName:U.name,operator:Ae}),{success:!0,comment:T,employee:U}}function updateEmployeeQuickNotes(c,u,S=null){var Ae;const F=getEmployees(),U=F.find(T=>T.id===c);if(!U)return{success:!1,error:"Nie znaleziono pracownika"};const Z=S||((Ae=getCurrentOperator())==null?void 0:Ae.name)||"Operator";return U.notes=String(u).trim(),saveEmployees(F),logEmployeeHistory({action:"📝 ZMIANA NOTATKI GŁÓWNEJ",details:`Zaktualizowano notatkę główną pracownika ${U.name}`,employeeId:U.id,employeeName:U.name,operator:Z}),{success:!0,employee:U}}async function syncEmployeesFromOdoo(){var c;try{const[u,S,F]=await Promise.all([callOdooRpc("hr.employee","search_read",[[]],{fields:["id","name","work_email","work_phone","job_title","department_id"]}),callOdooRpc("hr.leave","search_read",[[]],{fields:["id","employee_id","date_from","date_to","number_of_days","state","name","holiday_status_id"]}),callOdooRpc("hr.leave.allocation","search_read",[[]],{fields:["id","employee_id","number_of_days","state"]})]);if(Array.isArray(u)&&u.length>0){const U=getEmployees();let Z=0,Ae=0;if(u.forEach(T=>{if(!T.name||T.name==="Administrator")return;const k=Array.isArray(F)?F.find(l=>l.employee_id&&l.employee_id[0]===T.id):null,r=k?Math.round(k.number_of_days):T.name.includes("Peret")||T.name.includes("Mateusz")?26:20,o=U.findIndex(l=>l.odooEmployeeId&&l.odooEmployeeId===T.id||l.name.toLowerCase().trim()===T.name.toLowerCase().trim());o>=0?(U[o]={...U[o],odooEmployeeId:T.id,name:T.name,position:T.job_title||U[o].position||"Pracownik",email:T.work_email||U[o].email||"",phone:T.work_phone||U[o].phone||"",annualLeaveLimit:r},Ae++):(U.push({id:`emp_odoo_${T.id}`,odooEmployeeId:T.id,name:T.name,shortName:T.name.split(" ")[0],role:T.name.includes("Peret")||T.name.includes("Mateusz")?"ADMIN":"OPERATOR",position:T.job_title||"Pracownik",department:Array.isArray(T.department_id)?T.department_id[1]:"Produkcja CNC",email:T.work_email||`${T.name.toLowerCase().replace(/\s+/g,"")}@bluemake.eu`,phone:T.work_phone||"",annualLeaveLimit:r,overdueLeaveDays:0,manualLeaveAdjustments:0,avatar:"person",notes:"",commentsList:[],assignedMachine:"Produkcja CNC",medicalExamDate:"",medicalExamValidUntil:"",medicalExamNotes:"",safetyTrainingDate:"",safetyTrainingValidUntil:"",forkliftLicense:"",craneLicense:"",sepLicense:"",clothesSize:"",shoesSize:"",gearIssuedDate:"",iceContact:""}),Z++)}),saveEmployees(U),Array.isArray(S)&&S.length>0){const T=getLeaveRequests();let k=0;S.forEach(r=>{const o=r.employee_id?r.employee_id[0]:null,l=U.find(H=>H.odooEmployeeId===o||r.employee_id&&H.name===r.employee_id[1]);if(!l)return;const m=r.date_from?r.date_from.split(" ")[0]:"",y=r.date_to?r.date_to.split(" ")[0]:"",x=Math.round(r.number_of_days)||1,C=r.state==="validate"?"APPROVED":r.state==="refuse"?"REJECTED":"PENDING",h=`odoo_leave_${r.id}`,b=T.findIndex(H=>H.id===h||H.employeeId===l.id&&H.startDate===m&&H.endDate===y),P={id:h,odooLeaveId:r.id,employeeId:l.id,employeeName:l.name,leaveType:"VACATION",startDate:m,endDate:y,daysCount:x,status:C,notes:r.name||"Wniosek urlopowy zsynchronizowany z Odoo 19",createdAt:r.date_from?new Date(r.date_from).toISOString():new Date().toISOString(),submittedBy:l.name,approvedBy:C==="APPROVED"?"Zarząd Bluemake":null};b>=0?T[b]={...T[b],...P}:(T.push(P),k++)}),saveLeaveRequests(T)}return logEmployeeHistory({action:"🔄 SYNCHRONIZACJA Z ODOO",details:`Zsynchronizowano pracowników i urlopy z Odoo 19 (Pracownicy: +${Z}, Urlopy z Odoo: ${(S==null?void 0:S.length)||0}).`,operator:((c=getCurrentOperator())==null?void 0:c.name)||"Operator"}),{success:!0,addedCount:Z,updatedCount:Ae,total:U.length,leavesCount:(S==null?void 0:S.length)||0}}return{success:!1,error:"Brak pracowników w Odoo."}}catch(u){return console.error("Błąd synchronizacji z Odoo:",u),{success:!1,error:u.message}}}function adjustEmployeeLeave({employeeId:c,type:u,daysDelta:S,reason:F,operatorName:U=null}){var x;const Z=getEmployees(),Ae=Z.find(C=>C.id===c);if(!Ae)return{success:!1,error:"Nie znaleziono pracownika"};const T=U||((x=getCurrentOperator())==null?void 0:x.name)||"Operator",k=Number(S);if(isNaN(k)||k===0)return{success:!1,error:"Nieprawidłowa liczba dni"};const r=Ae.manualLeaveAdjustments||0,o=Ae.overdueLeaveDays||0,l=Ae.annualLeaveLimit||26;let m="",y="";return u==="ADJUSTMENT"?(Ae.manualLeaveAdjustments=r+k,m=k>0?`➕ KOREKTA URLOPU (+${k} dni)`:`➖ KOREKTA URLOPU (${k} dni)`,y=`Korekta bilansu urlopowego dla ${Ae.name}: ${k>0?"+":""}${k} dni. Powód: ${F||"Korekta ręczna"}`):u==="OVERDUE"?(Ae.overdueLeaveDays=Math.max(0,o+k),m=`📅 ZMIANA URLOPU ZALEGŁEGO (${k>0?"+":""}${k} dni)`,y=`Zmiana puli urlopu zaległego dla ${Ae.name} z ${o} na ${Ae.overdueLeaveDays} dni. Powód: ${F||"Rozliczenie roku"}`):u==="LIMIT"&&(Ae.annualLeaveLimit=Math.max(1,k),m=`⚙️ ZMIANA LIMITU ROCZNEGO (${k} dni)`,y=`Zmiana rocznego wymiaru urlopu dla ${Ae.name} z ${l} na ${Ae.annualLeaveLimit} dni. Powód: ${F||"Zmiana etatu / uprawnień"}`),saveEmployees(Z),logEmployeeHistory({action:m,details:y,employeeId:Ae.id,employeeName:Ae.name,operator:T}),{success:!0,employee:Ae}}function getLeaveRequests(){try{const u=localStorage.getItem(STORAGE_KEY_LEAVE_REQUESTS);if(u){const S=JSON.parse(u);if(Array.isArray(S)&&S.length>0)return S}}catch(u){console.error("Error loading leave requests:",u)}const c=[{id:"odoo_leave_2",odooLeaveId:2,employeeId:"emp_1",employeeName:"Paweł Peret",leaveType:"VACATION",startDate:"2026-01-02",endDate:"2026-01-02",daysCount:1,status:"APPROVED",notes:"Urlop wypoczynkowy (Nowy Rok / Styczeń)",createdAt:"2026-01-02T07:00:00.000Z",submittedBy:"Paweł Peret",approvedBy:"Zarząd Bluemake"},{id:"odoo_leave_3",odooLeaveId:3,employeeId:"emp_1",employeeName:"Paweł Peret",leaveType:"VACATION",startDate:"2026-01-05",endDate:"2026-01-05",daysCount:1,status:"APPROVED",notes:"Urlop wypoczynkowy (Przed Trzema Królami)",createdAt:"2026-01-05T07:00:00.000Z",submittedBy:"Paweł Peret",approvedBy:"Zarząd Bluemake"},{id:"odoo_leave_11",odooLeaveId:11,employeeId:"emp_1",employeeName:"Paweł Peret",leaveType:"VACATION",startDate:"2026-01-20",endDate:"2026-01-20",daysCount:1,status:"APPROVED",notes:"Urlop wypoczynkowy (Styczeń)",createdAt:"2026-01-20T07:00:00.000Z",submittedBy:"Paweł Peret",approvedBy:"Zarząd Bluemake"},{id:"odoo_leave_14",odooLeaveId:14,employeeId:"emp_1",employeeName:"Paweł Peret",leaveType:"VACATION",startDate:"2026-07-27",endDate:"2026-07-31",daysCount:5,status:"APPROVED",notes:"Urlop letni wypoczynkowy (Lipiec - 1 tydzień)",createdAt:"2026-07-27T06:00:00.000Z",submittedBy:"Paweł Peret",approvedBy:"Zarząd Bluemake"},{id:"odoo_leave_22",odooLeaveId:22,employeeId:"emp_2",employeeName:"Mateusz Klimkowski",leaveType:"VACATION",startDate:"2026-07-01",endDate:"2026-07-31",daysCount:23,status:"APPROVED",notes:"Główny urlop letni (cały lipiec w Odoo)",createdAt:"2026-07-01T06:00:00.000Z",submittedBy:"Mateusz Klimkowski",approvedBy:"Paweł Peret"},{id:"odoo_leave_7",odooLeaveId:7,employeeId:"emp_4",employeeName:"Patryk Majka",leaveType:"VACATION",startDate:"2026-01-02",endDate:"2026-01-02",daysCount:1,status:"APPROVED",notes:"Urlop wypoczynkowy (Nowy Rok)",createdAt:"2026-01-02T07:00:00.000Z",submittedBy:"Patryk Majka",approvedBy:"Mateusz Klimkowski"},{id:"odoo_leave_8",odooLeaveId:8,employeeId:"emp_4",employeeName:"Patryk Majka",leaveType:"VACATION",startDate:"2026-01-05",endDate:"2026-01-05",daysCount:1,status:"APPROVED",notes:"Urlop wypoczynkowy (Przed Trzema Królami)",createdAt:"2026-01-05T07:00:00.000Z",submittedBy:"Patryk Majka",approvedBy:"Mateusz Klimkowski"},{id:"odoo_leave_9",odooLeaveId:9,employeeId:"emp_4",employeeName:"Patryk Majka",leaveType:"VACATION",startDate:"2026-01-19",endDate:"2026-01-19",daysCount:1,status:"APPROVED",notes:"Urlop wypoczynkowy (Styczeń)",createdAt:"2026-01-19T07:00:00.000Z",submittedBy:"Patryk Majka",approvedBy:"Mateusz Klimkowski"},{id:"odoo_leave_13",odooLeaveId:13,employeeId:"emp_4",employeeName:"Patryk Majka",leaveType:"VACATION",startDate:"2026-02-19",endDate:"2026-02-19",daysCount:1,status:"APPROVED",notes:"Urlop wypoczynkowy (Luty)",createdAt:"2026-02-19T07:00:00.000Z",submittedBy:"Patryk Majka",approvedBy:"Mateusz Klimkowski"},{id:"odoo_leave_15",odooLeaveId:15,employeeId:"emp_4",employeeName:"Patryk Majka",leaveType:"VACATION",startDate:"2026-07-27",endDate:"2026-07-27",daysCount:1,status:"APPROVED",notes:"Urlop wypoczynkowy (Lipiec)",createdAt:"2026-07-27T06:00:00.000Z",submittedBy:"Patryk Majka",approvedBy:"Mateusz Klimkowski"},{id:"odoo_leave_17",odooLeaveId:17,employeeId:"emp_3",employeeName:"Szymon Klimkowski",leaveType:"VACATION",startDate:"2026-07-29",endDate:"2026-07-31",daysCount:3,status:"APPROVED",notes:"Urlop wypoczynkowy (Koniec Lipca)",createdAt:"2026-07-29T06:00:00.000Z",submittedBy:"Szymon Klimkowski",approvedBy:"Mateusz Klimkowski"}];return localStorage.setItem(STORAGE_KEY_LEAVE_REQUESTS,JSON.stringify(c)),c}function saveLeaveRequests(c){localStorage.setItem(STORAGE_KEY_LEAVE_REQUESTS,JSON.stringify(c))}function calculateWorkingDays(c,u){if(!c||!u)return 0;const S=new Date(c),F=new Date(u);if(S>F)return 0;let U=0,Z=new Date(S);for(;Z<=F;){const Ae=Z.getDay();Ae!==0&&Ae!==6&&U++,Z.setDate(Z.getDate()+1)}return U}function saveLeaveRequest(c){var Ae;const u=getLeaveRequests(),S=calculateWorkingDays(c.startDate,c.endDate),F=c.submittedBy||((Ae=getCurrentOperator())==null?void 0:Ae.name)||"Operator",U={...c,daysCount:S,id:c.id||`leave_${Date.now()}`,createdAt:c.createdAt||new Date().toISOString(),status:c.status||"PENDING"},Z=u.findIndex(T=>T.id===U.id);return Z>=0?u[Z]=U:u.unshift(U),saveLeaveRequests(u),logEmployeeHistory({action:"🏖️ WNIOSEK URLOPOWY",details:`Złożono wniosek urlopowy dla ${U.employeeName}: ${U.startDate} → ${U.endDate} (${S} dni roboczych). Status: ${U.status}`,employeeId:U.employeeId,employeeName:U.employeeName,operator:F}),U}function updateLeaveRequestStatus(c,u,S=null){var Z;const F=getLeaveRequests(),U=F.find(Ae=>Ae.id===c);if(U){const Ae=S||((Z=getCurrentOperator())==null?void 0:Z.name)||"Zarząd";return U.status=u,u==="APPROVED"&&(U.approvedBy=Ae),u==="REJECTED"&&(U.rejectedBy=Ae),saveLeaveRequests(F),logEmployeeHistory({action:u==="APPROVED"?"✅ ZATWIERDZENIE URLOPU":"❌ ODRZUCENIE URLOPU",details:`${u==="APPROVED"?"Zatwierdzono":"Odrzucono"} wniosek urlopowy dla ${U.employeeName} (${U.startDate} - ${U.endDate}, ${U.daysCount} dni)`,employeeId:U.employeeId,employeeName:U.employeeName,operator:Ae}),U}return null}function deleteLeaveRequest(c,u=null){var Ae;const S=getLeaveRequests(),F=S.find(T=>T.id===c),U=u||((Ae=getCurrentOperator())==null?void 0:Ae.name)||"Operator",Z=S.filter(T=>T.id!==c);return saveLeaveRequests(Z),F&&logEmployeeHistory({action:"🗑️ USUNIĘCIE WNIOSKU URLOPOWEGO",details:`Usunięto wniosek urlopowy dla ${F.employeeName} (${F.startDate} - ${F.endDate})`,employeeId:F.employeeId,employeeName:F.employeeName,operator:U}),Z}function getEmployeeLeaveStats(c,u=new Date().getFullYear()){const F=getEmployees().find(x=>x.id===c),U=F&&F.annualLeaveLimit||20,Z=F&&F.overdueLeaveDays||0,Ae=F&&F.manualLeaveAdjustments||0,T=U+Z+Ae,k=getLeaveRequests().filter(x=>x.employeeId!==c?!1:new Date(x.startDate).getFullYear()===u),r=k.filter(x=>x.status==="APPROVED"),o=r.filter(x=>x.leaveType==="VACATION"||x.leaveType==="ON_DEMAND").reduce((x,C)=>x+(C.daysCount||0),0),l=k.filter(x=>x.status==="PENDING").reduce((x,C)=>x+(C.daysCount||0),0),m=r.filter(x=>x.leaveType==="SICK").reduce((x,C)=>x+(C.daysCount||0),0),y=Math.max(0,T-o);return{limit:U,overdue:Z,adjustments:Ae,totalPool:T,usedVacationDays:o,pendingDays:l,sickDays:m,remainingDays:y,totalRequests:k.length}}function getBhpAndMedicalStatus(c){const u=new Date,S=new Date;S.setDate(S.getDate()+30);let F="OK",U=null;if(!c.medicalExamValidUntil)F="MISSING";else{const r=new Date(c.medicalExamValidUntil)-u;U=Math.ceil(r/(1e3*60*60*24)),U<0?F="EXPIRED":U<=30&&(F="EXPIRING")}let Z="OK",Ae=null;if(!c.safetyTrainingValidUntil)Z="MISSING";else{const r=new Date(c.safetyTrainingValidUntil)-u;Ae=Math.ceil(r/(1e3*60*60*24)),Ae<0?Z="EXPIRED":Ae<=30&&(Z="EXPIRING")}return{medicalStatus:F,medicalDaysLeft:U,safetyStatus:Z,safetyDaysLeft:Ae,hasUrgentIssue:F==="EXPIRED"||F==="EXPIRING"||Z==="EXPIRED"||Z==="EXPIRING"}}function getAllBhpAlerts(){const c=getEmployees(),u=[];return c.forEach(S=>{const F=getBhpAndMedicalStatus(S);F.medicalStatus==="EXPIRED"?u.push({empId:S.id,empName:S.name,type:"MEDICAL",severity:"DANGER",msg:`Przeterminowane badania lekarskie! (Wygasły: ${S.medicalExamValidUntil})`}):F.medicalStatus==="EXPIRING"&&u.push({empId:S.id,empName:S.name,type:"MEDICAL",severity:"WARNING",msg:`Badania lekarskie wygasają za ${F.medicalDaysLeft} dni (${S.medicalExamValidUntil})`}),F.safetyStatus==="EXPIRED"?u.push({empId:S.id,empName:S.name,type:"SAFETY",severity:"DANGER",msg:`Przeterminowane szkolenie BHP! (Wygasło: ${S.safetyTrainingValidUntil})`}):F.safetyStatus==="EXPIRING"&&u.push({empId:S.id,empName:S.name,type:"SAFETY",severity:"WARNING",msg:`Szkolenie BHP wygasa za ${F.safetyDaysLeft} dni (${S.safetyTrainingValidUntil})`})}),u}function buildMedicalExamAlertMailto(c){const u="m.klimkowski@bluemake.eu",S="p.peret@bluemake.eu",F=getBhpAndMedicalStatus(c),U=encodeURIComponent(`[BHP Bluemake] ⚠️ Kończy się ważność badań lekarskich: ${c.name} (${c.medicalExamValidUntil||"Brak daty"})`),Z=encodeURIComponent(`Dzień dobry Mateusz,
 
