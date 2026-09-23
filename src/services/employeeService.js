@@ -1,9 +1,9 @@
 import { callOdooRpc } from './odooApi.js';
 import { getCurrentOperator } from './authService.js';
 
-const STORAGE_KEY_EMPLOYEES = 'bluemake_employees_v4';
-const STORAGE_KEY_LEAVE_REQUESTS = 'bluemake_leave_requests_v4';
-const STORAGE_KEY_EMPLOYEE_HISTORY = 'bluemake_employee_history_v4';
+const STORAGE_KEY_EMPLOYEES = 'bluemake_employees_v5';
+const STORAGE_KEY_LEAVE_REQUESTS = 'bluemake_leave_requests_v5';
+const STORAGE_KEY_EMPLOYEE_HISTORY = 'bluemake_employee_history_v5';
 
 export const LEAVE_TYPES = [
   { id: 'VACATION', label: 'Urlop wypoczynkowy', icon: 'beach_access', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
@@ -31,6 +31,11 @@ export const INITIAL_EMPLOYEES = [
     overdueLeaveDays: 0,
     manualLeaveAdjustments: 0,
     avatar: 'admin_panel_settings',
+    notes: 'Odpowiedzialny za automatyzację, systemy Odoo/IT, programowanie oraz nadzór nad infrastrukturą.',
+    commentsList: [
+      { id: 'c_1', dateFormatted: '10.01.2026, 08:30:00', author: 'Paweł Peret', text: 'Zatwierdzono plan wdrożeń i harmonogram pracy na I kwartał 2026.' }
+    ],
+    assignedMachine: 'Stanowisko Automatyki / IT / Magazyn',
     medicalExamDate: '2025-03-10',
     medicalExamValidUntil: '2027-03-10',
     medicalExamNotes: 'Zdolny do pracy - stanowisko kierownicze / komputer',
@@ -59,6 +64,11 @@ export const INITIAL_EMPLOYEES = [
     overdueLeaveDays: 0,
     manualLeaveAdjustments: 0,
     avatar: 'manage_accounts',
+    notes: 'Kierownik Produkcji. Nadzór nad parkiem maszynowym CNC, technologią frezowania/toczenia i zaopatrzeniem.',
+    commentsList: [
+      { id: 'c_2', dateFormatted: '01.07.2026, 09:00:00', author: 'Paweł Peret', text: 'Wykorzystano główny urlop letni w lipcu 2026 (23 dni robocze).' }
+    ],
+    assignedMachine: 'Centra Obróbcze CNC / Nadzór Produkcji',
     medicalExamDate: '2025-02-20',
     medicalExamValidUntil: '2027-02-20',
     medicalExamNotes: 'Zdolny do pracy - hałas, maszyny w ruchu',
@@ -87,6 +97,11 @@ export const INITIAL_EMPLOYEES = [
     overdueLeaveDays: 0,
     manualLeaveAdjustments: 0,
     avatar: 'precision_manufacturing',
+    notes: 'Główny tokarz CNC. Obsługa tokarek numerycznych, dobór narzędzi i oprawek tokarskich.',
+    commentsList: [
+      { id: 'c_3', dateFormatted: '15.02.2026, 11:00:00', author: 'Mateusz Klimkowski', text: 'Wydano nowe rękawice robocze oraz okulary ochronne UVEX.' }
+    ],
+    assignedMachine: 'Tokarki CNC (Doosan Puma / Haas)',
     medicalExamDate: '2025-06-01',
     medicalExamValidUntil: '2027-06-01',
     medicalExamNotes: 'Zdolny do pracy - tokarki CNC, chłodziwa',
@@ -115,6 +130,11 @@ export const INITIAL_EMPLOYEES = [
     overdueLeaveDays: 0,
     manualLeaveAdjustments: 0,
     avatar: 'inventory',
+    notes: 'Główny frezer CNC. Ustawianie i obsługa centrów pionowych 3- i 4-osiowych.',
+    commentsList: [
+      { id: 'c_4', dateFormatted: '20.02.2026, 14:00:00', author: 'Mateusz Klimkowski', text: 'Przeprowadzono instruktaż stanowiskowy dot. nowej głowicy frezarskiej.' }
+    ],
+    assignedMachine: 'Frezarki CNC (Centra Pionowe Haas VF-4 / Mikron)',
     medicalExamDate: '2025-09-10',
     medicalExamValidUntil: '2027-09-10',
     medicalExamNotes: 'Zdolny do pracy - centra frezarskie CNC, hałas',
@@ -166,7 +186,10 @@ export function saveEmployee(emp, operatorName = null) {
       ...emp,
       id: emp.id || `emp_${Date.now()}`,
       shortName: emp.shortName || emp.name.split(' ')[0],
-      avatar: emp.avatar || 'person'
+      avatar: emp.avatar || 'person',
+      notes: emp.notes || '',
+      commentsList: emp.commentsList || [],
+      assignedMachine: emp.assignedMachine || ''
     };
     list.push(newEmp);
     updatedList = list;
@@ -181,12 +204,17 @@ export function saveEmployee(emp, operatorName = null) {
   } else {
     const idx = list.findIndex(e => e.id === emp.id);
     const oldEmp = list[idx];
-    list[idx] = { ...oldEmp, ...emp };
+    list[idx] = { 
+      ...oldEmp, 
+      ...emp,
+      notes: emp.notes !== undefined ? emp.notes : oldEmp.notes,
+      commentsList: emp.commentsList || oldEmp.commentsList || []
+    };
     updatedList = list;
 
     logEmployeeHistory({
       action: '✏️ EDYCJA DANYCH PRACOWNIKA',
-      details: `Zaktualizowano dane pracownika ${emp.name} (Badania, BHP, Urlopy, Stanowisko)`,
+      details: `Zaktualizowano dane pracownika ${emp.name} (Komentarze, Badania, BHP, Urlopy)`,
       employeeId: emp.id,
       employeeName: emp.name,
       operator: op
@@ -195,6 +223,59 @@ export function saveEmployee(emp, operatorName = null) {
 
   saveEmployees(updatedList);
   return updatedList;
+}
+
+export function addEmployeeComment(employeeId, commentText, authorName = null) {
+  const employees = getEmployees();
+  const emp = employees.find(e => e.id === employeeId);
+  if (!emp) return { success: false, error: 'Nie znaleziono pracownika' };
+
+  const cleanText = String(commentText).trim();
+  if (!cleanText) return { success: false, error: 'Treść komentarza nie może być pusta' };
+
+  const op = authorName || getCurrentOperator()?.name || 'Operator';
+  const newComment = {
+    id: `comm_${Date.now()}`,
+    dateFormatted: new Date().toLocaleString('pl-PL'),
+    author: op,
+    text: cleanText
+  };
+
+  if (!Array.isArray(emp.commentsList)) {
+    emp.commentsList = [];
+  }
+  emp.commentsList.unshift(newComment);
+  saveEmployees(employees);
+
+  logEmployeeHistory({
+    action: '💬 NOWY KOMENTARZ',
+    details: `Dodano komentarz do profilu ${emp.name}: "${cleanText.slice(0, 70)}${cleanText.length > 70 ? '...' : ''}"`,
+    employeeId: emp.id,
+    employeeName: emp.name,
+    operator: op
+  });
+
+  return { success: true, comment: newComment, employee: emp };
+}
+
+export function updateEmployeeQuickNotes(employeeId, newNotes, authorName = null) {
+  const employees = getEmployees();
+  const emp = employees.find(e => e.id === employeeId);
+  if (!emp) return { success: false, error: 'Nie znaleziono pracownika' };
+
+  const op = authorName || getCurrentOperator()?.name || 'Operator';
+  emp.notes = String(newNotes).trim();
+  saveEmployees(employees);
+
+  logEmployeeHistory({
+    action: '📝 ZMIANA NOTATKI GŁÓWNEJ',
+    details: `Zaktualizowano notatkę główną pracownika ${emp.name}`,
+    employeeId: emp.id,
+    employeeName: emp.name,
+    operator: op
+  });
+
+  return { success: true, employee: emp };
 }
 
 export function deleteEmployee(id, operatorName = null) {
@@ -241,7 +322,6 @@ export async function syncEmployeesFromOdoo() {
       odooEmps.forEach(oEmp => {
         if (!oEmp.name || oEmp.name === 'Administrator') return;
 
-        // Allocation limit from Odoo
         const alloc = Array.isArray(odooAllocations) 
           ? odooAllocations.find(a => a.employee_id && a.employee_id[0] === oEmp.id)
           : null;
@@ -278,6 +358,9 @@ export async function syncEmployeesFromOdoo() {
             overdueLeaveDays: 0,
             manualLeaveAdjustments: 0,
             avatar: 'person',
+            notes: '',
+            commentsList: [],
+            assignedMachine: 'Produkcja CNC',
             medicalExamDate: '',
             medicalExamValidUntil: '',
             medicalExamNotes: '',
@@ -297,7 +380,6 @@ export async function syncEmployeesFromOdoo() {
 
       saveEmployees(currentList);
 
-      // Synchronize Leaves from Odoo
       if (Array.isArray(odooLeaves) && odooLeaves.length > 0) {
         const localLeaves = getLeaveRequests();
         let leavesImported = 0;
@@ -358,7 +440,7 @@ export async function syncEmployeesFromOdoo() {
 }
 
 /**
- * Manual Leave Adjustments (Dodaj / Odejmij dni / Zmień pulę z rejestrem KTO zmienił)
+ * Manual Leave Adjustments
  */
 export function adjustEmployeeLeave({ employeeId, type, daysDelta, reason, operatorName = null }) {
   const employees = getEmployees();
@@ -407,7 +489,7 @@ export function adjustEmployeeLeave({ employeeId, type, daysDelta, reason, opera
 }
 
 /**
- * Leave Requests & Working Days Calculations with Real Historical Leave Records from Odoo 19
+ * Leave Requests & Working Days Calculations
  */
 export function getLeaveRequests() {
   try {
@@ -420,9 +502,7 @@ export function getLeaveRequests() {
     console.error('Error loading leave requests:', e);
   }
 
-  // Exact 100% Genuine Records from Odoo 19 database
   const initialLeaves = [
-    // --- PAWEŁ PERET (Łącznie: 8 dni roboczych wykorzystane w 2026) ---
     {
       id: 'odoo_leave_2',
       odooLeaveId: 2,
@@ -483,8 +563,6 @@ export function getLeaveRequests() {
       submittedBy: 'Paweł Peret',
       approvedBy: 'Zarząd Bluemake'
     },
-
-    // --- MATEUSZ KLIMKOWSKI (Łącznie: 23 dni robocze - cały lipiec) ---
     {
       id: 'odoo_leave_22',
       odooLeaveId: 22,
@@ -500,8 +578,6 @@ export function getLeaveRequests() {
       submittedBy: 'Mateusz Klimkowski',
       approvedBy: 'Paweł Peret'
     },
-
-    // --- PATRYK MAJKA (Łącznie: 5 dni roboczych) ---
     {
       id: 'odoo_leave_7',
       odooLeaveId: 7,
@@ -577,8 +653,6 @@ export function getLeaveRequests() {
       submittedBy: 'Patryk Majka',
       approvedBy: 'Mateusz Klimkowski'
     },
-
-    // --- SZYMON KLIMKOWSKI (Łącznie: 3 dni robocze) ---
     {
       id: 'odoo_leave_17',
       odooLeaveId: 17,
@@ -613,7 +687,7 @@ export function calculateWorkingDays(startDateStr, endDateStr) {
   let workingDays = 0;
   let cur = new Date(start);
   while (cur <= end) {
-    const dayOfWeek = cur.getDay(); // 0 = Sun, 6 = Sat
+    const dayOfWeek = cur.getDay();
     if (dayOfWeek !== 0 && dayOfWeek !== 6) {
       workingDays++;
     }
@@ -746,8 +820,7 @@ export function getBhpAndMedicalStatus(emp) {
   const in30Days = new Date();
   in30Days.setDate(in30Days.getDate() + 30);
 
-  // Medical Exam
-  let medicalStatus = 'OK'; // 'OK' | 'EXPIRING' | 'EXPIRED' | 'MISSING'
+  let medicalStatus = 'OK';
   let medicalDaysLeft = null;
   if (!emp.medicalExamValidUntil) {
     medicalStatus = 'MISSING';
@@ -759,7 +832,6 @@ export function getBhpAndMedicalStatus(emp) {
     else if (medicalDaysLeft <= 30) medicalStatus = 'EXPIRING';
   }
 
-  // Safety Training (BHP)
   let safetyStatus = 'OK';
   let safetyDaysLeft = null;
   if (!emp.safetyTrainingValidUntil) {
@@ -827,6 +899,68 @@ export function getAllBhpAlerts() {
   });
 
   return alerts;
+}
+
+/**
+ * Generate Medical Exam Alert Mailto to m.klimkowski@bluemake.eu & p.peret@bluemake.eu
+ */
+export function buildMedicalExamAlertMailto(emp) {
+  const recipient = 'm.klimkowski@bluemake.eu';
+  const cc = 'p.peret@bluemake.eu';
+  const status = getBhpAndMedicalStatus(emp);
+  
+  const subject = encodeURIComponent(`[BHP Bluemake] ⚠️ Kończy się ważność badań lekarskich: ${emp.name} (${emp.medicalExamValidUntil || 'Brak daty'})`);
+  const body = encodeURIComponent(
+`Dzień dobry Mateusz,
+
+Powiadomienie o badaniach medycyny pracy w firmie Bluemake Sp. z o.o.:
+
+Pracownik: ${emp.name}
+Stanowisko: ${emp.position || 'Pracownik'} (${emp.department || 'Produkcja CNC'})
+Telefon: ${emp.phone || '-'}
+Data ważności obecnych badań: ${emp.medicalExamValidUntil || 'Brak wpisanej daty'}
+Status badań: ${status.medicalStatus === 'EXPIRED' ? '⛔ PRZETERMINOWANE!' : `⚠️ Wygasają za ${status.medicalDaysLeft} dni`}
+Orzeczenie / Uwagi: ${emp.medicalExamNotes || 'Zdolny do pracy'}
+
+Przypisana maszyna / obszar: ${emp.assignedMachine || 'Produkcja'}
+Szkolenie BHP ważne do: ${emp.safetyTrainingValidUntil || '-'}
+
+Należy wystawić pracownikowi skierowanie na okresowe badania lekarskie (Medycyna Pracy).
+
+Wysłano z aplikacji Bluemake Magazyn & Kadry
+Data wygenerowania zgłoszenia: ${new Date().toLocaleString('pl-PL')}`
+  );
+
+  return `mailto:${recipient}?cc=${cc}&subject=${subject}&body=${body}`;
+}
+
+export async function sendMedicalExamAlertToOdoo(emp) {
+  const status = getBhpAndMedicalStatus(emp);
+  const statusLabel = status.medicalStatus === 'EXPIRED' ? '⛔ PRZETERMINOWANE' : `⚠️ WYGASA ZA ${status.medicalDaysLeft} DNI`;
+
+  const msgHtml = `
+🩺 <strong>ALERT BADAŃ MEDYCYNY PRACY (Bluemake):</strong><br/>
+Pracownik: <strong>${emp.name}</strong> (${emp.position || 'Pracownik'})<br/>
+Termin ważności badań: <strong>${emp.medicalExamValidUntil || 'Brak daty'}</strong> (<strong>${statusLabel}</strong>)<br/>
+Stanowisko / Maszyny: <em>${emp.assignedMachine || emp.department || 'Produkcja CNC'}</em><br/>
+Uwagi lekarskie: <em>${emp.medicalExamNotes || 'Brak'}</em><br/>
+<small>Wysłano powiadomienie do M. Klimkowskiego & P. Pereta • ${new Date().toLocaleString('pl-PL')}</small>
+  `.trim();
+
+  try {
+    await callOdooRpc('mail.message', 'create', [{
+      model: 'discuss.channel',
+      res_id: 11, // #Wszystko
+      body: msgHtml,
+      message_type: 'comment',
+      subtype_id: 1,
+      partner_ids: [6, 8] // Mateusz & Paweł
+    }]);
+    return { success: true };
+  } catch (err) {
+    console.warn('Nie udało się wysłać alertu medycznego do Odoo:', err);
+    return { success: false, error: err.message };
+  }
 }
 
 /**

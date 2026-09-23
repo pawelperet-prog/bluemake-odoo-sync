@@ -4,6 +4,8 @@ import {
   deleteEmployee, 
   syncEmployeesFromOdoo,
   adjustEmployeeLeave,
+  addEmployeeComment,
+  updateEmployeeQuickNotes,
   getLeaveRequests, 
   saveLeaveRequest, 
   updateLeaveRequestStatus, 
@@ -14,6 +16,8 @@ import {
   sendLeaveNotificationToOdoo, 
   getBhpAndMedicalStatus,
   getAllBhpAlerts,
+  buildMedicalExamAlertMailto,
+  sendMedicalExamAlertToOdoo,
   getEmployeeHistory,
   LEAVE_TYPES 
 } from '../services/employeeService.js';
@@ -32,8 +36,9 @@ export function renderEmployeesView(container, navigateTo) {
   let showNewLeaveModal = false;
   let showNewEmployeeModal = false;
   let showAdjustLeaveModal = false;
-  let editingEmployee = null; // if set, open edit modal
-  let adjustingEmployee = null; // if set, open adjust modal
+  let selectedEmployeeDetail = null; // When set, opens full detail & comments modal
+  let editingEmployee = null; // if set, open edit form modal
+  let adjustingEmployee = null; // if set, open adjust leave modal
   let isSyncingOdoo = false;
   let statusBanner = null;
 
@@ -43,6 +48,11 @@ export function renderEmployeesView(container, navigateTo) {
     const historyLogs = getEmployeeHistory();
     const bhpAlerts = getAllBhpAlerts();
     const todayStr = new Date().toISOString().split('T')[0];
+
+    // Refresh selected employee reference if open
+    if (selectedEmployeeDetail) {
+      selectedEmployeeDetail = employees.find(e => e.id === selectedEmployeeDetail.id) || selectedEmployeeDetail;
+    }
 
     // Filter requests
     const filteredRequests = allRequests.filter(r => {
@@ -71,7 +81,7 @@ export function renderEmployeesView(container, navigateTo) {
 
         <div class="flex items-center gap-2">
           <!-- Sync with Odoo -->
-          <button id="btn-sync-odoo" class="bg-purple-900/60 hover:bg-purple-800 text-purple-200 border border-purple-600/50 font-bold text-xs px-2.5 sm:px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all active:scale-95 shadow-sm" title="Pobierz i zsynchronizuj pracowników z Odoo 19 (hr.employee)">
+          <button id="btn-sync-odoo" class="bg-purple-900/60 hover:bg-purple-800 text-purple-200 border border-purple-600/50 font-bold text-xs px-2.5 sm:px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all active:scale-95 shadow-sm" title="Pobierz i zsynchronizuj pracowników i urlopy z Odoo 19">
             <span class="material-symbols-outlined text-[16px] ${isSyncingOdoo ? 'animate-spin' : ''}">sync</span>
             <span class="hidden sm:inline">${isSyncingOdoo ? 'Pobieranie...' : 'Pobierz z Odoo'}</span>
           </button>
@@ -153,7 +163,7 @@ export function renderEmployeesView(container, navigateTo) {
           </button>
           <button id="tab-btn-cards" type="button" class="tab-nav-btn flex-1 min-w-[140px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${activeTab === 'CARDS' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'}">
             <span class="material-symbols-outlined text-[18px]">groups</span>
-            <span>3. Karty Pracowników</span>
+            <span>3. Karty & Komentarze</span>
           </button>
           <button id="tab-btn-history" type="button" class="tab-nav-btn flex-1 min-w-[140px] py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${activeTab === 'HISTORY' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'}">
             <span class="material-symbols-outlined text-[18px]">history</span>
@@ -171,7 +181,7 @@ export function renderEmployeesView(container, navigateTo) {
             <div class="flex justify-between items-center mb-2 px-1">
               <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                 <span class="material-symbols-outlined text-[16px] text-indigo-400">calendar_month</span>
-                <span>Bilans Dni Urlopowych (${new Date().getFullYear()})</span>
+                <span>Bilans Dni Urlopowych 2026 (Kliknij w pracownika aby wejść w profil)</span>
               </h2>
               <span class="text-[11px] text-slate-500">Zalogowany: <strong>${currentOp ? currentOp.name : 'Operator'}</strong></span>
             </div>
@@ -187,7 +197,7 @@ export function renderEmployeesView(container, navigateTo) {
                 );
 
                 return `
-                  <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-md flex flex-col justify-between hover:border-slate-700 transition-all">
+                  <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-md flex flex-col justify-between hover:border-indigo-500/60 transition-all cursor-pointer card-click-employee" data-id="${emp.id}">
                     <div>
                       <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center gap-2.5">
@@ -195,7 +205,7 @@ export function renderEmployeesView(container, navigateTo) {
                             <span class="material-symbols-outlined text-2xl">${emp.avatar || 'person'}</span>
                           </div>
                           <div>
-                            <div class="font-bold text-white text-sm">${emp.name}</div>
+                            <div class="font-bold text-white text-sm hover:text-indigo-300 transition-colors">${emp.name}</div>
                             <div class="text-[11px] text-slate-400 truncate max-w-[140px]">${emp.position || 'Pracownik'}</div>
                           </div>
                         </div>
@@ -211,15 +221,9 @@ export function renderEmployeesView(container, navigateTo) {
                       <!-- Leave Stats Meter -->
                       <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 mb-3 space-y-1.5 text-xs">
                         <div class="flex justify-between text-slate-400">
-                          <span>Pula roczna + zaległy:</span>
-                          <strong class="text-slate-200 font-mono">${stats.limit} + ${stats.overdue} dni</strong>
+                          <span>Pula roczna:</span>
+                          <strong class="text-slate-200 font-mono">${stats.limit} dni</strong>
                         </div>
-                        ${stats.adjustments !== 0 ? `
-                          <div class="flex justify-between text-slate-400">
-                            <span>Korekty ręczne:</span>
-                            <strong class="${stats.adjustments > 0 ? 'text-emerald-400' : 'text-rose-400'} font-mono">${stats.adjustments > 0 ? '+' : ''}${stats.adjustments} dni</strong>
-                          </div>
-                        ` : ''}
                         <div class="flex justify-between text-slate-400">
                           <span>Wykorzystane urlopy:</span>
                           <strong class="text-amber-400 font-mono">${stats.usedVacationDays} dni</strong>
@@ -229,10 +233,16 @@ export function renderEmployeesView(container, navigateTo) {
                           <span class="font-mono text-sm bg-emerald-950 px-2 py-0.2 rounded border border-emerald-800">${stats.remainingDays} dni</span>
                         </div>
                       </div>
+
+                      ${emp.notes ? `
+                        <div class="text-[11px] text-slate-400 italic truncate mb-2" title="${emp.notes}">
+                          💬 ${emp.notes}
+                        </div>
+                      ` : ''}
                     </div>
 
                     <!-- Actions on Card -->
-                    <div class="flex items-center gap-1.5 pt-2 border-t border-slate-800">
+                    <div class="flex items-center gap-1.5 pt-2 border-t border-slate-800" onclick="event.stopPropagation();">
                       <button type="button" class="btn-quick-leave flex-1 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 hover:text-white font-bold text-[11px] py-1.5 rounded-lg border border-indigo-500/40 flex items-center justify-center gap-1 transition-colors" data-id="${emp.id}">
                         <span class="material-symbols-outlined text-[14px]">beach_access</span>
                         <span>Zgłoś urlop</span>
@@ -375,13 +385,16 @@ export function renderEmployeesView(container, navigateTo) {
 
         <!-- ═════════════════════════════════════════════════════════════════════
              TAB 2: BADANIA OKRESOWE & BHP & UPRAWNIENIA
-             ═════════════════════════════════════════════════════════════════════ -->
+             ═════════════════════════════════════════════ -->
         ${activeTab === 'BHP' ? `
           <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-md flex flex-col gap-4">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-amber-400">health_and_safety</span>
-                <h2 class="font-bold text-white text-base">Ewidencja Badań Lekarskich, Szkoleń BHP & Uprawnień</h2>
+                <div>
+                  <h2 class="font-bold text-white text-base">Ewidencja Badań Lekarskich, Szkoleń BHP & Uprawnień</h2>
+                  <p class="text-[11px] text-slate-400">Powiadomienia e-mail o badaniach kierowane do: <strong>m.klimkowski@bluemake.eu</strong></p>
+                </div>
               </div>
               <span class="text-xs text-slate-400">Pracownicy: <strong>${employees.length}</strong></span>
             </div>
@@ -394,21 +407,22 @@ export function renderEmployeesView(container, navigateTo) {
                     <th class="py-2.5 px-3">Pracownik / Stanowisko</th>
                     <th class="py-2.5 px-3 text-center">Badania Medycyny Pracy</th>
                     <th class="py-2.5 px-3 text-center">Szkolenie BHP</th>
-                    <th class="py-2.5 px-3">Uprawnienia UDT / SEP</th>
+                    <th class="py-2.5 px-3">Uprawnienia UDT / Maszyny</th>
                     <th class="py-2.5 px-3 text-center">Odzież Robocza</th>
-                    <th class="py-2.5 px-3">Kontakt Alarmowy ICE</th>
-                    <th class="py-2.5 px-3 text-right">Akcje</th>
+                    <th class="py-2.5 px-3 text-right">Powiadomienia & Akcje</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-800 font-medium">
                   ${employees.map(emp => {
                     const status = getBhpAndMedicalStatus(emp);
+                    const mailtoBhp = buildMedicalExamAlertMailto(emp);
+
                     return `
                       <tr class="hover:bg-slate-800/40 transition-colors">
                         <td class="py-3 px-3">
-                          <div class="font-bold text-white text-sm">${emp.name}</div>
+                          <div class="font-bold text-white text-sm cursor-pointer hover:text-indigo-400 transition-colors card-click-employee" data-id="${emp.id}">${emp.name}</div>
                           <div class="text-[11px] text-slate-400">${emp.position || 'Pracownik'}</div>
-                          <div class="text-[10px] text-indigo-400">${emp.department || 'Produkcja CNC'}</div>
+                          <div class="text-[10px] text-indigo-400">${emp.assignedMachine || emp.department || 'Produkcja CNC'}</div>
                         </td>
 
                         <!-- Medycyna Pracy -->
@@ -421,11 +435,11 @@ export function renderEmployeesView(container, navigateTo) {
                                 ${emp.medicalExamValidUntil}
                               </span>
                               <span class="text-[9px] px-2 py-0.2 rounded-full font-bold mt-0.5 ${
-                                status.medicalStatus === 'EXPIRED' ? 'bg-rose-950 text-rose-300 border border-rose-800' : (status.medicalStatus === 'EXPIRING' ? 'bg-amber-950 text-amber-300 border border-amber-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800')
+                                status.medicalStatus === 'EXPIRED' ? 'bg-rose-950 text-rose-300 border border-rose-800' : (status.medicalStatus === 'EXPIRING' ? `bg-amber-950 text-amber-300 border border-amber-800` : 'bg-emerald-950 text-emerald-300 border border-emerald-800')
                               }">
                                 ${status.medicalStatus === 'EXPIRED' ? '⛔ PRZETERMINOWANE' : (status.medicalStatus === 'EXPIRING' ? `⚠️ Wygasa (${status.medicalDaysLeft}d)` : '🟢 Ważne')}
                               </span>
-                              ${emp.medicalExamNotes ? `<span class="text-[9px] text-slate-500 max-w-[120px] truncate mt-0.5" title="${emp.medicalExamNotes}">${emp.medicalExamNotes}</span>` : ''}
+                              ${emp.medicalExamNotes ? `<span class="text-[9px] text-slate-400 max-w-[120px] truncate mt-0.5" title="${emp.medicalExamNotes}">${emp.medicalExamNotes}</span>` : ''}
                             </div>
                           ` : `
                             <span class="text-slate-500 italic text-[11px]">Brak danych</span>
@@ -442,7 +456,7 @@ export function renderEmployeesView(container, navigateTo) {
                                 ${emp.safetyTrainingValidUntil}
                               </span>
                               <span class="text-[9px] px-2 py-0.2 rounded-full font-bold mt-0.5 ${
-                                status.safetyStatus === 'EXPIRED' ? 'bg-rose-950 text-rose-300 border border-rose-800' : (status.safetyStatus === 'EXPIRING' ? 'bg-amber-950 text-amber-300 border border-amber-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800')
+                                status.safetyStatus === 'EXPIRED' ? 'bg-rose-950 text-rose-300 border border-rose-800' : (status.safetyStatus === 'EXPIRING' ? `bg-amber-950 text-amber-300 border border-amber-800` : 'bg-emerald-950 text-emerald-300 border border-emerald-800')
                               }">
                                 ${status.safetyStatus === 'EXPIRED' ? '⛔ PRZETERMINOWANE' : (status.safetyStatus === 'EXPIRING' ? `⚠️ Wygasa (${status.safetyDaysLeft}d)` : '🟢 Ważne')}
                               </span>
@@ -470,18 +484,19 @@ export function renderEmployeesView(container, navigateTo) {
                           </div>
                         </td>
 
-                        <!-- Kontakt ICE -->
-                        <td class="py-3 px-3 text-xs text-slate-300">
-                          <div>Tel: <strong class="text-white font-mono">${emp.phone || '-'}</strong></div>
-                          <div class="text-amber-300 text-[11px]">${emp.iceContact || '<span class="text-slate-500 italic">Brak ICE</span>'}</div>
-                        </td>
-
-                        <!-- Edit Button -->
+                        <!-- Actions (Send Mail to Mateusz & Edit) -->
                         <td class="py-3 px-3 text-right">
-                          <button type="button" class="btn-edit-emp-profile bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-700 transition-colors flex items-center gap-1 ml-auto" data-id="${emp.id}">
-                            <span class="material-symbols-outlined text-[15px]">edit</span>
-                            <span>Edytuj BHP</span>
-                          </button>
+                          <div class="flex items-center justify-end gap-1.5">
+                            <a href="${mailtoBhp}" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors" title="Wyślij e-mail o badaniach do Mateusza (m.klimkowski@bluemake.eu)">
+                              <span class="material-symbols-outlined text-[15px]">outgoing_mail</span>
+                              <span class="hidden md:inline">Mail do Mateusza</span>
+                            </a>
+
+                            <button type="button" class="btn-card-details bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-700 transition-colors flex items-center gap-1" data-id="${emp.id}" title="Wejdź w pełną kartę pracownika">
+                              <span class="material-symbols-outlined text-[15px]">open_in_new</span>
+                              <span>Karta</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     `;
@@ -493,14 +508,14 @@ export function renderEmployeesView(container, navigateTo) {
         ` : ''}
 
         <!-- ═════════════════════════════════════════════════════════════════════
-             TAB 3: KARTY PRACOWNIKÓW & PEŁNY PROFIL
+             TAB 3: KARTY PRACOWNIKÓW & KOMENTARZE
              ═════════════════════════════════════════════════════════════════════ -->
         ${activeTab === 'CARDS' ? `
           <div>
             <div class="flex justify-between items-center mb-3">
               <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                 <span class="material-symbols-outlined text-[16px] text-indigo-400">groups</span>
-                <span>Profile Pracowników Bluemake Sp. z o.o. (${employees.length})</span>
+                <span>Karty Pracowników & Podpięte Komentarze (${employees.length})</span>
               </h2>
             </div>
 
@@ -509,9 +524,10 @@ export function renderEmployeesView(container, navigateTo) {
                 const stats = getEmployeeLeaveStats(emp.id);
                 const bhp = getBhpAndMedicalStatus(emp);
                 const isUserAdmin = emp.role === 'ADMIN';
+                const commentsCount = Array.isArray(emp.commentsList) ? emp.commentsList.length : 0;
 
                 return `
-                  <div class="bg-slate-900 rounded-3xl border border-slate-800 p-5 shadow-lg flex flex-col justify-between gap-4 hover:border-slate-700 transition-all">
+                  <div class="bg-slate-900 rounded-3xl border border-slate-800 p-5 shadow-lg flex flex-col justify-between gap-4 hover:border-indigo-500/60 transition-all cursor-pointer card-click-employee" data-id="${emp.id}">
                     <div>
                       <!-- Header Card -->
                       <div class="flex items-start justify-between">
@@ -520,72 +536,63 @@ export function renderEmployeesView(container, navigateTo) {
                             <span class="material-symbols-outlined text-3xl">${emp.avatar || 'person'}</span>
                           </div>
                           <div>
-                            <h3 class="font-black text-lg text-white">${emp.name}</h3>
+                            <h3 class="font-black text-lg text-white hover:text-indigo-300 transition-colors">${emp.name}</h3>
                             <div class="text-xs font-bold text-slate-300">${emp.position || 'Pracownik'}</div>
-                            <div class="text-[11px] text-indigo-400 font-medium">${emp.department || 'Produkcja CNC'}</div>
+                            <div class="text-[11px] text-indigo-400 font-medium">${emp.assignedMachine || emp.department || 'Produkcja CNC'}</div>
                           </div>
                         </div>
 
                         <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full ${isUserAdmin ? 'bg-amber-950 text-amber-300 border border-amber-800' : 'bg-slate-800 text-slate-300 border border-slate-700'}">
-                          ${isUserAdmin ? '👑 ZARZĄD / ADMIN' : '📦 OPERATOR CNC'}
+                          ${isUserAdmin ? '👑 ZARZĄD' : '📦 OPERATOR'}
                         </span>
                       </div>
 
                       <!-- Key Info Grid -->
                       <div class="grid grid-cols-2 gap-2 my-3 text-xs">
                         <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
-                          <span class="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">Kontakt:</span>
-                          <div class="text-slate-300 font-mono truncate">${emp.phone || '-'}</div>
-                          <div class="text-slate-400 text-[11px] truncate">${emp.email || '-'}</div>
-                        </div>
-
-                        <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
-                          <span class="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">Urlop ${new Date().getFullYear()}:</span>
+                          <span class="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">Urlop 2026:</span>
                           <div class="text-emerald-400 font-bold font-mono">Pozostało: ${stats.remainingDays} dni</div>
-                          <div class="text-slate-400 text-[11px]">Pula: ${stats.totalPool}d (Wykorzystano: ${stats.usedVacationDays}d)</div>
+                          <div class="text-slate-400 text-[11px]">Wykorzystano: ${stats.usedVacationDays}d / ${stats.limit}d</div>
                         </div>
 
                         <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
-                          <span class="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">Badania Medycyny Pracy:</span>
+                          <span class="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">Badania Okresowe:</span>
                           <div class="font-mono font-bold ${bhp.medicalStatus === 'EXPIRED' ? 'text-rose-400' : (bhp.medicalStatus === 'EXPIRING' ? 'text-amber-400' : 'text-slate-200')}">
                             ${emp.medicalExamValidUntil || 'Brak daty'}
                           </div>
                           <div class="text-[10px] text-slate-400">${emp.medicalExamNotes || 'Zdolny do pracy'}</div>
                         </div>
-
-                        <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
-                          <span class="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">Szkolenie BHP & Uprawnienia:</span>
-                          <div class="font-mono font-bold ${bhp.safetyStatus === 'EXPIRED' ? 'text-rose-400' : 'text-slate-200'}">
-                            BHP do: ${emp.safetyTrainingValidUntil || 'Brak daty'}
-                          </div>
-                          <div class="text-[10px] text-indigo-300 truncate">${emp.forkliftLicense || emp.craneLicense || 'BHP stanowiskowe'}</div>
-                        </div>
                       </div>
 
-                      <!-- Footnote ICE & Clothes -->
-                      <div class="bg-slate-950/40 px-3 py-2 rounded-xl border border-slate-800/60 flex justify-between items-center text-[11px] text-slate-400">
-                        <div>Odzież: <strong class="text-slate-200">${emp.clothesSize || '-'}</strong> | Buty: <strong class="text-slate-200">${emp.shoesSize || '-'}</strong></div>
-                        <div class="text-amber-300/90 truncate max-w-[200px]">${emp.iceContact || 'Brak kontaktu ICE'}</div>
+                      <!-- Notes / Comments Snippet -->
+                      <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 flex flex-col gap-1.5">
+                        <div class="flex justify-between items-center text-[10.5px] font-bold text-slate-400">
+                          <span class="flex items-center gap-1 text-indigo-300">
+                            <span class="material-symbols-outlined text-[14px]">chat</span>
+                            <span>Podpięte Komentarze (${commentsCount})</span>
+                          </span>
+                          <span class="text-slate-500 font-normal">Kliknij kartę aby otworzyć</span>
+                        </div>
+                        <p class="text-[11.5px] text-slate-300 line-clamp-2 italic">
+                          ${emp.notes || (commentsCount > 0 ? emp.commentsList[0].text : 'Brak przypisanych notatek. Kliknij, aby dodać komentarz...')}
+                        </p>
                       </div>
                     </div>
 
                     <!-- Bottom Action Buttons -->
-                    <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
-                      <button type="button" class="btn-edit-emp-profile flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs py-2 rounded-xl border border-slate-700 flex items-center justify-center gap-1.5 transition-colors" data-id="${emp.id}">
-                        <span class="material-symbols-outlined text-[16px] text-indigo-400">edit</span>
-                        <span>Edytuj Profil & BHP</span>
+                    <div class="flex items-center gap-2 pt-2 border-t border-slate-800" onclick="event.stopPropagation();">
+                      <button type="button" class="btn-card-details flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-2 rounded-xl shadow-md flex items-center justify-center gap-1.5 transition-colors" data-id="${emp.id}">
+                        <span class="material-symbols-outlined text-[16px]">visibility</span>
+                        <span>Otwórz Profil & Komentarze</span>
                       </button>
 
-                      <button type="button" class="btn-open-adjust-modal bg-indigo-950 hover:bg-indigo-900 text-indigo-300 font-bold text-xs px-3 py-2 rounded-xl border border-indigo-800 flex items-center gap-1 transition-colors" data-id="${emp.id}" title="Korekta puli urlopowej">
+                      <button type="button" class="btn-edit-emp-profile bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs p-2 rounded-xl border border-slate-700 transition-colors" data-id="${emp.id}" title="Edytuj dane & BHP">
+                        <span class="material-symbols-outlined text-[16px]">edit</span>
+                      </button>
+
+                      <button type="button" class="btn-open-adjust-modal bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs p-2 rounded-xl border border-slate-700 transition-colors" data-id="${emp.id}" title="Korekta urlopu">
                         <span class="material-symbols-outlined text-[16px]">tune</span>
-                        <span>± Urlopy</span>
                       </button>
-
-                      ${isOpAdmin && emp.role !== 'ADMIN' ? `
-                        <button type="button" class="btn-del-emp text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-slate-800 border border-slate-800 transition-colors" data-id="${emp.id}" title="Usuń profil pracownika">
-                          <span class="material-symbols-outlined text-[18px]">delete</span>
-                        </button>
-                      ` : ''}
                     </div>
                   </div>
                 `;
@@ -602,7 +609,7 @@ export function renderEmployeesView(container, navigateTo) {
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-indigo-400">history</span>
-                <h2 class="font-bold text-white text-base">Dziennik Audytu Zmian Kadrowych & Urlopowych</h2>
+                <h2 class="font-bold text-white text-base">Dziennik Audytu Zmian Kadrowych, Komentarzy & Urlopowych</h2>
               </div>
               <span class="text-xs text-slate-400">Zarejestrowane zdarzenia: <strong>${historyLogs.length}</strong></span>
             </div>
@@ -658,7 +665,172 @@ export function renderEmployeesView(container, navigateTo) {
       </main>
 
       <!-- ═════════════════════════════════════════════════════════════════════
-           MODAL 1: NOWY WNIOSEK URLOPOWY
+           MODAL 1: KARTA SZCZEGÓŁÓW PRACOWNIKA & KOMENTARZE
+           ═════════════════════════════════════════════════════════════════════ -->
+      ${selectedEmployeeDetail ? `
+        <div id="detail-modal-backdrop" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-4 select-none">
+          <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl flex flex-col gap-4 text-slate-100 max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+            
+            <!-- Header Modal -->
+            <div class="flex justify-between items-start border-b border-slate-800 pb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-14 h-14 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/40 flex items-center justify-center shadow-lg">
+                  <span class="material-symbols-outlined text-3xl">${selectedEmployeeDetail.avatar || 'person'}</span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-black text-xl text-white">${selectedEmployeeDetail.name}</h3>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${selectedEmployeeDetail.role === 'ADMIN' ? 'bg-amber-950 text-amber-300 border border-amber-800' : 'bg-slate-800 text-slate-300 border border-slate-700'}">
+                      ${selectedEmployeeDetail.role === 'ADMIN' ? '👑 ZARZĄD' : '📦 OPERATOR'}
+                    </span>
+                  </div>
+                  <p class="text-xs text-indigo-300 font-bold">${selectedEmployeeDetail.position || 'Pracownik'} • <span class="text-slate-400 font-normal">${selectedEmployeeDetail.department || 'Produkcja CNC'}</span></p>
+                  <p class="text-[11px] text-slate-400">Maszyna: <strong class="text-slate-200">${selectedEmployeeDetail.assignedMachine || 'Główny Park Maszynowy'}</strong></p>
+                </div>
+              </div>
+
+              <button id="close-detail-modal-btn" class="p-1.5 text-slate-400 hover:text-white rounded-full hover:bg-slate-800 transition-colors">
+                <span class="material-symbols-outlined text-2xl">close</span>
+              </button>
+            </div>
+
+            <!-- SECTION 1: BADANIA OKRESOWE & BHP WITH SEND MAIL BUTTON -->
+            <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800 flex flex-col gap-3">
+              <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-slate-800/80 pb-2.5">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-amber-400 text-xl">health_and_safety</span>
+                  <h4 class="font-bold text-white text-sm">Badania Okresowe (Medycyna Pracy) & BHP</h4>
+                </div>
+
+                <!-- Send Alert Mail to Mateusz Button -->
+                <div class="flex items-center gap-2">
+                  <a href="${buildMedicalExamAlertMailto(selectedEmployeeDetail)}" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-xs px-3 py-1.5 rounded-xl shadow-md flex items-center gap-1.5 transition-all active:scale-95" title="Wyślij powiadomienie e-mail o badaniach do m.klimkowski@bluemake.eu">
+                    <span class="material-symbols-outlined text-[16px]">outgoing_mail</span>
+                    <span>Wyślij Mail do Mateusza</span>
+                  </a>
+                  <button type="button" class="btn-send-med-odoo bg-purple-950/80 hover:bg-purple-900 text-purple-300 border border-purple-800 font-bold text-xs px-2.5 py-1.5 rounded-xl flex items-center gap-1 transition-all" data-id="${selectedEmployeeDetail.id}" title="Wyślij alert do Odoo (#Wszystko)">
+                    <span class="material-symbols-outlined text-[15px]">forum</span>
+                    <span>Odoo</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                  <span class="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">Ważność Badań Lekarskich:</span>
+                  <div class="font-mono font-bold text-sm ${getBhpAndMedicalStatus(selectedEmployeeDetail).medicalStatus === 'EXPIRED' ? 'text-rose-400' : 'text-emerald-400'}">
+                    ${selectedEmployeeDetail.medicalExamValidUntil || 'Brak daty'}
+                  </div>
+                  <div class="text-[10.5px] text-slate-400 mt-0.5">${selectedEmployeeDetail.medicalExamNotes || 'Zdolny do pracy'}</div>
+                </div>
+
+                <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                  <span class="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">Szkolenie BHP:</span>
+                  <div class="font-mono font-bold text-sm text-slate-200">
+                    Ważne do: ${selectedEmployeeDetail.safetyTrainingValidUntil || 'Brak daty'}
+                  </div>
+                  <div class="text-[10.5px] text-indigo-300 mt-0.5">${selectedEmployeeDetail.forkliftLicense || selectedEmployeeDetail.craneLicense || 'BHP ogólne'}</div>
+                </div>
+
+                <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                  <span class="text-[10px] uppercase font-bold text-slate-500 block mb-0.5">Odzież Robocza & ICE:</span>
+                  <div class="font-mono text-slate-200">Rozmiar: <strong>${selectedEmployeeDetail.clothesSize || '-'}</strong> | Buty: <strong>${selectedEmployeeDetail.shoesSize || '-'}</strong></div>
+                  <div class="text-[10.5px] text-amber-300 mt-0.5">${selectedEmployeeDetail.iceContact || 'Brak kontaktu ICE'}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION 2: KOMENTARZE & NOTATKI PODPIĘTE POD PRACOWNIKA -->
+            <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800 flex flex-col gap-3">
+              <div class="flex justify-between items-center border-b border-slate-800/80 pb-2">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-indigo-400 text-xl">chat</span>
+                  <h4 class="font-bold text-white text-sm">Podpięte Komentarze & Notatki</h4>
+                </div>
+                <span class="text-xs text-slate-400">Wpisów: <strong>${Array.isArray(selectedEmployeeDetail.commentsList) ? selectedEmployeeDetail.commentsList.length : 0}</strong></span>
+              </div>
+
+              <!-- Quick Main Note Field -->
+              <div class="flex flex-col gap-1.5">
+                <label class="text-[11px] font-bold text-slate-400">Główna Notatka Kadrowo-Techniczna:</label>
+                <div class="flex gap-2">
+                  <input type="text" id="input-quick-note" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" value="${selectedEmployeeDetail.notes || ''}" placeholder="Wpisz stałą notatkę / ustalenia dla pracownika..." />
+                  <button type="button" id="btn-save-quick-note" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3 py-2 rounded-xl shadow-md transition-all active:scale-95">
+                    Zapisz
+                  </button>
+                </div>
+              </div>
+
+              <!-- Add New Comment Box -->
+              <form id="form-add-comment" class="flex flex-col gap-2 pt-2 border-t border-slate-800/60">
+                <label class="text-[11px] font-bold text-slate-400">Dodaj nowy komentarz z datą i podpisem (${currentOp ? currentOp.name : 'Operator'}):</label>
+                <div class="flex gap-2">
+                  <input type="text" id="input-new-comment-text" placeholder="np. Zgłosił chęć urlopu w sierpniu, wydano nowe narzędzia..." class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500" required />
+                  <button type="submit" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl border border-slate-700 flex items-center gap-1 transition-all active:scale-95">
+                    <span class="material-symbols-outlined text-[15px] text-indigo-400">send</span>
+                    <span>Dodaj</span>
+                  </button>
+                </div>
+              </form>
+
+              <!-- Comments List Timeline -->
+              <div class="flex flex-col gap-2 max-h-48 overflow-y-auto mt-1">
+                ${Array.isArray(selectedEmployeeDetail.commentsList) && selectedEmployeeDetail.commentsList.length > 0 ? selectedEmployeeDetail.commentsList.map(c => `
+                  <div class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl text-xs flex flex-col gap-1">
+                    <div class="flex justify-between items-center text-[10.5px]">
+                      <span class="font-bold text-indigo-300 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[13px]">person</span>
+                        <span>${c.author || 'Operator'}</span>
+                      </span>
+                      <span class="font-mono text-slate-500">${c.dateFormatted}</span>
+                    </div>
+                    <p class="text-slate-200">${c.text}</p>
+                  </div>
+                `).join('') : `
+                  <p class="text-xs text-slate-500 italic text-center py-2">Brak wpisów w historii komentarzy.</p>
+                `}
+              </div>
+            </div>
+
+            <!-- SECTION 3: URLOPY & BILANS -->
+            <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800 flex justify-between items-center text-xs">
+              <div>
+                <span class="text-[10px] uppercase font-bold text-slate-500 block">Bilans Urlopowy 2026:</span>
+                <div class="text-emerald-400 font-bold text-sm font-mono">
+                  Pozostało: ${getEmployeeLeaveStats(selectedEmployeeDetail.id).remainingDays} dni
+                </div>
+                <div class="text-slate-400 text-[11px]">
+                  Pula roczna: ${getEmployeeLeaveStats(selectedEmployeeDetail.id).limit}d | Wykorzystano: ${getEmployeeLeaveStats(selectedEmployeeDetail.id).usedVacationDays}d
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button type="button" class="btn-quick-leave bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 font-bold text-xs px-3 py-2 rounded-xl border border-indigo-500/40 transition-colors" data-id="${selectedEmployeeDetail.id}">
+                  Zgłoś urlop
+                </button>
+                <button type="button" class="btn-open-adjust-modal bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-3 py-2 rounded-xl border border-slate-700 transition-colors" data-id="${selectedEmployeeDetail.id}">
+                  ± Korekta dni
+                </button>
+              </div>
+            </div>
+
+            <!-- Bottom Close & Edit Button -->
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+              <button type="button" id="btn-edit-from-detail" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition-colors">
+                <span class="material-symbols-outlined text-[16px] text-indigo-400">edit</span>
+                <span>Edytuj Wszystkie Dane</span>
+              </button>
+              <button type="button" id="btn-close-detail" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg transition-colors">
+                Zamknij
+              </button>
+            </div>
+
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- ═════════════════════════════════════════════════════════════════════
+           MODAL 2: NOWY WNIOSEK URLOPOWY
            ═════════════════════════════════════════════════════════════════════ -->
       ${showNewLeaveModal ? `
         <div id="leave-modal-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-3 select-none">
@@ -742,7 +914,7 @@ export function renderEmployeesView(container, navigateTo) {
       ` : ''}
 
       <!-- ═════════════════════════════════════════════════════════════════════
-           MODAL 2: RĘCZNA KOREKTA DNI URLOPOWYCH (± DNI)
+           MODAL 3: RĘCZNA KOREKTA DNI URLOPOWYCH (± DNI)
            ═════════════════════════════════════════════════════════════════════ -->
       ${showAdjustLeaveModal && adjustingEmployee ? `
         <div id="adjust-modal-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-3 select-none">
@@ -778,12 +950,7 @@ export function renderEmployeesView(container, navigateTo) {
 
               <div>
                 <label class="block font-bold text-slate-300 mb-1">Powód zmiany (widoczny w historii) *</label>
-                <input type="text" id="adjust-reason-input" placeholder="np. Odbiór za pracę w sobotę 12.09, wyrównanie bilansu..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-indigo-500" required />
-              </div>
-
-              <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-400 flex items-center gap-2">
-                <span class="material-symbols-outlined text-indigo-400 text-lg">history_edu</span>
-                <span>Operacja zostanie zapisana w dzienniku audytu z Twoim imieniem (<strong>${currentOp ? currentOp.name : 'Operator'}</strong>).</span>
+                <input type="text" id="adjust-reason-input" placeholder="np. Odbiór za pracę w sobotę, wyrównanie bilansu..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-indigo-500" required />
               </div>
 
               <div class="flex gap-2 pt-2 border-t border-slate-800">
@@ -801,7 +968,7 @@ export function renderEmployeesView(container, navigateTo) {
       ` : ''}
 
       <!-- ═════════════════════════════════════════════════════════════════════
-           MODAL 3: DODAJ LUB EDYTUJ PRACOWNIKA (DANE + BHP + URLOPY)
+           MODAL 4: DODAJ LUB EDYTUJ PRACOWNIKA (DANE + BHP + URLOPY)
            ═════════════════════════════════════════════════════════════════════ -->
       ${showNewEmployeeModal ? `
         <div id="emp-modal-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-3 select-none">
@@ -837,8 +1004,8 @@ export function renderEmployeesView(container, navigateTo) {
                     <input type="text" id="f-emp-pos" placeholder="np. Operator CNC / Frezer" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" value="${editingEmployee?.position || ''}" required />
                   </div>
                   <div>
-                    <label class="block font-bold text-slate-300 mb-1">Dział</label>
-                    <input type="text" id="f-emp-dept" placeholder="np. Obróbka Skrawaniem CNC" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" value="${editingEmployee?.department || 'Produkcja CNC'}" />
+                    <label class="block font-bold text-slate-300 mb-1">Przypisana Maszyna / Obszar</label>
+                    <input type="text" id="f-emp-machine" placeholder="np. Tokarka Doosan Puma / Haas VF-4" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" value="${editingEmployee?.assignedMachine || 'Produkcja CNC'}" />
                   </div>
                   <div>
                     <label class="block font-bold text-slate-300 mb-1">Rola w systemie</label>
@@ -867,7 +1034,7 @@ export function renderEmployeesView(container, navigateTo) {
                 <div class="grid grid-cols-2 gap-3">
                   <div>
                     <label class="block font-bold text-slate-300 mb-1">Roczna pula urlopu (dni) *</label>
-                    <input type="number" id="f-emp-limit" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 font-mono font-bold text-white" value="${editingEmployee?.annualLeaveLimit || 26}" min="1" max="60" required />
+                    <input type="number" id="f-emp-limit" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 font-mono font-bold text-white" value="${editingEmployee?.annualLeaveLimit || 20}" min="1" max="60" required />
                   </div>
                   <div>
                     <label class="block font-bold text-slate-300 mb-1">Urlop zaległy z ub. roku (dni)</label>
@@ -910,7 +1077,7 @@ export function renderEmployeesView(container, navigateTo) {
               <div class="border-t border-slate-800 pt-3">
                 <h4 class="font-bold text-purple-400 uppercase tracking-wider text-[11px] mb-2 flex items-center gap-1">
                   <span class="material-symbols-outlined text-[15px]">verified_user</span>
-                  <span>4. Uprawnienia, Odzież BHP & ICE</span>
+                  <span>4. Uprawnienia, Odzież BHP, ICE & Komentarz</span>
                 </h4>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
@@ -920,10 +1087,6 @@ export function renderEmployeesView(container, navigateTo) {
                   <div>
                     <label class="block font-bold text-slate-300 mb-1">Uprawnienia Suwnice / Żurawie</label>
                     <input type="text" id="f-emp-crane" placeholder="np. Suwnice IIS z poziomu roboczego" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" value="${editingEmployee?.craneLicense || ''}" />
-                  </div>
-                  <div>
-                    <label class="block font-bold text-slate-300 mb-1">Uprawnienia Elektryczne (SEP)</label>
-                    <input type="text" id="f-emp-sep" placeholder="np. SEP G1 E do 1kV" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white" value="${editingEmployee?.sepLicense || ''}" />
                   </div>
                   <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -935,9 +1098,13 @@ export function renderEmployeesView(container, navigateTo) {
                       <input type="text" id="f-emp-shoes" placeholder="np. 43" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono" value="${editingEmployee?.shoesSize || ''}" />
                     </div>
                   </div>
-                  <div class="sm:col-span-2">
-                    <label class="block font-bold text-slate-300 mb-1">Kontakt Alarmowy ICE (W razie wypadku)</label>
+                  <div>
+                    <label class="block font-bold text-slate-300 mb-1">Kontakt Alarmowy ICE</label>
                     <input type="text" id="f-emp-ice" placeholder="np. Żona Anna: +48 600 123 456" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-amber-300 font-medium" value="${editingEmployee?.iceContact || ''}" />
+                  </div>
+                  <div class="sm:col-span-2">
+                    <label class="block font-bold text-slate-300 mb-1">Główny Komentarz / Notatka Podpięta</label>
+                    <textarea id="f-emp-notes" rows="2" placeholder="Wpisz uwagi, specyfikację pracy, ustalenia..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-white">${editingEmployee?.notes || ''}</textarea>
                   </div>
                 </div>
               </div>
@@ -982,11 +1149,98 @@ export function renderEmployeesView(container, navigateTo) {
       const res = await syncEmployeesFromOdoo();
       isSyncingOdoo = false;
       if (res.success) {
-        statusBanner = { type: 'success', msg: `Zsynchronizowano pracowników z Odoo: zaktualizowano ${res.updatedCount}, dodano ${res.addedCount}. Łącznie w systemie: ${res.total}.` };
+        statusBanner = { type: 'success', msg: `Zsynchronizowano z Odoo 19: pracownicy (zaktualizowano ${res.updatedCount}, dodano ${res.addedCount}), pobrano ${res.leavesCount} wniosków urlopowych.` };
       } else {
         statusBanner = { type: 'error', msg: `Błąd synchronizacji z Odoo: ${res.error}` };
       }
       renderUI();
+    });
+
+    // Click on employee card to open Employee Detail Modal
+    container.querySelectorAll('.card-click-employee').forEach(card => {
+      card.addEventListener('click', () => {
+        const empId = card.getAttribute('data-id');
+        selectedEmployeeDetail = getEmployees().find(e => e.id === empId);
+        if (selectedEmployeeDetail) {
+          renderUI();
+        }
+      });
+    });
+
+    container.querySelectorAll('.btn-card-details').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const empId = btn.getAttribute('data-id');
+        selectedEmployeeDetail = getEmployees().find(e => e.id === empId);
+        if (selectedEmployeeDetail) {
+          renderUI();
+        }
+      });
+    });
+
+    // Close Detail Modal
+    container.querySelector('#close-detail-modal-btn')?.addEventListener('click', () => {
+      selectedEmployeeDetail = null;
+      renderUI();
+    });
+    container.querySelector('#btn-close-detail')?.addEventListener('click', () => {
+      selectedEmployeeDetail = null;
+      renderUI();
+    });
+
+    // Save Quick Note inside Detail Modal
+    container.querySelector('#btn-save-quick-note')?.addEventListener('click', () => {
+      if (selectedEmployeeDetail) {
+        const noteInput = container.querySelector('#input-quick-note');
+        if (noteInput) {
+          updateEmployeeQuickNotes(selectedEmployeeDetail.id, noteInput.value, currentOp ? currentOp.name : 'Operator');
+          statusBanner = { type: 'success', msg: `Zapisano notatkę główną dla ${selectedEmployeeDetail.name}.` };
+          renderUI();
+        }
+      }
+    });
+
+    // Add Comment inside Detail Modal
+    const commentForm = container.querySelector('#form-add-comment');
+    if (commentForm && selectedEmployeeDetail) {
+      commentForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const commentInput = container.querySelector('#input-new-comment-text');
+        if (commentInput && commentInput.value.trim()) {
+          addEmployeeComment(selectedEmployeeDetail.id, commentInput.value.trim(), currentOp ? currentOp.name : 'Operator');
+          commentInput.value = '';
+          statusBanner = { type: 'success', msg: `Dodano komentarz do profilu ${selectedEmployeeDetail.name}.` };
+          renderUI();
+        }
+      });
+    }
+
+    // Edit from Detail Modal
+    container.querySelector('#btn-edit-from-detail')?.addEventListener('click', () => {
+      if (selectedEmployeeDetail) {
+        editingEmployee = selectedEmployeeDetail;
+        selectedEmployeeDetail = null;
+        showNewEmployeeModal = true;
+        renderUI();
+      }
+    });
+
+    // Send Medical Exam Alert to Odoo from Detail Modal
+    container.querySelectorAll('.btn-send-med-odoo').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const emp = getEmployees().find(e => e.id === id);
+        if (emp) {
+          btn.innerHTML = '<span class="material-symbols-outlined text-[14px] animate-spin">sync</span>';
+          const res = await sendMedicalExamAlertToOdoo(emp);
+          if (res.success) {
+            statusBanner = { type: 'success', msg: `Wysłano alert o badaniach ${emp.name} do Odoo (#Wszystko)!` };
+          } else {
+            statusBanner = { type: 'error', msg: `Błąd wysyłania do Odoo: ${res.error}` };
+          }
+          renderUI();
+        }
+      });
     });
 
     // Modals triggers
@@ -1038,18 +1292,6 @@ export function renderEmployeesView(container, navigateTo) {
         editingEmployee = getEmployees().find(e => e.id === empId);
         if (editingEmployee) {
           showNewEmployeeModal = true;
-          renderUI();
-        }
-      });
-    });
-
-    // Delete Employee
-    container.querySelectorAll('.btn-del-emp').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-id');
-        if (confirm('Czy na pewno chcesz usunąć tego pracownika z listy?')) {
-          deleteEmployee(id, currentOp ? currentOp.name : 'Operator');
-          statusBanner = { type: 'success', msg: 'Usunięto pracownika.' };
           renderUI();
         }
       });
@@ -1167,11 +1409,11 @@ export function renderEmployeesView(container, navigateTo) {
         e.preventDefault();
         const name = container.querySelector('#f-emp-name').value.trim();
         const position = container.querySelector('#f-emp-pos').value.trim();
-        const department = container.querySelector('#f-emp-dept').value.trim();
+        const machine = container.querySelector('#f-emp-machine').value.trim();
         const role = container.querySelector('#f-emp-role').value;
         const email = container.querySelector('#f-emp-email').value.trim();
         const phone = container.querySelector('#f-emp-phone').value.trim();
-        const limit = parseInt(container.querySelector('#f-emp-limit').value, 10) || 26;
+        const limit = parseInt(container.querySelector('#f-emp-limit').value, 10) || 20;
         const overdue = parseInt(container.querySelector('#f-emp-overdue').value, 10) || 0;
 
         const medicalExamDate = container.querySelector('#f-emp-med-date').value;
@@ -1182,10 +1424,10 @@ export function renderEmployeesView(container, navigateTo) {
 
         const forkliftLicense = container.querySelector('#f-emp-forklift').value.trim();
         const craneLicense = container.querySelector('#f-emp-crane').value.trim();
-        const sepLicense = container.querySelector('#f-emp-sep').value.trim();
         const clothesSize = container.querySelector('#f-emp-clothes').value.trim();
         const shoesSize = container.querySelector('#f-emp-shoes').value.trim();
         const iceContact = container.querySelector('#f-emp-ice').value.trim();
+        const notes = container.querySelector('#f-emp-notes').value.trim();
 
         saveEmployee({
           id: editingEmployee ? editingEmployee.id : null,
@@ -1194,7 +1436,7 @@ export function renderEmployeesView(container, navigateTo) {
           shortName: name.split(' ')[0],
           role,
           position,
-          department,
+          assignedMachine: machine,
           email: email || `${name.toLowerCase().replace(/\s+/g, '')}@bluemake.eu`,
           phone,
           annualLeaveLimit: limit,
@@ -1206,10 +1448,10 @@ export function renderEmployeesView(container, navigateTo) {
           safetyTrainingValidUntil,
           forkliftLicense,
           craneLicense,
-          sepLicense,
           clothesSize,
           shoesSize,
           iceContact,
+          notes,
           avatar: editingEmployee ? editingEmployee.avatar : (role === 'ADMIN' ? 'admin_panel_settings' : 'person')
         }, currentOp ? currentOp.name : 'Operator');
 
