@@ -39,6 +39,11 @@ export function renderDashboardView(container, navigateTo) {
           <span class="material-symbols-outlined text-[16px]">description</span>
           <span>DOKUMENT WZ</span>
         </button>
+        <!-- Pracownicy i Urlopy Button -->
+        <button id="hdr-employees" title="Ewidencja Pracowników, Urlopy i Zgłoszenia" class="hidden sm:flex items-center gap-1 bg-purple-700 hover:bg-purple-800 text-white font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
+          <span class="material-symbols-outlined text-[16px]">badge</span>
+          <span>PRACOWNICY</span>
+        </button>
         ${isOpAdmin ? `
           <button id="hdr-orders" title="Import i Wysyłka Zamówień" class="hidden sm:flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
             <span class="material-symbols-outlined text-[16px]">receipt_long</span>
@@ -81,6 +86,12 @@ export function renderDashboardView(container, navigateTo) {
         <button id="btn-open-wz" class="h-touch-target-min bg-amber-600 hover:bg-amber-700 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Kreator Dokumentów WZ (Wydanie Magazynowe)">
           <span class="material-symbols-outlined text-[18px]">description</span>
           DOKUMENT WZ
+        </button>
+
+        <!-- Employees & Leave Button -->
+        <button id="btn-open-employees" class="h-touch-target-min bg-purple-700 hover:bg-purple-800 text-white font-label-caps px-3 rounded flex items-center justify-center gap-1 shadow-md uppercase font-bold transition-transform active:scale-95 flex-shrink-0 text-xs" title="Ewidencja Pracowników, Urlopy i Zgłoszenia">
+          <span class="material-symbols-outlined text-[18px]">badge</span>
+          PRACOWNICY
         </button>
         
         ${isOpAdmin ? `
@@ -447,6 +458,9 @@ export function renderDashboardView(container, navigateTo) {
 
   container.querySelector('#btn-open-wz')?.addEventListener('click', () => navigateTo('wz'));
   container.querySelector('#hdr-wz')?.addEventListener('click', () => navigateTo('wz'));
+
+  container.querySelector('#btn-open-employees')?.addEventListener('click', () => navigateTo('employees'));
+  container.querySelector('#hdr-employees')?.addEventListener('click', () => navigateTo('employees'));
 
   container.querySelector('#btn-open-orders')?.addEventListener('click', () => navigateTo('orders'));
   container.querySelector('#hdr-orders')?.addEventListener('click', () => navigateTo('orders'));

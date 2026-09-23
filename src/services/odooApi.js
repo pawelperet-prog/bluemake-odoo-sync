@@ -414,6 +414,7 @@ export async function createNewProduct({ name, sku, initialQuantity = 0, categor
   try {
     const isRaw = categoryId === 4;
     const catId = categoryId || 4;
+    const uomId = (uomName === 'm' || (isRaw && uomName !== 'szt')) ? 8 : (uomName === 'kg' ? 15 : (uomName === 'mm' ? 6 : 1));
 
     const pId = await callOdooRpc('product.product', 'create', [{
       name: name,
@@ -422,7 +423,8 @@ export async function createNewProduct({ name, sku, initialQuantity = 0, categor
       is_storable: true,
       sale_ok: true,
       purchase_ok: isRaw,
-      categ_id: catId
+      categ_id: catId,
+      uom_id: uomId
     }]);
 
     if (!pId) throw new Error('Nie otrzymano ID nowego produktu z Odoo.');

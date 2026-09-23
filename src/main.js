@@ -7,6 +7,7 @@ import { renderValuationView } from './views/ValuationView.js';
 import { renderOrderImportView } from './views/OrderImportView.js';
 import { renderSoftJawsView } from './views/SoftJawsView.js';
 import { renderWzGeneratorView } from './views/WzGeneratorView.js';
+import { renderEmployeesView } from './views/EmployeesView.js';
 import { renderLoginView } from './views/LoginView.js';
 import { renderSiteGateView } from './views/SiteGateView.js';
 import { isSiteUnlocked, isUserLoggedIn, isAdmin, getCurrentOperator } from './services/authService.js';
@@ -68,6 +69,9 @@ function navigateTo(route, params = null) {
       break;
     case 'wz':
       renderWzGeneratorView(app, navigateTo);
+      break;
+    case 'employees':
+      renderEmployeesView(app, navigateTo);
       break;
     default:
       renderDashboardView(app, navigateTo);
