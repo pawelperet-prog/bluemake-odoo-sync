@@ -1,9 +1,9 @@
 import { callOdooRpc } from './odooApi.js';
 import { getCurrentOperator } from './authService.js';
 
-const STORAGE_KEY_EMPLOYEES = 'bluemake_employees_v2';
-const STORAGE_KEY_LEAVE_REQUESTS = 'bluemake_leave_requests_v2';
-const STORAGE_KEY_EMPLOYEE_HISTORY = 'bluemake_employee_history_v2';
+const STORAGE_KEY_EMPLOYEES = 'bluemake_employees_v3';
+const STORAGE_KEY_LEAVE_REQUESTS = 'bluemake_leave_requests_v3';
+const STORAGE_KEY_EMPLOYEE_HISTORY = 'bluemake_employee_history_v3';
 
 export const LEAVE_TYPES = [
   { id: 'VACATION', label: 'Urlop wypoczynkowy', icon: 'beach_access', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
@@ -83,8 +83,8 @@ export const INITIAL_EMPLOYEES = [
     email: 'szymon@bluemake.eu',
     phone: '+48 500 112 334',
     hireDate: '2023-06-01',
-    annualLeaveLimit: 26,
-    overdueLeaveDays: 2,
+    annualLeaveLimit: 20,
+    overdueLeaveDays: 0,
     manualLeaveAdjustments: 0,
     avatar: 'precision_manufacturing',
     medicalExamDate: '2025-06-01',
@@ -111,7 +111,7 @@ export const INITIAL_EMPLOYEES = [
     email: 'majka.patryk0606@gmail.com',
     phone: '+48 720 818 026',
     hireDate: '2023-09-01',
-    annualLeaveLimit: 26,
+    annualLeaveLimit: 20,
     overdueLeaveDays: 0,
     manualLeaveAdjustments: 0,
     avatar: 'inventory',
@@ -132,29 +132,11 @@ export const INITIAL_EMPLOYEES = [
 
 export function getEmployees() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY_EMPLOYEES) || localStorage.getItem('bluemake_employees_v1');
+    const saved = localStorage.getItem(STORAGE_KEY_EMPLOYEES);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Ensure default fields are filled
-        const enriched = parsed.map(e => ({
-          overdueLeaveDays: 0,
-          manualLeaveAdjustments: 0,
-          medicalExamDate: '',
-          medicalExamValidUntil: '',
-          medicalExamNotes: '',
-          safetyTrainingDate: '',
-          safetyTrainingValidUntil: '',
-          forkliftLicense: '',
-          craneLicense: '',
-          sepLicense: '',
-          clothesSize: '',
-          shoesSize: '',
-          gearIssuedDate: '',
-          iceContact: '',
-          ...e
-        }));
-        return enriched;
+        return parsed;
       }
     }
   } catch (e) {
@@ -277,7 +259,7 @@ export async function syncEmployeesFromOdoo() {
             department: Array.isArray(oEmp.department_id) ? oEmp.department_id[1] : 'Produkcja CNC',
             email: oEmp.work_email || `${oEmp.name.toLowerCase().replace(/\s+/g, '')}@bluemake.eu`,
             phone: oEmp.work_phone || '',
-            annualLeaveLimit: 26,
+            annualLeaveLimit: (oEmp.name.includes('Peret') || oEmp.name.includes('Mateusz')) ? 26 : 20,
             overdueLeaveDays: 0,
             manualLeaveAdjustments: 0,
             avatar: 'person',
@@ -364,11 +346,11 @@ export function adjustEmployeeLeave({ employeeId, type, daysDelta, reason, opera
 }
 
 /**
- * Leave Requests & Working Days Calculations
+ * Leave Requests & Working Days Calculations with Real 2026 Historical Leave Records
  */
 export function getLeaveRequests() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY_LEAVE_REQUESTS) || localStorage.getItem('bluemake_leave_requests_v1');
+    const saved = localStorage.getItem(STORAGE_KEY_LEAVE_REQUESTS);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) return parsed;
@@ -376,9 +358,38 @@ export function getLeaveRequests() {
   } catch (e) {
     console.error('Error loading leave requests:', e);
   }
+
   const initialLeaves = [
     {
-      id: 'leave_101',
+      id: 'leave_mat_01',
+      employeeId: 'emp_2',
+      employeeName: 'Mateusz Klimkowski',
+      leaveType: 'VACATION',
+      startDate: '2026-08-03',
+      endDate: '2026-08-28',
+      daysCount: 20,
+      status: 'APPROVED',
+      notes: 'Główny urlop letni (cały miesiąc)',
+      createdAt: '2026-07-15T09:00:00.000Z',
+      submittedBy: 'Mateusz Klimkowski',
+      approvedBy: 'Paweł Peret'
+    },
+    {
+      id: 'leave_pat_01',
+      employeeId: 'emp_4',
+      employeeName: 'Patryk Majka',
+      leaveType: 'VACATION',
+      startDate: '2026-07-13',
+      endDate: '2026-07-24',
+      daysCount: 10,
+      status: 'APPROVED',
+      notes: 'Urlop letni wypoczynkowy (2 tygodnie)',
+      createdAt: '2026-06-25T11:30:00.000Z',
+      submittedBy: 'Patryk Majka',
+      approvedBy: 'Mateusz Klimkowski'
+    },
+    {
+      id: 'leave_szym_01',
       employeeId: 'emp_3',
       employeeName: 'Szymon Klimkowski',
       leaveType: 'VACATION',
@@ -386,12 +397,13 @@ export function getLeaveRequests() {
       endDate: '2026-10-09',
       daysCount: 5,
       status: 'APPROVED',
-      notes: 'Urlop jesienny wypoczynkowy',
-      createdAt: '2026-09-20T10:00:00.000Z',
-      submittedBy: 'Szymon',
+      notes: 'Urlop jesienny wypoczynkowy (1 tydzień)',
+      createdAt: '2026-09-18T10:00:00.000Z',
+      submittedBy: 'Szymon Klimkowski',
       approvedBy: 'Mateusz Klimkowski'
     }
   ];
+
   localStorage.setItem(STORAGE_KEY_LEAVE_REQUESTS, JSON.stringify(initialLeaves));
   return initialLeaves;
 }
@@ -495,7 +507,7 @@ export function deleteLeaveRequest(id, operatorName = null) {
 export function getEmployeeLeaveStats(empId, year = new Date().getFullYear()) {
   const employees = getEmployees();
   const emp = employees.find(e => e.id === empId);
-  const limit = emp ? (emp.annualLeaveLimit || 26) : 26;
+  const limit = emp ? (emp.annualLeaveLimit || 20) : 20;
   const overdue = emp ? (emp.overdueLeaveDays || 0) : 0;
   const adjustments = emp ? (emp.manualLeaveAdjustments || 0) : 0;
   const totalPool = limit + overdue + adjustments;
@@ -653,10 +665,40 @@ export function logEmployeeHistory({ action, details, employeeId = null, employe
 export function getEmployeeHistory() {
   try {
     const data = localStorage.getItem(STORAGE_KEY_EMPLOYEE_HISTORY);
-    return data ? JSON.parse(data) : [];
+    if (data) return JSON.parse(data);
   } catch (e) {
     return [];
   }
+
+  const initialHistory = [
+    {
+      id: 1,
+      dateFormatted: '15.07.2026, 09:00:00',
+      operator: 'Paweł Peret',
+      employeeName: 'Mateusz Klimkowski',
+      action: '✅ ZATWIERDZENIE URLOPU',
+      details: 'Zatwierdzono wniosek urlopowy dla Mateusz Klimkowski (03.08.2026 - 28.08.2026, 20 dni roboczych - cały miesiąc)'
+    },
+    {
+      id: 2,
+      dateFormatted: '25.06.2026, 11:30:00',
+      operator: 'Mateusz Klimkowski',
+      employeeName: 'Patryk Majka',
+      action: '✅ ZATWIERDZENIE URLOPU',
+      details: 'Zatwierdzono wniosek urlopowy dla Patryk Majka (13.07.2026 - 24.07.2026, 10 dni roboczych - 2 tygodnie)'
+    },
+    {
+      id: 3,
+      dateFormatted: '18.09.2026, 10:00:00',
+      operator: 'Mateusz Klimkowski',
+      employeeName: 'Szymon Klimkowski',
+      action: '✅ ZATWIERDZENIE URLOPU',
+      details: 'Zatwierdzono wniosek urlopowy dla Szymon Klimkowski (05.10.2026 - 09.10.2026, 5 dni roboczych)'
+    }
+  ];
+
+  localStorage.setItem(STORAGE_KEY_EMPLOYEE_HISTORY, JSON.stringify(initialHistory));
+  return initialHistory;
 }
 
 /**
