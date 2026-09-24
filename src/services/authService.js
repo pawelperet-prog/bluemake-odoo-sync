@@ -85,9 +85,12 @@ export function changeUserPin(userId, newPin) {
     saveUsers(users);
 
     logAuditAction({
+      category: 'AUTH',
       action: '🔑 ZMIANA PINU',
       details: `Użytkownik ${user.name} zmienił swój kod PIN na nowy`,
-      operator: user.name
+      operator: user.name,
+      operatorRole: user.role,
+      status: 'SUCCESS'
     });
 
     const current = getCurrentOperator();
@@ -131,9 +134,12 @@ export function setLoggedIn(operator) {
   saveCurrentOperator(freshUser);
   resetFailedAttempts(freshUser.id);
   logAuditAction({
-    action: 'LOGOWANIE',
+    category: 'AUTH',
+    action: '🟢 LOGOWANIE',
     details: `Zalogowano operatora ${freshUser.name} (${freshUser.roleLabel})`,
-    operator: freshUser.name
+    operator: freshUser.name,
+    operatorRole: freshUser.role,
+    status: 'SUCCESS'
   });
 }
 
@@ -157,9 +163,12 @@ export function logoutOperator() {
   const op = getCurrentOperator();
   if (op) {
     logAuditAction({
-      action: 'WYLOGOWANIE',
+      category: 'AUTH',
+      action: '🔴 WYLOGOWANIE',
       details: `Wylogowano operatora ${op.name}`,
-      operator: op.name
+      operator: op.name,
+      operatorRole: op.role,
+      status: 'INFO'
     });
   }
   localStorage.removeItem(LOCAL_STORAGE_LOGGED_IN_KEY);
@@ -236,11 +245,13 @@ export function recordFailedPinAttempt(user) {
 
   // Log to Audit History
   logAuditAction({
+    category: 'AUTH',
     action: lockDurationMs > 0 ? '🚨 BLOKADA ANTYWŁAMANIOWA' : '⚠️ BŁĘDNY PIN',
     details: lockDurationMs > 0 
       ? `Zablokowano konto ${user.name} na ${lockDurationMs / 1000}s z powodu ${count} błędnych prób logowania!`
       : `Nieudana próba logowania do konta: ${user.name} (Próba ${count}/3)`,
-    operator: `Nieznany (Próba na konto: ${user.name})`
+    operator: `Nieznany (Próba na: ${user.name})`,
+    status: lockDurationMs > 0 ? 'ERROR' : 'WARNING'
   });
 
   // Post alert into Odoo Discuss channel (#Wszystko) if 3+ attempts
@@ -284,24 +295,46 @@ async function sendOdooSecurityAlert(targetUserName, attemptsCount, lockDuration
 }
 
 /**
- * Audit Logging - History of all actions (Who did what)
+ * Universal Audit Logging - Complete History of all System Actions
  */
-export function logAuditAction({ action, details, operator = null, sku = null }) {
+export function logAuditAction({ 
+  action, 
+  details, 
+  operator = null, 
+  operatorRole = null, 
+  sku = null, 
+  category = 'SYSTEM', 
+  status = 'SUCCESS', 
+  error = null, 
+  metadata = null 
+}) {
   try {
-    const op = operator || getCurrentOperator()?.name || 'Operator';
+    const curOp = getCurrentOperator();
+    const opName = operator || curOp?.name || 'Operator';
+    const opRole = operatorRole || curOp?.role || (opName === 'Paweł' || opName === 'Mateusz' ? 'ADMIN' : 'OPERATOR');
     const logs = getAuditLogs();
+    
+    const now = new Date();
     const entry = {
-      id: Date.now(),
-      timestamp: new Date().toISOString(),
-      dateFormatted: new Date().toLocaleString('pl-PL'),
-      operator: op,
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      timestamp: now.toISOString(),
+      dateFormatted: now.toLocaleString('pl-PL'),
+      timeShort: now.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      dateOnly: now.toISOString().split('T')[0],
+      operator: opName,
+      operatorRole: opRole,
+      category: category || 'SYSTEM', // 'STOCK', 'EMPLOYEE', 'WZ', 'JAW', 'ORDER', 'AUTH', 'CONFIG', 'SYSTEM'
       action: action || 'OPERACJA',
       details: details || '',
-      sku: sku || ''
+      sku: sku || '',
+      status: status || 'SUCCESS', // 'SUCCESS', 'SYNCHRONIZED', 'PENDING', 'ERROR', 'WARNING', 'INFO'
+      error: error || null,
+      metadata: metadata || null
     };
+    
     logs.unshift(entry);
-    // Keep last 500 actions
-    localStorage.setItem(LOCAL_STORAGE_AUDIT_LOGS_KEY, JSON.stringify(logs.slice(0, 500)));
+    // Keep last 1000 actions in persistent storage
+    localStorage.setItem(LOCAL_STORAGE_AUDIT_LOGS_KEY, JSON.stringify(logs.slice(0, 1000)));
     return entry;
   } catch (e) {
     console.warn('Could not save audit log:', e);
@@ -311,8 +344,26 @@ export function logAuditAction({ action, details, operator = null, sku = null })
 export function getAuditLogs() {
   try {
     const data = localStorage.getItem(LOCAL_STORAGE_AUDIT_LOGS_KEY) || localStorage.getItem('bluemake_audit_logs_v3');
-    return data ? JSON.parse(data) : [];
+    if (data) {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) {
+        // Scrub out fake / mock entries (e.g. S355-FI20 mock records)
+        return parsed.filter(log => {
+          if (!log) return false;
+          if (log.sku === 'S355-FI20' && (log.details?.includes('14.0m') || log.action?.includes('Ucięcie') || log.title?.includes('Ucięcie'))) return false;
+          if (log.sku === 'S235-PL10' && (log.details?.includes('150 szt.') || log.action?.includes('Przyjęcie') || log.title?.includes('Przyjęcie'))) return false;
+          return true;
+        });
+      }
+    }
+    return [];
   } catch (e) {
     return [];
   }
+}
+
+export function clearAuditLogs() {
+  localStorage.setItem(LOCAL_STORAGE_AUDIT_LOGS_KEY, JSON.stringify([]));
+  localStorage.removeItem('odoo_sync_history');
+  localStorage.removeItem('bluemake_audit_logs_v3');
 }

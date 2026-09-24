@@ -1,3 +1,5 @@
+import { logAuditAction, getCurrentOperator } from './authService.js';
+
 /**
  * Service for Managing Cut Blanks / BOM Buffers (Pocięte przygotówki pod detal)
  * Persistence via LocalStorage
@@ -60,7 +62,7 @@ export function getCutBufferById(id) {
   return list.find(b => b.id.toUpperCase() === searchId) || null;
 }
 
-export function saveCutBufferRecord(record) {
+export function saveCutBufferRecord(record, operatorName = null) {
   if (!record || !record.productSku) throw new Error('Brak numeru SKU detalu');
 
   const list = getCutBuffers();
@@ -81,12 +83,13 @@ export function saveCutBufferRecord(record) {
     cutLengthMm: Number(record.cutLengthMm) || 140,
     quantity: Number(record.quantity) || 1,
     location: record.location || 'Paleta buforowa',
-    operator: record.operator || 'Operator',
+    operator: record.operator || operatorName || getCurrentOperator()?.name || 'Operator',
     dateFormatted: new Date().toLocaleDateString('pl-PL'),
     updatedAt: now
   };
 
   const existingIndex = list.findIndex(b => b.id.toUpperCase() === cleanRecord.id.toUpperCase() || b.productSku.toUpperCase() === sku);
+  const isNew = existingIndex < 0;
 
   if (existingIndex >= 0) {
     list[existingIndex] = {
@@ -99,14 +102,35 @@ export function saveCutBufferRecord(record) {
   }
 
   saveCutBuffersList(list);
+
+  logAuditAction({
+    category: 'STOCK',
+    action: isNew ? '✂️ UCIĘCIE PRZYGOTÓWKI (BOM)' : '✂️ AKTUALIZACJA BUFORA BOM',
+    details: `Ucięto ${cleanRecord.quantity} szt. ${cleanRecord.dimensions} dla ${cleanRecord.productSku} (Lokalizacja: ${cleanRecord.location})`,
+    sku: cleanRecord.productSku,
+    operator: cleanRecord.operator,
+    status: 'SUCCESS'
+  });
+
   return cleanRecord;
 }
 
-export function deleteCutBufferRecord(idOrSku) {
+export function deleteCutBufferRecord(idOrSku, operatorName = null) {
   if (!idOrSku) return false;
   const list = getCutBuffers();
   const search = String(idOrSku).trim().toUpperCase();
+  const found = list.find(b => b.id.toUpperCase() === search || b.productSku.toUpperCase() === search);
   const filtered = list.filter(b => b.id.toUpperCase() !== search && b.productSku.toUpperCase() !== search);
   saveCutBuffersList(filtered);
+
+  logAuditAction({
+    category: 'STOCK',
+    action: '🗑️ USUNIĘCIE / ZUŻYCIE BUFORA BOM',
+    details: `Oznaczono bufor ${found?.id || search} (${found?.quantity || 0} szt. dla ${found?.productSku || search}) jako zużyty`,
+    sku: found?.productSku,
+    operator: operatorName || getCurrentOperator()?.name,
+    status: 'INFO'
+  });
+
   return true;
 }

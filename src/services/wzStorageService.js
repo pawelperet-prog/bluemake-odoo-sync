@@ -1,6 +1,4 @@
-/**
- * WZ (Wydanie z Magazynu) Storage & Monthly Numbering Service
- */
+import { logAuditAction, getCurrentOperator } from './authService.js';
 
 const STORAGE_KEY_WZ_HISTORY = 'bluemake_wz_history_v2';
 const STORAGE_KEY_WZ_COUNTERS = 'bluemake_wz_monthly_counters_v2';
@@ -49,12 +47,22 @@ export function getSavedCustomers() {
 export function saveCustomer(customer) {
   const list = getSavedCustomers();
   const existingIdx = list.findIndex(c => c.id === customer.id || (customer.nip && c.nip === customer.nip));
+  const isNew = existingIdx < 0;
   if (existingIdx >= 0) {
     list[existingIdx] = { ...list[existingIdx], ...customer };
   } else {
     list.unshift({ ...customer, id: customer.id || `cust_${Date.now()}` });
   }
   localStorage.setItem(STORAGE_KEY_WZ_CUSTOMERS, JSON.stringify(list));
+
+  logAuditAction({
+    category: 'WZ',
+    action: isNew ? '🏢 NOWY KONTRAHENT WZ' : '🏢 EDYCJA KONTRAHENTA WZ',
+    details: `Zapisano dane kontrahenta: "${customer.name}" (NIP: ${customer.nip || 'Brak'})`,
+    operator: getCurrentOperator()?.name,
+    status: 'SUCCESS'
+  });
+
   return list;
 }
 
@@ -68,9 +76,10 @@ export function getWzHistory() {
   }
 }
 
-export function saveWzDocument(wzDoc) {
+export function saveWzDocument(wzDoc, operatorName = null) {
   const history = getWzHistory();
   const idx = history.findIndex(w => w.id === wzDoc.id);
+  const isNew = idx < 0;
   const docWithMeta = {
     ...wzDoc,
     savedAt: new Date().toISOString(),
@@ -83,13 +92,34 @@ export function saveWzDocument(wzDoc) {
     history.unshift(docWithMeta);
   }
   localStorage.setItem(STORAGE_KEY_WZ_HISTORY, JSON.stringify(history));
+
+  const itemsCount = Array.isArray(wzDoc.items) ? wzDoc.items.length : 0;
+  logAuditAction({
+    category: 'WZ',
+    action: isNew ? '📄 WYSTAWIENIE DOKUMENTU WZ' : '📄 AKTUALIZACJA DOKUMENTU WZ',
+    details: `Dokument ${docWithMeta.formattedNumber} dla "${wzDoc.customer?.name || 'Klient'}" (${itemsCount} pozycji towarowych). Magazynier: ${wzDoc.operatorName || 'Operator'}`,
+    operator: operatorName || wzDoc.operatorName || getCurrentOperator()?.name,
+    status: 'SUCCESS'
+  });
+
   return history;
 }
 
-export function deleteWzDocument(wzId) {
-  const history = getWzHistory().filter(w => w.id !== wzId);
-  localStorage.setItem(STORAGE_KEY_WZ_HISTORY, JSON.stringify(history));
-  return history;
+export function deleteWzDocument(wzId, operatorName = null) {
+  const history = getWzHistory();
+  const doc = history.find(w => w.id === wzId);
+  const updated = history.filter(w => w.id !== wzId);
+  localStorage.setItem(STORAGE_KEY_WZ_HISTORY, JSON.stringify(updated));
+
+  logAuditAction({
+    category: 'WZ',
+    action: '🗑️ USUNIĘCIE DOKUMENTU WZ',
+    details: `Usunięto dokument WZ ${doc?.formattedNumber || wzId} (Kontrahent: "${doc?.customer?.name || 'Brak'}")`,
+    operator: operatorName || getCurrentOperator()?.name,
+    status: 'WARNING'
+  });
+
+  return updated;
 }
 
 /**

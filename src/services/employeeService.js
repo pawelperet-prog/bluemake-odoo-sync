@@ -1,5 +1,5 @@
 import { callOdooRpc } from './odooApi.js';
-import { getCurrentOperator } from './authService.js';
+import { getCurrentOperator, logAuditAction } from './authService.js';
 
 const STORAGE_KEY_EMPLOYEES = 'bluemake_employees_v5';
 const STORAGE_KEY_LEAVE_REQUESTS = 'bluemake_leave_requests_v5';
@@ -982,6 +982,15 @@ export function logEmployeeHistory({ action, details, employeeId = null, employe
     };
     logs.unshift(entry);
     localStorage.setItem(STORAGE_KEY_EMPLOYEE_HISTORY, JSON.stringify(logs.slice(0, 500)));
+
+    logAuditAction({
+      category: 'EMPLOYEE',
+      action: action || '🏖️ KADRY I URLOPY',
+      details: `${employeeName ? `[${employeeName}] ` : ''}${details || ''}`,
+      operator: op,
+      status: 'SUCCESS'
+    });
+
     return entry;
   } catch (e) {
     console.warn('Could not save employee history log:', e);
@@ -995,52 +1004,7 @@ export function getEmployeeHistory() {
   } catch (e) {
     return [];
   }
-
-  const initialHistory = [
-    {
-      id: 1,
-      dateFormatted: '01.07.2026, 06:00:00',
-      operator: 'Paweł Peret',
-      employeeName: 'Mateusz Klimkowski',
-      action: '✅ ZATWIERDZENIE URLOPU',
-      details: 'Zatwierdzono wniosek urlopowy z Odoo (01.07.2026 - 31.07.2026, 23 dni robocze - cały lipiec)'
-    },
-    {
-      id: 2,
-      dateFormatted: '27.07.2026, 06:00:00',
-      operator: 'Zarząd Bluemake',
-      employeeName: 'Paweł Peret',
-      action: '✅ ZATWIERDZENIE URLOPU',
-      details: 'Zatwierdzono wniosek urlopowy z Odoo (27.07.2026 - 31.07.2026, 5 dni roboczych)'
-    },
-    {
-      id: 3,
-      dateFormatted: '20.01.2026, 07:00:00',
-      operator: 'Zarząd Bluemake',
-      employeeName: 'Paweł Peret',
-      action: '✅ ZATWIERDZENIE URLOPU',
-      details: 'Zatwierdzono wniosek urlopowy z Odoo (20.01.2026, 1 dzień)'
-    },
-    {
-      id: 4,
-      dateFormatted: '05.01.2026, 07:00:00',
-      operator: 'Zarząd Bluemake',
-      employeeName: 'Paweł Peret',
-      action: '✅ ZATWIERDZENIE URLOPU',
-      details: 'Zatwierdzono wniosek urlopowy z Odoo (05.01.2026, 1 dzień)'
-    },
-    {
-      id: 5,
-      dateFormatted: '02.01.2026, 07:00:00',
-      operator: 'Zarząd Bluemake',
-      employeeName: 'Paweł Peret',
-      action: '✅ ZATWIERDZENIE URLOPU',
-      details: 'Zatwierdzono wniosek urlopowy z Odoo (02.01.2026, 1 dzień)'
-    }
-  ];
-
-  localStorage.setItem(STORAGE_KEY_EMPLOYEE_HISTORY, JSON.stringify(initialHistory));
-  return initialHistory;
+  return [];
 }
 
 /**

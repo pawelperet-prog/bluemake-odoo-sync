@@ -1,3 +1,5 @@
+import { logAuditAction, getCurrentOperator } from './authService.js';
+
 /**
  * Service for Managing Soft Jaws (Szczęki Miękkie) Database
  * Persistence via LocalStorage + Odoo metadata integration
@@ -73,7 +75,7 @@ export function getJawsByProductSku(sku) {
   });
 }
 
-export function saveJawsRecord(record) {
+export function saveJawsRecord(record, operatorName = null) {
   if (!record || !record.id) throw new Error('Brak identyfikatora szczęk (np. SZ-00329)');
   
   const list = getSoftJaws();
@@ -81,6 +83,7 @@ export function saveJawsRecord(record) {
   const now = new Date().toISOString();
 
   const existingIndex = list.findIndex(j => j.id.toUpperCase() === normalizedId);
+  const isNew = existingIndex < 0;
 
   const cleanRecord = {
     ...record,
@@ -109,14 +112,35 @@ export function saveJawsRecord(record) {
   }
 
   saveSoftJawsList(list);
+
+  logAuditAction({
+    category: 'JAW',
+    action: isNew ? '⚙️ NOWA SZCZĘKA CNC' : '⚙️ EDYCJA SZCZĘKI CNC',
+    details: `Zapisano szczękę ${cleanRecord.id} (Detal SKU: ${cleanRecord.productSku || 'Brak'}, ${cleanRecord.operation}, Lokacja: ${cleanRecord.location}, Status: ${cleanRecord.status})`,
+    sku: cleanRecord.productSku,
+    operator: operatorName || getCurrentOperator()?.name,
+    status: 'SUCCESS'
+  });
+
   return cleanRecord;
 }
 
-export function deleteJawsRecord(id) {
+export function deleteJawsRecord(id, operatorName = null) {
   if (!id) return false;
   const list = getSoftJaws();
   const normalizedId = String(id).trim().toUpperCase();
+  const found = list.find(j => j.id.toUpperCase() === normalizedId);
   const filtered = list.filter(j => j.id.toUpperCase() !== normalizedId);
   saveSoftJawsList(filtered);
+
+  logAuditAction({
+    category: 'JAW',
+    action: '🗑️ USUNIĘCIE SZCZĘKI CNC',
+    details: `Usunięto szczękę miękką ${normalizedId} (Detal: "${found?.productName || found?.productSku || 'Brak'}")`,
+    sku: found?.productSku,
+    operator: operatorName || getCurrentOperator()?.name,
+    status: 'WARNING'
+  });
+
   return true;
 }

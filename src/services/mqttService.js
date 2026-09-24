@@ -1,3 +1,5 @@
+import { logAuditAction, getCurrentOperator } from './authService.js';
+
 /**
  * MQTT Cloud Printing Service for Zebra Link-OS Printers
  * Compatible with HiveMQ Cloud, custom Mosquitto / EMQX brokers, and Cloudflare
@@ -35,6 +37,13 @@ export function getMqttConfig() {
 
 export function saveMqttConfig(cfg) {
   localStorage.setItem(LOCAL_STORAGE_MQTT_KEY, JSON.stringify(cfg));
+  logAuditAction({
+    category: 'CONFIG',
+    action: '⚙️ ZMIANA USTAWIEŃ MQTT / ZEBRA',
+    details: `Zapisano konfigurację drukarki Zebra (Host: ${cfg.host}, Port: ${cfg.port}, Włączony: ${cfg.enabled ? 'TAK' : 'NIE'})`,
+    operator: getCurrentOperator()?.name,
+    status: 'SUCCESS'
+  });
 }
 
 /**

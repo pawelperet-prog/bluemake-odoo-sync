@@ -1,5 +1,5 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
-import { getCurrentOperator } from './authService.js';
+import { getCurrentOperator, logAuditAction } from './authService.js';
 
 // Odoo Config with LocalStorage persistence support
 const DEFAULT_CONFIG = {
@@ -34,6 +34,13 @@ export function getOdooConfig() {
 
 export function saveOdooConfig(newConfig) {
   localStorage.setItem(LOCAL_STORAGE_CONFIG_KEY, JSON.stringify(newConfig));
+  logAuditAction({
+    category: 'CONFIG',
+    action: '⚙️ ZMIANA USTAWIEŃ ODOO',
+    details: `Zapisano nowe parametry API (${newConfig.url}, Baza: ${newConfig.db}, UID: ${newConfig.uid}, Strefa: ${newConfig.locationId})`,
+    operator: getCurrentOperator()?.name,
+    status: 'SUCCESS'
+  });
 }
 
 let requestId = 1;
@@ -399,6 +406,15 @@ export async function updateProductDescription(productId, templateId, descriptio
     } else {
       await callOdooRpc('product.product', 'write', [[Number(productId)], { description: description }]);
     }
+
+    logAuditAction({
+      category: 'STOCK',
+      action: '📝 ZMIANA OPISU PRODUKTU',
+      details: `Zaktualizowano opis produktu (ID #${productId || templateId}) w Odoo`,
+      operator: getCurrentOperator()?.name,
+      status: 'SYNCHRONIZED'
+    });
+
     return true;
   } catch (err) {
     console.error('Błąd aktualizacji opisu produktu:', err);
@@ -443,6 +459,15 @@ export async function createNewProduct({ name, sku, initialQuantity = 0, categor
       }
     }
 
+    logAuditAction({
+      category: 'STOCK',
+      action: '➕ NOWY PRODUKT W ODOO',
+      details: `Utworzono produkt: "${name}" (${sku}) • Kat ID: ${catId} • Stan początkowy: ${initialQuantity} ${uomName}`,
+      sku: sku,
+      operator: getCurrentOperator()?.name,
+      status: 'SYNCHRONIZED'
+    });
+
     return { success: true, productId: pId };
   } catch (err) {
     console.error('createNewProduct Error:', err);
@@ -465,6 +490,7 @@ export async function applyStockAdjustment(productId, newQuantity, sku, oldQuant
     title: `Korekta ${sku}: ${diff > 0 ? '+' : ''}${diff}`,
     details: `Nowy stan: ${newQuantity} (Lokalizacja ID #${targetLoc})`,
     time: dateStr,
+    timestamp: new Date().toISOString(),
     operator: operator ? operator.name : 'Nieznany Operator',
     operatorRole: operator ? operator.role : 'Operator',
     status: 'PENDING',
@@ -476,6 +502,20 @@ export async function applyStockAdjustment(productId, newQuantity, sku, oldQuant
   };
 
   saveHistoryItem(historyItem);
+
+  const actionTitle = diff === 0 
+    ? '📦 SPRAWDZENIE STANU' 
+    : (diff > 0 ? `📦 PRZYJĘCIE (+${diff})` : `📦 WYDANIE / ZUŻYCIE (${diff})`);
+
+  logAuditAction({
+    category: 'STOCK',
+    action: actionTitle,
+    details: `Korekta dla ${sku}: ${oldQuantity} → ${newQuantity} (${diff > 0 ? '+' : ''}${diff}). Lokalizacja ID #${targetLoc}`,
+    sku: sku,
+    operator: operator?.name,
+    operatorRole: operator?.role,
+    status: 'PENDING'
+  });
 
   try {
     // Pobierz wszystkie quants w lokalizacjach wewnętrznych dla tego produktu
@@ -554,12 +594,14 @@ export function getHistory() {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY);
     if (!raw) {
-      return [
-        { id: 1, sku: 'S355-FI20', title: 'Ucięcie S355-FI20: -1.5m', details: 'Nowy stan: 14.0m', time: 'Dziś, 10:45 AM', status: 'SYNCHRONIZED', error: null },
-        { id: 2, sku: 'S235-PL10', title: 'Przyjęcie S235-PL10: +50 szt.', details: 'Nowy stan: 150 szt.', time: 'Dziś, 09:12 AM', status: 'SYNCHRONIZED', error: null }
-      ];
+      return [];
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      // Filter out any legacy fake mock items
+      return parsed.filter(i => !(i.sku === 'S355-FI20' && i.id === 1) && !(i.sku === 'S235-PL10' && i.id === 2));
+    }
+    return [];
   } catch (e) {
     return [];
   }
@@ -737,6 +779,7 @@ ${customNote ? `📝 <strong>Notatka:</strong> <em>${customNote}</em><br/>` : ''
     title: `🚨 Alert na czacie Odoo (${sku})`,
     details: `Stan: ${qtyStr} • Wysłano do: #Materiał / #Wszystko`,
     time: 'Dziś, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    timestamp: new Date().toISOString(),
     operator: opName,
     operatorRole: 'Magazynier / Operator',
     status: sentChannelsCount > 0 ? 'SYNCHRONIZED' : 'ERROR',
@@ -744,6 +787,16 @@ ${customNote ? `📝 <strong>Notatka:</strong> <em>${customNote}</em><br/>` : ''
     productId
   };
   saveHistoryItem(alertHistoryItem);
+
+  logAuditAction({
+    category: 'STOCK',
+    action: '🚨 ALERT NISKIEGO STANU',
+    details: `Wysłano alert o niskim stanie dla ${sku} (${name}): ${qtyStr} (Lokacja: ${locationStr}). Powiadomiono Odoo #Materiał / #Wszystko`,
+    sku: sku,
+    operator: opName,
+    status: sentChannelsCount > 0 ? 'SUCCESS' : 'ERROR',
+    error: errors.length > 0 ? errors.join('; ') : null
+  });
 
   if (sentChannelsCount > 0) {
     return { success: true, channelsCount: sentChannelsCount };
