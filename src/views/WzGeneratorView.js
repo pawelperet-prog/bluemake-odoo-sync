@@ -6,10 +6,14 @@ import {
   getSavedCustomers, 
   saveCustomer, 
   getWzHistory, 
+  getWzDrafts,
+  getWzIssued,
+  saveWzDraft,
   saveWzDocument, 
   deleteWzDocument, 
   getNextWzNumber, 
-  incrementWzCounter 
+  incrementWzCounter,
+  isCustomerEc
 } from '../services/wzStorageService.js';
 
 export function renderWzGeneratorView(container, navigateTo) {
@@ -34,6 +38,9 @@ export function renderWzGeneratorView(container, navigateTo) {
 
   let wzState = {
     id: `WZ_${Date.now()}`,
+    status: 'DRAFT', // 'DRAFT' | 'ISSUED'
+    isDraft: false,
+    deductFromOdoo: isCustomerEc(initialCustomer),
     wzNum: String(nextNumInfo.num),
     wzMonth: nextNumInfo.month,
     wzYear: nextNumInfo.year,
@@ -61,6 +68,7 @@ export function renderWzGeneratorView(container, navigateTo) {
 
   let odooProductsList = [];
   let showHistoryModal = false;
+  let activeHistoryTab = 'drafts'; // 'drafts' | 'issued'
   let showOdooPickerModal = false;
   let targetPickerItemIdx = null;
   let isProcessing = false;
@@ -273,6 +281,9 @@ export function renderWzGeneratorView(container, navigateTo) {
   }
 
   function renderUI() {
+    const drafts = getWzDrafts();
+    const issued = getWzIssued();
+
     container.innerHTML = `
       <style>
         @media print {
@@ -322,10 +333,11 @@ export function renderWzGeneratorView(container, navigateTo) {
         </div>
 
         <div class="flex items-center gap-2">
-          <button id="btn-toggle-wz-history" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs px-3 py-1.5 rounded-lg transition-all shadow-sm">
-            <span class="material-symbols-outlined text-[16px]">history</span>
-            <span>HISTORIA WZ</span>
-            <span class="bg-amber-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono">${getWzHistory().length}</span>
+          <button id="btn-toggle-wz-history" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs px-3 py-1.5 rounded-xl transition-all shadow-sm">
+            <span class="material-symbols-outlined text-[16px] text-amber-400">folder_open</span>
+            <span>BAZA WZ</span>
+            <span class="bg-amber-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full font-mono" title="Liczba szkiców">${drafts.length} szkice</span>
+            <span class="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full font-mono" title="Liczba wystawionych WZ">${issued.length} WZ</span>
           </button>
         </div>
       </header>
@@ -430,6 +442,24 @@ export function renderWzGeneratorView(container, navigateTo) {
             </div>
           </div>
 
+          <!-- Conditional Odoo Stock Deduction Bar (EC Engineering vs Inni Klienci) -->
+          <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl border ${wzState.deductFromOdoo ? 'bg-emerald-950/40 border-emerald-600/60 text-emerald-200' : 'bg-slate-800/80 border-slate-700 text-slate-300'}">
+            <label class="flex items-center gap-2.5 cursor-pointer select-none">
+              <input type="checkbox" id="toggle-deduct-odoo" ${wzState.deductFromOdoo ? 'checked' : ''} class="w-4 h-4 rounded text-emerald-600 bg-slate-950 border-slate-700 focus:ring-emerald-500" />
+              <span class="font-bold text-xs sm:text-sm">Odejmuj stany z magazynu Odoo 19 przy wystawieniu WZ</span>
+            </label>
+            <div class="text-[11px] font-semibold flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${wzState.deductFromOdoo ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-700/50' : 'bg-amber-950/60 text-amber-300 border border-amber-700/50'}">
+              <span class="material-symbols-outlined text-[15px] ${wzState.deductFromOdoo ? 'text-emerald-400' : 'text-amber-400'}">
+                ${wzState.deductFromOdoo ? 'verified' : 'info'}
+              </span>
+              <span>
+                ${wzState.deductFromOdoo 
+                  ? 'EC Engineering: Stany magazynowe w Odoo zostaną automatycznie pomniejszone.' 
+                  : 'Inny kontrahent: Pozycje nie są w Odoo – stany NIE zostaną zmienione.'}
+              </span>
+            </div>
+          </div>
+
           <!-- Items Row Controls: [ Usuń ] [ Licznik ] [ + Dodaj ] + Action Buttons -->
           <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800">
             
@@ -447,23 +477,31 @@ export function renderWzGeneratorView(container, navigateTo) {
               </button>
             </div>
 
-            <!-- Action Buttons -->
+            <!-- Action Buttons: [ Zapisz Szkic ] [ Wystaw WZ ] [ HTML ] [ Nowa WZ ] [ Drukuj ] -->
             <div class="flex flex-wrap items-center gap-2">
-              <button id="btn-save-wz-state" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-1.5 active:scale-95 transition-all">
+              <button id="btn-save-draft" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-xs px-3.5 py-2.5 rounded-xl shadow-lg shadow-amber-600/20 flex items-center gap-1.5 active:scale-95 transition-all" title="Zapisz ten dokument jako szkic roboczy bez odejmowania stanów i bez zmiany licznika">
+                <span class="material-symbols-outlined text-[16px]">draw</span>
+                <span>Zapisz jako Szkic</span>
+              </button>
+
+              <button id="btn-save-wz-state" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-1.5 active:scale-95 transition-all" title="Wystaw ostateczny dokument WZ, odejmij stany jeśli zaznaczono i pobierz PDF">
                 <span class="material-symbols-outlined text-[16px]">${isProcessing ? 'sync' : 'cloud_sync'}</span>
-                <span>${isProcessing ? 'SYNCHRONIZACJA ODOO & PDF...' : '💾 Generuj WZ (Odejmij Stan & Pobierz PDF)'}</span>
+                <span>${isProcessing ? 'SYNCHRONIZACJA ODOO & PDF...' : (wzState.deductFromOdoo ? '💾 Wystaw WZ (Odejmij Stan EC & PDF)' : '💾 Wystaw WZ (Pobierz PDF)')}</span>
               </button>
-              <button id="btn-download-wz-html" class="bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
+
+              <button id="btn-download-wz-html" class="bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs px-3 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[16px]">html</span>
-                <span>Pobierz HTML</span>
+                <span>HTML</span>
               </button>
-              <button id="btn-reset-new-wz" class="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
+
+              <button id="btn-reset-new-wz" class="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[16px]">add_circle</span>
                 <span>Nowa WZ</span>
               </button>
+
               <button id="btn-print-wz-doc" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/20 flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[18px]">print</span>
-                <span>Drukuj WZ</span>
+                <span>Drukuj</span>
               </button>
             </div>
 
@@ -473,9 +511,9 @@ export function renderWzGeneratorView(container, navigateTo) {
           <div class="flex flex-col gap-2 pt-2 border-t border-slate-800">
             <div class="flex justify-between items-center">
               <span class="font-bold text-slate-300 text-xs uppercase tracking-wide">Pozycje towarowe (Wpisz numer / SKU lub wybierz z bazy):</span>
-              <span class="text-[11px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-700/50 flex items-center gap-1">
-                <span class="material-symbols-outlined text-[14px]">inventory_2</span>
-                Automatyczne odejmowanie ze stanu Odoo 19 przy zapisie
+              <span class="text-[11px] ${wzState.deductFromOdoo ? 'text-emerald-400 bg-emerald-950/60 border-emerald-700/50' : 'text-slate-400 bg-slate-800/80 border-slate-700'} font-bold px-2 py-0.5 rounded-md border flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">${wzState.deductFromOdoo ? 'inventory_2' : 'do_not_disturb_on'}</span>
+                ${wzState.deductFromOdoo ? 'Odejmowanie z Odoo 19 AKTYWNE (EC)' : 'Odejmowanie z Odoo WYŁĄCZONE (Inny klient)'}
               </span>
             </div>
 
@@ -707,54 +745,118 @@ export function renderWzGeneratorView(container, navigateTo) {
       ` : ''}
 
       <!-- ═════════════════════════════════════════════════════════════════════
-           HISTORY MODAL (DARK THEMED)
+           MODAL: WZ BROWSER & MANAGER (2 TABS: SZKICE vs WYSTAWIONE WZ)
            ═════════════════════════════════════════════════════════════════════ -->
       ${showHistoryModal ? `
         <div id="history-modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
-          <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-5 shadow-2xl flex flex-col gap-4 max-h-[85vh] text-slate-100">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+          <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full p-5 shadow-2xl flex flex-col gap-4 max-h-[88vh] text-slate-100">
+            
+            <!-- Modal Header with Tab Selector -->
+            <div class="flex flex-wrap justify-between items-center border-b border-slate-800 pb-3 gap-2">
               <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-amber-400 text-2xl">history</span>
-                <h2 class="font-bold text-white text-base">Baza Wystawionych Dokumentów WZ (${getWzHistory().length})</h2>
+                <span class="material-symbols-outlined text-amber-400 text-2xl">folder_managed</span>
+                <h2 class="font-bold text-white text-base">Baza Dokumentów i Szkiców WZ</h2>
               </div>
               <button id="close-history-modal-btn" class="p-1 text-slate-400 hover:text-white rounded-full hover:bg-slate-800">
                 <span class="material-symbols-outlined">close</span>
               </button>
             </div>
 
-            <div class="flex-1 overflow-y-auto flex flex-col gap-2.5">
-              ${getWzHistory().length === 0 ? `
-                <div class="text-center py-10 text-slate-500 text-xs font-bold flex flex-col items-center gap-2">
-                  <span class="material-symbols-outlined text-4xl text-slate-600">folder_open</span>
-                  <span>Brak zapisanych dokumentów WZ. Utwórz WZ i kliknij „Generuj WZ”.</span>
-                </div>
-              ` : getWzHistory().map(w => `
-                <div class="flex flex-wrap justify-between items-center p-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl hover:bg-slate-800 transition-all gap-2">
-                  <div class="flex flex-col gap-0.5">
-                    <div class="flex items-center gap-2">
-                      <span class="font-bold text-sm text-white">${w.formattedNumber || `Nr ${w.wzNum}/${w.wzMonth}/${w.wzYear}${w.wzSuffix || '/BM'}`}</span>
-                      <span class="text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-700/60 px-2 py-0.5 rounded-full">${w.issueDate}</span>
-                    </div>
-                    <div class="text-xs text-slate-300 font-semibold">${w.customer?.name || 'Brak odbiorcy'} • Zam: <span class="font-mono text-white">${w.orderNumber}</span></div>
-                    <div class="text-[11px] text-slate-400">
-                      Pozycje (${w.items?.length || 0}): ${w.items?.map(i => `${i.name} (${i.quantity}${i.uom})`).slice(0, 3).join(', ')}${w.items?.length > 3 ? '...' : ''}
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button class="btn-load-wz bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm" data-id="${w.id}">
-                      Wczytaj
-                    </button>
-                    <button class="btn-history-pdf bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm flex items-center gap-1" data-id="${w.id}" title="Pobierz plik PDF">
-                      <span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>
-                      <span>PDF</span>
-                    </button>
-                    <button class="btn-del-wz text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 p-2 rounded-xl" data-id="${w.id}" title="Usuń z bazy">
-                      <span class="material-symbols-outlined text-[18px]">delete</span>
-                    </button>
-                  </div>
-                </div>
-              `).join('')}
+            <!-- Tab Switcher -->
+            <div class="flex items-center gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+              <button id="tab-btn-drafts" class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all ${activeHistoryTab === 'drafts' ? 'bg-amber-500 text-slate-950 font-black shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}">
+                <span class="material-symbols-outlined text-[16px]">draw</span>
+                <span>📝 Szkice Robocze (${drafts.length})</span>
+              </button>
+              <button id="tab-btn-issued" class="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all ${activeHistoryTab === 'issued' ? 'bg-emerald-600 text-white font-black shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'}">
+                <span class="material-symbols-outlined text-[16px]">verified</span>
+                <span>📄 Wystawione Dokumenty WZ (${issued.length})</span>
+              </button>
             </div>
+
+            <!-- TAB 1: SZKICE ROBOCZE -->
+            ${activeHistoryTab === 'drafts' ? `
+              <div class="flex-1 overflow-y-auto flex flex-col gap-2.5 max-h-[55vh]">
+                ${drafts.length === 0 ? `
+                  <div class="text-center py-12 text-slate-500 text-xs font-bold flex flex-col items-center gap-2">
+                    <span class="material-symbols-outlined text-5xl text-slate-600">draw</span>
+                    <span>Brak zapisanych szkiców WZ.</span>
+                    <span class="text-[11px] text-slate-500 font-normal">Gdy przygotowujesz WZ i chcesz wrócić do niej później, kliknij przycisk „Zapisz jako Szkic”.</span>
+                  </div>
+                ` : drafts.map(w => `
+                  <div class="flex flex-wrap justify-between items-center p-3.5 bg-slate-800/80 border border-amber-500/30 rounded-2xl hover:bg-slate-800 transition-all gap-3">
+                    <div class="flex flex-col gap-1">
+                      <div class="flex items-center gap-2">
+                        <span class="font-bold text-sm text-amber-300 font-mono">${w.formattedNumber || `Nr ${w.wzNum}/${w.wzMonth}/${w.wzYear}${w.wzSuffix || '/BM'}`}</span>
+                        <span class="text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/50 px-2 py-0.5 rounded-md uppercase tracking-wider">SZKIC ROBOCZY</span>
+                        <span class="text-[11px] font-semibold text-slate-400">${w.issueDate}</span>
+                      </div>
+                      <div class="text-xs text-slate-200 font-semibold">
+                        Odbiorca: <strong class="text-white">${w.customer?.name || 'Brak'}</strong> • Zam: <span class="font-mono text-slate-300">${w.orderNumber || '-'}</span>
+                      </div>
+                      <div class="text-[11px] text-slate-400">
+                        Pozycje (${w.items?.length || 0}): ${w.items?.map(i => `${i.name || i.sku || 'Towar'} (${i.quantity}${i.uom})`).slice(0, 3).join(', ')}${w.items?.length > 3 ? '...' : ''}
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button class="btn-load-draft bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl active:scale-95 shadow-sm flex items-center gap-1" data-id="${w.id}">
+                        <span class="material-symbols-outlined text-[15px]">edit</span>
+                        <span>Wczytaj do edycji</span>
+                      </button>
+                      <button class="btn-issue-now-draft bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl active:scale-95 shadow-sm flex items-center gap-1" data-id="${w.id}">
+                        <span class="material-symbols-outlined text-[15px]">cloud_sync</span>
+                        <span>Wystaw teraz</span>
+                      </button>
+                      <button class="btn-del-wz text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 p-2 rounded-xl" data-id="${w.id}" title="Usuń szkic">
+                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            <!-- TAB 2: WYSTAWIONE WZ -->
+            ${activeHistoryTab === 'issued' ? `
+              <div class="flex-1 overflow-y-auto flex flex-col gap-2.5 max-h-[55vh]">
+                ${issued.length === 0 ? `
+                  <div class="text-center py-12 text-slate-500 text-xs font-bold flex flex-col items-center gap-2">
+                    <span class="material-symbols-outlined text-5xl text-slate-600">description</span>
+                    <span>Brak wystawionych dokumentów WZ.</span>
+                    <span class="text-[11px] text-slate-500 font-normal">Wypełnij formularz i kliknij „Wystaw WZ”.</span>
+                  </div>
+                ` : issued.map(w => `
+                  <div class="flex flex-wrap justify-between items-center p-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl hover:bg-slate-800 transition-all gap-3">
+                    <div class="flex flex-col gap-1">
+                      <div class="flex items-center gap-2">
+                        <span class="font-bold text-sm text-white font-mono">${w.formattedNumber || `Nr ${w.wzNum}/${w.wzMonth}/${w.wzYear}${w.wzSuffix || '/BM'}`}</span>
+                        <span class="text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700/60 px-2 py-0.5 rounded-md">${w.issueDate}</span>
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md ${w.deductFromOdoo ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-700/50' : 'bg-slate-700 text-slate-300'}">
+                          ${w.deductFromOdoo ? '🟢 Odjęto z Odoo (EC)' : '⚪ Bez zmian w Odoo'}
+                        </span>
+                      </div>
+                      <div class="text-xs text-slate-300 font-semibold">${w.customer?.name || 'Brak odbiorcy'} • Zam: <span class="font-mono text-white">${w.orderNumber || '-'}</span></div>
+                      <div class="text-[11px] text-slate-400">
+                        Pozycje (${w.items?.length || 0}): ${w.items?.map(i => `${i.name || i.sku || 'Towar'} (${i.quantity}${i.uom})`).slice(0, 3).join(', ')}${w.items?.length > 3 ? '...' : ''}
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button class="btn-load-wz bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm flex items-center gap-1" data-id="${w.id}">
+                        <span class="material-symbols-outlined text-[15px]">visibility</span>
+                        <span>Podgląd</span>
+                      </button>
+                      <button class="btn-history-pdf bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 shadow-sm flex items-center gap-1" data-id="${w.id}" title="Pobierz plik PDF">
+                        <span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>
+                        <span>PDF</span>
+                      </button>
+                      <button class="btn-del-wz text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 p-2 rounded-xl" data-id="${w.id}" title="Usuń z bazy">
+                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
 
             <div class="flex justify-end pt-2 border-t border-slate-800">
               <button id="btn-close-hist-bottom" class="bg-slate-800 hover:bg-slate-700 font-bold px-4 py-2 rounded-xl text-xs text-slate-200">
@@ -798,6 +900,54 @@ export function renderWzGeneratorView(container, navigateTo) {
       });
     });
 
+    // Tab buttons in History Modal
+    const tabDrafts = container.querySelector('#tab-btn-drafts');
+    const tabIssued = container.querySelector('#tab-btn-issued');
+    if (tabDrafts) {
+      tabDrafts.addEventListener('click', () => {
+        activeHistoryTab = 'drafts';
+        renderUI();
+      });
+    }
+    if (tabIssued) {
+      tabIssued.addEventListener('click', () => {
+        activeHistoryTab = 'issued';
+        renderUI();
+      });
+    }
+
+    // Load Draft handler
+    container.querySelectorAll('.btn-load-draft').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const found = getWzHistory().find(w => w.id === id);
+        if (found) {
+          wzState = JSON.parse(JSON.stringify(found));
+          showHistoryModal = false;
+          statusBannerType = 'info';
+          statusBannerMsg = `Wczytano szkic: ${formatFullWzNumber()}`;
+          renderUI();
+        }
+      });
+    });
+
+    // Issue Draft directly from modal
+    container.querySelectorAll('.btn-issue-now-draft').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const found = getWzHistory().find(w => w.id === id);
+        if (found) {
+          wzState = JSON.parse(JSON.stringify(found));
+          showHistoryModal = false;
+          renderUI();
+          setTimeout(() => {
+            const issueBtn = container.querySelector('#btn-save-wz-state');
+            if (issueBtn) issueBtn.click();
+          }, 150);
+        }
+      });
+    });
+
     // History Load, Download PDF and Delete handlers
     container.querySelectorAll('.btn-load-wz').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -806,6 +956,8 @@ export function renderWzGeneratorView(container, navigateTo) {
         if (found) {
           wzState = JSON.parse(JSON.stringify(found));
           showHistoryModal = false;
+          statusBannerType = 'info';
+          statusBannerMsg = `Wczytano dokument: ${formatFullWzNumber()}`;
           renderUI();
         }
       });
@@ -816,7 +968,6 @@ export function renderWzGeneratorView(container, navigateTo) {
         const id = btn.getAttribute('data-id');
         const found = getWzHistory().find(w => w.id === id);
         if (found) {
-          const oldState = { ...wzState };
           wzState = JSON.parse(JSON.stringify(found));
           showHistoryModal = false;
           renderUI();
@@ -830,12 +981,21 @@ export function renderWzGeneratorView(container, navigateTo) {
     container.querySelectorAll('.btn-del-wz').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
-        if (confirm('Czy na pewno usunąć ten dokument z bazy WZ?')) {
+        if (confirm('Czy na pewno usunąć ten dokument / szkic z bazy WZ?')) {
           deleteWzDocument(id);
           renderUI();
         }
       });
     });
+
+    // Odoo Stock Deduction Checkbox Toggle
+    const toggleDeduct = container.querySelector('#toggle-deduct-odoo');
+    if (toggleDeduct) {
+      toggleDeduct.addEventListener('change', (e) => {
+        wzState.deductFromOdoo = e.target.checked;
+        renderUI();
+      });
+    }
 
     // Number Inputs
     const inputNum = container.querySelector('#input-wz-num');
@@ -927,14 +1087,16 @@ export function renderWzGeneratorView(container, navigateTo) {
         if (e.target.value === 'NEW') {
           custEditBox.classList.remove('hidden');
           wzState.customer = { name: '', address: '', nip: '', regon: '', contact: '' };
+          wzState.deductFromOdoo = false;
         } else {
           const found = customers.find(c => c.id === e.target.value);
           if (found) {
             wzState.customer = { ...found };
             custEditBox.classList.add('hidden');
+            wzState.deductFromOdoo = isCustomerEc(found);
           }
         }
-        updatePreview();
+        renderUI();
       });
     }
 
@@ -951,6 +1113,7 @@ export function renderWzGeneratorView(container, navigateTo) {
         nip: editNip?.value || '',
         contact: editContact?.value || ''
       };
+      wzState.deductFromOdoo = isCustomerEc(wzState.customer);
       updatePreview();
     };
 
@@ -1025,20 +1188,19 @@ export function renderWzGeneratorView(container, navigateTo) {
         }
 
         dropdown.innerHTML = matches.map(p => {
-          // Format full label: e.g. "00229 - EC-VAC 0108000-004-01 - Podkladka gniazdo"
           const fullLabel = p.name.includes(p.sku) ? p.name : `${p.sku} - ${p.name}`;
           return `
-            <div class="suggestion-item p-2 hover:bg-indigo-50 rounded-lg cursor-pointer flex justify-between items-center transition-colors border-b border-gray-100 last:border-none" 
+            <div class="suggestion-item p-2 hover:bg-indigo-950 rounded-lg cursor-pointer flex justify-between items-center transition-colors border-b border-slate-800 last:border-none" 
               data-sku="${p.sku}" data-name="${fullLabel}" data-id="${p.id}" data-qty="${p.quantity || 0}" data-loc="${p.locationId || 5}" data-uom="${p.uom || 'szt'}">
               <div>
                 <div class="flex items-center gap-1.5">
-                  <span class="font-mono font-bold text-xs bg-indigo-100 text-indigo-900 px-1.5 py-0.5 rounded">${p.sku}</span>
-                  <span class="font-bold text-xs text-slate-900">${p.name}</span>
+                  <span class="font-mono font-bold text-xs bg-indigo-950 text-indigo-300 border border-indigo-700/60 px-1.5 py-0.5 rounded">${p.sku}</span>
+                  <span class="font-bold text-xs text-slate-100">${p.name}</span>
                 </div>
-                <div class="text-[10px] text-slate-500 mt-0.5">Lokacja: ${p.location || 'Strefa składowania'}</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">Lokacja: ${p.location || 'Strefa składowania'}</div>
               </div>
               <div class="text-right">
-                <span class="font-mono font-bold text-xs text-indigo-700">${Number(p.quantity || 0).toFixed(1)} ${p.uom || 'szt'}</span>
+                <span class="font-mono font-bold text-xs text-emerald-400">${Number(p.quantity || 0).toFixed(1)} ${p.uom || 'szt'}</span>
               </div>
             </div>
           `;
@@ -1075,7 +1237,6 @@ export function renderWzGeneratorView(container, navigateTo) {
 
       inp.addEventListener('input', (e) => {
         wzState.items[idx].name = e.target.value;
-        // Check if matches SKU
         const matched = odooProductsList.find(p => p.sku.toLowerCase() === e.target.value.toLowerCase().trim());
         if (matched) {
           wzState.items[idx].productId = matched.id;
@@ -1132,18 +1293,18 @@ export function renderWzGeneratorView(container, navigateTo) {
           pickerList.innerHTML = filtered.map(p => {
             const fullLabel = p.name.includes(p.sku) ? p.name : `${p.sku} - ${p.name}`;
             return `
-              <div class="picker-prod-card flex justify-between items-center p-2.5 bg-slate-50 border border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-colors cursor-pointer" 
+              <div class="picker-prod-card flex justify-between items-center p-2.5 bg-slate-800/80 border border-slate-700 rounded-xl hover:bg-slate-800 hover:border-indigo-400 transition-colors cursor-pointer" 
                 data-sku="${p.sku}" data-name="${fullLabel}" data-id="${p.id}" data-qty="${p.quantity || 0}" data-loc="${p.locationId || 5}" data-uom="${p.uom || 'szt'}">
                 <div>
                   <div class="flex items-center gap-2">
-                    <span class="font-mono font-bold bg-indigo-100 text-indigo-900 px-2 py-0.5 rounded text-xs">${p.sku}</span>
-                    <span class="font-bold text-xs text-slate-800">${p.name}</span>
+                    <span class="font-mono font-bold bg-indigo-950 text-indigo-300 border border-indigo-700/60 px-2 py-0.5 rounded text-xs">${p.sku}</span>
+                    <span class="font-bold text-xs text-white">${p.name}</span>
                   </div>
-                  <div class="text-[11px] text-slate-500 mt-0.5">Lokacja: ${p.location || 'Magazyn'} • Kategoria: ID ${p.categoryId || '-'}</div>
+                  <div class="text-[11px] text-slate-400 mt-0.5">Lokacja: ${p.location || 'Magazyn'} • Kategoria: ID ${p.categoryId || '-'}</div>
                 </div>
                 <div class="flex items-center gap-3">
-                  <span class="font-mono font-bold text-xs text-slate-700">Stan: ${Number(p.quantity || 0).toFixed(1)} ${p.uom || 'szt'}</span>
-                  <button type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Wybierz</button>
+                  <span class="font-mono font-bold text-xs text-slate-300">Stan: ${Number(p.quantity || 0).toFixed(1)} ${p.uom || 'szt'}</span>
+                  <button type="button" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg">Wybierz</button>
                 </div>
               </div>
             `;
@@ -1213,48 +1374,68 @@ export function renderWzGeneratorView(container, navigateTo) {
     });
 
     // ═════════════════════════════════════════════════════════════════════════
-    // ACTION: GENERATE WZ (DEDUCT STOCK FROM ODOO + SAVE DB + DOWNLOAD PDF)
+    // ACTION 1: SAVE AS DRAFT (NO ODOO DEDUCTION, NO COUNTER INCREMENT)
+    // ═════════════════════════════════════════════════════════════════════════
+    const btnSaveDraft = container.querySelector('#btn-save-draft');
+    if (btnSaveDraft) {
+      btnSaveDraft.addEventListener('click', () => {
+        saveWzDraft(wzState);
+        statusBannerType = 'success';
+        statusBannerMsg = `Zapisano szkic dokumentu (${formatFullWzNumber()}) dla "${wzState.customer?.name || 'Klient'}". Dostępny w zakładce „Baza WZ -> Szkice Robocze”.`;
+        renderUI();
+      });
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // ACTION 2: ISSUE WZ (CONDITIONAL ODOO DEDUCTION + SAVE DB + PDF)
     // ═════════════════════════════════════════════════════════════════════════
     const btnSaveState = container.querySelector('#btn-save-wz-state');
     if (btnSaveState) {
       btnSaveState.addEventListener('click', async () => {
         isProcessing = true;
-        btnSaveState.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>ODEJMOWANIE ZE STANU ODOO...</span>';
+        btnSaveState.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span><span>WYSTAWIANIE WZ...</span>';
         btnSaveState.disabled = true;
 
         let deductedCount = 0;
         let deductedSummary = [];
 
         try {
-          // 1. Deduct Stock in Odoo 19 for matched items
-          for (const it of wzState.items) {
-            let pId = it.productId;
-            let curStock = it.currentStock;
-            let locId = it.locationId || 5;
-            let sku = it.sku || it.name;
+          // 1. Deduct Stock in Odoo 19 ONLY if deductFromOdoo is enabled
+          if (wzState.deductFromOdoo) {
+            for (const it of wzState.items) {
+              let pId = it.productId;
+              let curStock = it.currentStock;
+              let locId = it.locationId || 5;
+              let sku = it.sku || it.name;
 
-            // If productId not assigned, search in odooProductsList
-            if (!pId && odooProductsList.length > 0) {
-              const matched = odooProductsList.find(p => p.sku === it.name || (it.name && it.name.includes(p.sku)));
-              if (matched) {
-                pId = matched.id;
-                curStock = Number(matched.quantity || 0);
-                locId = matched.locationId || 5;
-                sku = matched.sku;
+              // If productId not assigned, search in odooProductsList
+              if (!pId && odooProductsList.length > 0) {
+                const matched = odooProductsList.find(p => p.sku === it.name || (it.name && it.name.includes(p.sku)));
+                if (matched) {
+                  pId = matched.id;
+                  curStock = Number(matched.quantity || 0);
+                  locId = matched.locationId || 5;
+                  sku = matched.sku;
+                }
               }
-            }
 
-            if (pId && it.quantity > 0) {
-              const newQty = Math.max(0, Number((curStock - it.quantity).toFixed(2)));
-              await applyStockAdjustment(pId, newQty, sku, curStock, locId);
-              it.currentStock = newQty;
-              deductedCount++;
-              deductedSummary.push(`${sku} (-${it.quantity} ${it.uom})`);
+              if (pId && it.quantity > 0) {
+                const newQty = Math.max(0, Number((curStock - it.quantity).toFixed(2)));
+                await applyStockAdjustment(pId, newQty, sku, curStock, locId);
+                it.currentStock = newQty;
+                deductedCount++;
+                deductedSummary.push(`${sku} (-${it.quantity} ${it.uom})`);
+              }
             }
           }
 
-          // 2. Save full WZ document to database
-          saveWzDocument(wzState);
+          // 2. Save full WZ document as ISSUED to database
+          saveWzDocument({
+            ...wzState,
+            status: 'ISSUED',
+            isDraft: false,
+            deductFromOdoo: wzState.deductFromOdoo
+          });
 
           // 3. Increment monthly counter
           incrementWzCounter(wzState.wzNum, wzState.wzMonth, wzState.wzYear);
@@ -1264,13 +1445,17 @@ export function renderWzGeneratorView(container, navigateTo) {
           await downloadPdfFile(wzState);
 
           statusBannerType = 'success';
-          statusBannerMsg = `Wystawiono WZ (${formatFullWzNumber()})! ${deductedCount > 0 ? `Zaktualizowano stan w Odoo 19 dla: ${deductedSummary.join(', ')}.` : 'Zapisano do bazy i pobrano PDF.'}`;
+          if (wzState.deductFromOdoo) {
+            statusBannerMsg = `Wystawiono WZ (${formatFullWzNumber()})! ${deductedCount > 0 ? `Zaktualizowano stan w Odoo 19 dla: ${deductedSummary.join(', ')}.` : 'Zapisano do bazy i pobrano PDF (stany Odoo zsynchronizowane).'}`;
+          } else {
+            statusBannerMsg = `Wystawiono WZ (${formatFullWzNumber()}) dla "${wzState.customer?.name}"! Stan w Odoo 19 bez zmian (kontrahent poza ewidencją Odoo). Pobrano plik PDF.`;
+          }
 
         } catch (err) {
           console.error('Error processing WZ stock adjustment:', err);
           statusBannerType = 'error';
           statusBannerMsg = `Błąd zapisu w Odoo: ${err.message || err}. Pobrano PDF i zapisano kopię lokalną.`;
-          saveWzDocument(wzState);
+          saveWzDocument({ ...wzState, status: 'ISSUED', isDraft: false });
           await downloadPdfFile(wzState);
         } finally {
           isProcessing = false;
@@ -1288,15 +1473,19 @@ export function renderWzGeneratorView(container, navigateTo) {
     if (btnResetNew) {
       btnResetNew.addEventListener('click', () => {
         const next = getNextWzNumber(wzState.wzMonth, wzState.wzYear);
+        const isEc = isCustomerEc(wzState.customer);
         wzState = {
           id: `WZ_${Date.now()}`,
+          status: 'DRAFT',
+          isDraft: false,
+          deductFromOdoo: isEc,
           wzNum: String(next.num),
           wzMonth: next.month,
           wzYear: next.year,
           wzSuffix: '/BM',
           issueDate: new Date().toISOString().split('T')[0],
           issuePlace: 'MIELEC',
-          orderNumber: `ZZ-73/${next.month}/${next.year}/EC`,
+          orderNumber: `ZZ-73/${next.month}/${next.year}/${isEc ? 'EC' : 'BM'}`,
           orderDate: new Date().toISOString().split('T')[0],
           issuerName: wzState.issuerName,
           supplier: { ...DEFAULT_SUPPLIER },

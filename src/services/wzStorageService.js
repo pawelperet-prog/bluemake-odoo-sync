@@ -66,6 +66,13 @@ export function saveCustomer(customer) {
   return list;
 }
 
+export function isCustomerEc(customerOrName) {
+  if (!customerOrName) return false;
+  const name = typeof customerOrName === 'string' ? customerOrName : (customerOrName.name || '');
+  const clean = name.toLowerCase().trim();
+  return clean.includes('ec engineering') || clean === 'ec' || clean.startsWith('ec-') || clean.includes('ec_eng');
+}
+
 export function getWzHistory() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY_WZ_HISTORY);
@@ -76,12 +83,36 @@ export function getWzHistory() {
   }
 }
 
+export function getWzDrafts() {
+  const all = getWzHistory();
+  return all.filter(w => w.status === 'DRAFT' || w.isDraft === true);
+}
+
+export function getWzIssued() {
+  const all = getWzHistory();
+  return all.filter(w => w.status !== 'DRAFT' && w.isDraft !== true);
+}
+
+export function saveWzDraft(wzDoc, operatorName = null) {
+  return saveWzDocument({
+    ...wzDoc,
+    status: 'DRAFT',
+    isDraft: true,
+    deductFromOdoo: false
+  }, operatorName);
+}
+
 export function saveWzDocument(wzDoc, operatorName = null) {
   const history = getWzHistory();
+  const isDraft = wzDoc.status === 'DRAFT' || wzDoc.isDraft === true;
   const idx = history.findIndex(w => w.id === wzDoc.id);
   const isNew = idx < 0;
+
   const docWithMeta = {
     ...wzDoc,
+    status: isDraft ? 'DRAFT' : 'ISSUED',
+    isDraft: isDraft,
+    deductFromOdoo: isDraft ? false : (wzDoc.deductFromOdoo !== undefined ? wzDoc.deductFromOdoo : isCustomerEc(wzDoc.customer)),
     savedAt: new Date().toISOString(),
     formattedNumber: `Nr ${wzDoc.wzNum}/${wzDoc.wzMonth}/${wzDoc.wzYear}${wzDoc.wzSuffix || '/BM'}`
   };
@@ -94,10 +125,14 @@ export function saveWzDocument(wzDoc, operatorName = null) {
   localStorage.setItem(STORAGE_KEY_WZ_HISTORY, JSON.stringify(history));
 
   const itemsCount = Array.isArray(wzDoc.items) ? wzDoc.items.length : 0;
+  const actionTitle = isDraft 
+    ? (isNew ? '📝 NOWY SZKIC WZ' : '📝 AKTUALIZACJA SZKICU WZ')
+    : (isNew ? '📄 WYSTAWIENIE DOKUMENTU WZ' : '📄 AKTUALIZACJA DOKUMENTU WZ');
+
   logAuditAction({
     category: 'WZ',
-    action: isNew ? '📄 WYSTAWIENIE DOKUMENTU WZ' : '📄 AKTUALIZACJA DOKUMENTU WZ',
-    details: `Dokument ${docWithMeta.formattedNumber} dla "${wzDoc.customer?.name || 'Klient'}" (${itemsCount} pozycji towarowych). Magazynier: ${wzDoc.operatorName || 'Operator'}`,
+    action: actionTitle,
+    details: `${isDraft ? '[SZKIC] ' : ''}${docWithMeta.formattedNumber} dla "${wzDoc.customer?.name || 'Klient'}" (${itemsCount} pozycji towarowych). Magazynier: ${wzDoc.operatorName || 'Operator'}${docWithMeta.deductFromOdoo ? ' • Odjęto ze stanu Odoo (EC)' : ' • Bez odejmowania z Odoo'}`,
     operator: operatorName || wzDoc.operatorName || getCurrentOperator()?.name,
     status: 'SUCCESS'
   });
@@ -108,13 +143,14 @@ export function saveWzDocument(wzDoc, operatorName = null) {
 export function deleteWzDocument(wzId, operatorName = null) {
   const history = getWzHistory();
   const doc = history.find(w => w.id === wzId);
+  const isDraft = doc?.status === 'DRAFT' || doc?.isDraft === true;
   const updated = history.filter(w => w.id !== wzId);
   localStorage.setItem(STORAGE_KEY_WZ_HISTORY, JSON.stringify(updated));
 
   logAuditAction({
     category: 'WZ',
-    action: '🗑️ USUNIĘCIE DOKUMENTU WZ',
-    details: `Usunięto dokument WZ ${doc?.formattedNumber || wzId} (Kontrahent: "${doc?.customer?.name || 'Brak'}")`,
+    action: isDraft ? '🗑️ USUNIĘCIE SZKICU WZ' : '🗑️ USUNIĘCIE DOKUMENTU WZ',
+    details: `Usunięto ${isDraft ? 'szkic' : 'dokument'} WZ ${doc?.formattedNumber || wzId} (Kontrahent: "${doc?.customer?.name || 'Brak'}")`,
     operator: operatorName || getCurrentOperator()?.name,
     status: 'WARNING'
   });
