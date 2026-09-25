@@ -21,6 +21,38 @@ export const DEFAULT_CUSTOMERS = [
     contact: 'office@ec-e.pl, www.ec-e.pl'
   },
   {
+    id: 'cust_kinar',
+    name: 'KINAR Kamil Janiszewski',
+    address: 'Modra 24/16, 54-151 Wrocław',
+    nip: 'PL8982138720',
+    regon: '',
+    contact: 'kamil.janiszewski@kinar.pl, tel. +48 577 928 734, www.kinar.pl'
+  },
+  {
+    id: 'cust_mv_center',
+    name: 'MV Center Systemy Wizyjne Sp. z o.o.',
+    address: 'ul. Krakowska 50, 32-083 Balice (Kraków)',
+    nip: '5130255480',
+    regon: '380649718',
+    contact: 'biuro@mv-center.com, www.mv-center.com'
+  },
+  {
+    id: 'cust_zmj',
+    name: 'ZMJ Metals – Mateusz Zieliński',
+    address: 'ul. Wojska Polskiego 3, 39-300 Mielec',
+    nip: '8141696404',
+    regon: '522759005',
+    contact: 'biuro@zmjmetals.pl, www.zmjmetals.pl'
+  },
+  {
+    id: 'cust_matmont',
+    name: 'MATMONT Sp. z o.o. Sp. k.',
+    address: 'Łubnice 22B, 28-232 Łubnice',
+    nip: '8661742725',
+    regon: '385669667',
+    contact: 'biuro@matmont.pl, www.matmont.pl'
+  },
+  {
     id: 'cust_husqvarna',
     name: 'Husqvarna Poland Sp. z o.o.',
     address: 'ul. Wysockiego 15A, 03-371 Warszawa',
@@ -34,8 +66,25 @@ export function getSavedCustomers() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY_WZ_CUSTOMERS);
     if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      let parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        let modified = false;
+        for (const def of DEFAULT_CUSTOMERS) {
+          const exists = parsed.some(c => 
+            c.id === def.id || 
+            (def.nip && c.nip === def.nip) || 
+            (c.name && c.name.toLowerCase() === def.name.toLowerCase())
+          );
+          if (!exists) {
+            parsed.push(def);
+            modified = true;
+          }
+        }
+        if (modified) {
+          localStorage.setItem(STORAGE_KEY_WZ_CUSTOMERS, JSON.stringify(parsed));
+        }
+        return parsed;
+      }
     }
   } catch (e) {
     console.error('Error loading WZ customers:', e);
@@ -44,9 +93,9 @@ export function getSavedCustomers() {
   return DEFAULT_CUSTOMERS;
 }
 
-export function saveCustomer(customer) {
+export function saveCustomer(customer, operatorName = null) {
   const list = getSavedCustomers();
-  const existingIdx = list.findIndex(c => c.id === customer.id || (customer.nip && c.nip === customer.nip));
+  const existingIdx = list.findIndex(c => c.id === customer.id || (customer.nip && c.nip && c.nip === customer.nip));
   const isNew = existingIdx < 0;
   if (existingIdx >= 0) {
     list[existingIdx] = { ...list[existingIdx], ...customer };
@@ -59,11 +108,40 @@ export function saveCustomer(customer) {
     category: 'WZ',
     action: isNew ? '🏢 NOWY KONTRAHENT WZ' : '🏢 EDYCJA KONTRAHENTA WZ',
     details: `Zapisano dane kontrahenta: "${customer.name}" (NIP: ${customer.nip || 'Brak'})`,
-    operator: getCurrentOperator()?.name,
+    operator: operatorName || getCurrentOperator()?.name,
     status: 'SUCCESS'
   });
 
   return list;
+}
+
+export function deleteCustomer(customerId, operatorName = null) {
+  const list = getSavedCustomers();
+  const found = list.find(c => c.id === customerId);
+  const updated = list.filter(c => c.id !== customerId);
+  localStorage.setItem(STORAGE_KEY_WZ_CUSTOMERS, JSON.stringify(updated));
+
+  logAuditAction({
+    category: 'WZ',
+    action: '🏢 USUNIĘCIE KONTRAHENTA',
+    details: `Usunięto kontrahenta "${found?.name || customerId}" (NIP: ${found?.nip || 'Brak'})`,
+    operator: operatorName || getCurrentOperator()?.name,
+    status: 'WARNING'
+  });
+
+  return updated;
+}
+
+export function resetCustomersToDefault(operatorName = null) {
+  localStorage.setItem(STORAGE_KEY_WZ_CUSTOMERS, JSON.stringify(DEFAULT_CUSTOMERS));
+  logAuditAction({
+    category: 'WZ',
+    action: '🏢 RESET BAZY KONTRAHENTÓW',
+    details: `Przywrócono domyślną listę kontrahentów (${DEFAULT_CUSTOMERS.length} firm)`,
+    operator: operatorName || getCurrentOperator()?.name,
+    status: 'INFO'
+  });
+  return DEFAULT_CUSTOMERS;
 }
 
 export function isCustomerEc(customerOrName) {

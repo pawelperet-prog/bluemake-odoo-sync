@@ -3,8 +3,11 @@ import { getProducts, applyStockAdjustment } from '../services/odooApi.js';
 import { getCurrentOperator } from '../services/authService.js';
 import { 
   DEFAULT_SUPPLIER, 
+  DEFAULT_CUSTOMERS,
   getSavedCustomers, 
   saveCustomer, 
+  deleteCustomer,
+  resetCustomersToDefault,
   getWzHistory, 
   getWzDrafts,
   getWzIssued,
@@ -69,6 +72,9 @@ export function renderWzGeneratorView(container, navigateTo) {
   let odooProductsList = [];
   let showHistoryModal = false;
   let activeHistoryTab = 'drafts'; // 'drafts' | 'issued'
+  let showCustomersModal = false;
+  let editingCustomerInModal = null;
+  let customerModalSearchQuery = '';
   let showOdooPickerModal = false;
   let targetPickerItemIdx = null;
   let isProcessing = false;
@@ -281,6 +287,7 @@ export function renderWzGeneratorView(container, navigateTo) {
   }
 
   function renderUI() {
+    const currentCustomers = getSavedCustomers();
     const drafts = getWzDrafts();
     const issued = getWzIssued();
 
@@ -314,7 +321,7 @@ export function renderWzGeneratorView(container, navigateTo) {
             background-color: #ffffff !important;
             color: #0f172a !important;
           }
-          header, #wz-creator-controls, #history-modal-backdrop, #odoo-picker-modal-backdrop { display: none !important; }
+          header, #wz-creator-controls, #history-modal-backdrop, #odoo-picker-modal-backdrop, #customers-modal-backdrop { display: none !important; }
         }
       </style>
 
@@ -333,11 +340,16 @@ export function renderWzGeneratorView(container, navigateTo) {
         </div>
 
         <div class="flex items-center gap-2">
+          <button id="btn-open-customers-top" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs px-3 py-1.5 rounded-xl transition-all shadow-sm">
+            <span class="material-symbols-outlined text-[16px] text-indigo-400">corporate_fare</span>
+            <span>BAZA FIRM</span>
+            <span class="bg-indigo-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full font-mono">${currentCustomers.length}</span>
+          </button>
           <button id="btn-toggle-wz-history" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs px-3 py-1.5 rounded-xl transition-all shadow-sm">
             <span class="material-symbols-outlined text-[16px] text-amber-400">folder_open</span>
             <span>BAZA WZ</span>
-            <span class="bg-amber-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full font-mono" title="Liczba szkiców">${drafts.length} szkice</span>
-            <span class="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full font-mono" title="Liczba wystawionych WZ">${issued.length} WZ</span>
+            <span class="bg-amber-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full font-mono" title="Liczba szkiców">${drafts.length}</span>
+            <span class="bg-emerald-600 text-white font-bold text-[10px] px-2 py-0.5 rounded-full font-mono" title="Liczba wystawionych WZ">${issued.length}</span>
           </button>
         </div>
       </header>
@@ -412,33 +424,75 @@ export function renderWzGeneratorView(container, navigateTo) {
               </select>
             </div>
 
-            <!-- Odbiorca (Klient) Preset Selector -->
+            <!-- Odbiorca (Klient) Preset Selector & Database Control Buttons -->
             <div class="md:col-span-5 flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
               <span class="font-bold text-slate-300 whitespace-nowrap">Odbiorca:</span>
-              <select id="select-customer-preset" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold py-1 px-2 text-white focus:ring-1 focus:ring-blue-500">
-                ${customers.map(c => `
-                  <option value="${c.id}" ${wzState.customer.name === c.name ? 'selected' : ''}>${c.name}</option>
+              <select id="select-customer-preset" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold py-1 px-2 text-white focus:ring-1 focus:ring-blue-500 text-xs">
+                ${currentCustomers.map(c => `
+                  <option value="${c.id}" ${(wzState.customer.id === c.id || wzState.customer.name === c.name) ? 'selected' : ''}>${c.name}</option>
                 `).join('')}
-                <option value="NEW">+ Dodaj nowego kontrahenta</option>
+                <option value="NEW">+ Wpisz / Dodaj nowego...</option>
               </select>
-              <button id="btn-edit-customer" title="Edytuj dane odbiorcy" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-1.5 rounded-lg transition-colors">
+              <button id="btn-edit-customer" title="Szybka edycja danych bieżącego odbiorcy" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-1.5 rounded-lg transition-colors flex items-center gap-0.5">
                 <span class="material-symbols-outlined text-[16px]">edit</span>
+              </button>
+              <button id="btn-manage-customers" title="Zarządzaj bazą wszystkich kontrahentów (dodaj, edytuj, usuń)" class="bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 font-bold text-[11px] px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 active:scale-95">
+                <span class="material-symbols-outlined text-[15px]">corporate_fare</span>
+                <span>Firmy</span>
               </button>
             </div>
 
           </div>
 
-          <!-- Customer Edit Drawer (Collapsible) -->
-          <div id="customer-edit-box" class="hidden bg-amber-950/40 border border-amber-500/50 p-3 rounded-xl flex flex-col gap-2 text-xs">
-            <span class="font-bold text-amber-300 uppercase tracking-wide">Edycja danych odbiorcy na dokumencie WZ:</span>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <input id="edit-cust-name" type="text" placeholder="Nazwa firmy" value="${wzState.customer.name || ''}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded font-bold text-white" />
-              <input id="edit-cust-address" type="text" placeholder="Adres (Ulica, Kod, Miasto)" value="${wzState.customer.address || ''}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded text-white" />
-              <input id="edit-cust-nip" type="text" placeholder="NIP (np. PL9452024663)" value="${wzState.customer.nip || ''}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded font-mono text-white" />
-              <input id="edit-cust-contact" type="text" placeholder="Kontakt / email / www" value="${wzState.customer.contact || ''}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded text-white" />
+          <!-- Customer Quick Edit Drawer (Collapsible) -->
+          <div id="customer-edit-box" class="hidden bg-amber-950/40 border border-amber-500/50 p-3.5 rounded-2xl flex flex-col gap-2.5 text-xs shadow-inner">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-amber-300 uppercase tracking-wide flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px]">edit_square</span>
+                <span>Edycja danych odbiorcy na dokumencie WZ:</span>
+              </span>
+              <span class="text-[10px] text-slate-400">Możesz zapisać zmiany w bazie lub użyć tylko na tym dokumencie</span>
             </div>
-            <div class="flex justify-end gap-2 mt-1">
-              <button id="btn-save-cust-preset" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black py-1.5 px-3 rounded-lg text-xs transition-colors">Zapisz do listy odbiorców</button>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              <div class="flex flex-col gap-1">
+                <span class="text-[10px] text-slate-400 font-bold">Nazwa firmy:</span>
+                <input id="edit-cust-name" type="text" placeholder="Nazwa firmy" value="${wzState.customer.name || ''}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded-lg font-bold text-white focus:ring-1 focus:ring-amber-500" />
+              </div>
+              <div class="flex flex-col gap-1">
+                <span class="text-[10px] text-slate-400 font-bold">Adres (Ulica, Kod, Miasto):</span>
+                <input id="edit-cust-address" type="text" placeholder="Adres (Ulica, Kod, Miasto)" value="${wzState.customer.address || ''}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded-lg text-white focus:ring-1 focus:ring-amber-500" />
+              </div>
+              <div class="flex flex-col gap-1">
+                <span class="text-[10px] text-slate-400 font-bold">NIP / VAT UE:</span>
+                <input id="edit-cust-nip" type="text" placeholder="NIP (np. PL9452024663)" value="${wzState.customer.nip || ''}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded-lg font-mono text-white focus:ring-1 focus:ring-amber-500" />
+              </div>
+              <div class="flex flex-col gap-1">
+                <span class="text-[10px] text-slate-400 font-bold">REGON (opcjonalnie):</span>
+                <input id="edit-cust-regon" type="text" placeholder="REGON" value="${wzState.customer.regon || ''}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded-lg font-mono text-white focus:ring-1 focus:ring-amber-500" />
+              </div>
+              <div class="sm:col-span-2 flex flex-col gap-1">
+                <span class="text-[10px] text-slate-400 font-bold">Kontakt / Email / Tel / WWW:</span>
+                <input id="edit-cust-contact" type="text" placeholder="Kontakt / email / www / tel" value="${wzState.customer.contact || ''}" class="bg-slate-950 border border-amber-500/60 p-1.5 rounded-lg text-white focus:ring-1 focus:ring-amber-500" />
+              </div>
+            </div>
+
+            <div class="flex flex-wrap justify-between items-center gap-2 mt-1 pt-2 border-t border-amber-500/30">
+              <div class="flex items-center gap-2">
+                ${wzState.customer.id ? `
+                  <button id="btn-delete-cust-drawer" class="bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 font-bold py-1.5 px-3 rounded-lg text-xs transition-colors flex items-center gap-1 active:scale-95">
+                    <span class="material-symbols-outlined text-[15px]">delete</span>
+                    <span>Usuń tę firmę z bazy</span>
+                  </button>
+                ` : ''}
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="btn-close-cust-drawer" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-1.5 px-3 rounded-lg text-xs transition-colors">Zamknij</button>
+                <button id="btn-save-cust-preset" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black py-1.5 px-3.5 rounded-lg text-xs transition-colors flex items-center gap-1 shadow-md active:scale-95">
+                  <span class="material-symbols-outlined text-[15px]">save</span>
+                  <span>Zapisz w bazie kontrahentów</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -694,7 +748,143 @@ export function renderWzGeneratorView(container, navigateTo) {
       </main>
 
       <!-- ═════════════════════════════════════════════════════════════════════
-           MODAL: ODOO PRODUCTS BROWSER / SELECTOR (DARK THEMED)
+           MODAL 1: BAZA KONTRAHENTÓW I ZARZĄDZANIE FIRMAMI (MODERN DARK THEMED)
+           ═════════════════════════════════════════════════════════════════════ -->
+      ${showCustomersModal ? `
+        <div id="customers-modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+          <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full p-5 shadow-2xl flex flex-col gap-4 max-h-[88vh] text-slate-100">
+            
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-400 text-2xl">corporate_fare</span>
+                <div>
+                  <h2 class="font-bold text-white text-base">Baza Kontrahentów i Odbiorców WZ (${currentCustomers.length})</h2>
+                  <p class="text-[11px] text-slate-400">Dodawaj, edytuj, usuwaj kontrahentów lub przywracaj domyślne firmy</p>
+                </div>
+              </div>
+              <button id="close-customers-modal-btn" class="p-1 text-slate-400 hover:text-white rounded-full hover:bg-slate-800">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <!-- Search Customer input inside modal -->
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+              <input id="modal-customer-search-input" type="text" value="${customerModalSearchQuery}" placeholder="Szukaj firmy po nazwie, NIP, mieście lub kontakcie..." autofocus class="w-full pl-10 pr-4 py-2 bg-slate-950 border-2 border-slate-700 focus:border-indigo-500 rounded-xl text-xs font-bold text-white placeholder:text-slate-500 outline-none" />
+            </div>
+
+            <!-- Add / Edit Customer Form inside Modal -->
+            <div class="bg-slate-950/80 border border-indigo-500/40 rounded-xl p-3.5 flex flex-col gap-2.5">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-indigo-300 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-[16px]">${editingCustomerInModal ? 'edit' : 'add_circle'}</span>
+                  <span>${editingCustomerInModal ? `Edycja kontrahenta: "${editingCustomerInModal.name}"` : '➕ Dodaj nowego kontrahenta do bazy:'}</span>
+                </span>
+                ${editingCustomerInModal ? `
+                  <button id="btn-cancel-modal-customer-edit" class="text-xs text-rose-400 hover:underline">Anuluj edycję</button>
+                ` : ''}
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                <div class="flex flex-col gap-1">
+                  <span class="text-[10px] text-slate-400 font-bold">Pełna nazwa firmy:*</span>
+                  <input id="modal-inp-cust-name" type="text" placeholder="np. KINAR Kamil Janiszewski" value="${editingCustomerInModal ? editingCustomerInModal.name || '' : ''}" class="bg-slate-900 border border-slate-700 focus:border-indigo-500 p-1.5 rounded-lg text-white font-bold" />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <span class="text-[10px] text-slate-400 font-bold">Adres (Ulica, Kod, Miasto):*</span>
+                  <input id="modal-inp-cust-address" type="text" placeholder="np. ul. Modra 24/16, 54-151 Wrocław" value="${editingCustomerInModal ? editingCustomerInModal.address || '' : ''}" class="bg-slate-900 border border-slate-700 focus:border-indigo-500 p-1.5 rounded-lg text-white" />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <span class="text-[10px] text-slate-400 font-bold">NIP / VAT UE:</span>
+                  <input id="modal-inp-cust-nip" type="text" placeholder="np. PL8982138720" value="${editingCustomerInModal ? editingCustomerInModal.nip || '' : ''}" class="bg-slate-900 border border-slate-700 focus:border-indigo-500 p-1.5 rounded-lg font-mono text-white" />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <span class="text-[10px] text-slate-400 font-bold">REGON:</span>
+                  <input id="modal-inp-cust-regon" type="text" placeholder="np. 35690824" value="${editingCustomerInModal ? editingCustomerInModal.regon || '' : ''}" class="bg-slate-900 border border-slate-700 focus:border-indigo-500 p-1.5 rounded-lg font-mono text-white" />
+                </div>
+                <div class="sm:col-span-2 flex flex-col gap-1">
+                  <span class="text-[10px] text-slate-400 font-bold">Kontakt / Email / Tel / WWW:</span>
+                  <input id="modal-inp-cust-contact" type="text" placeholder="np. biuro@firma.pl, tel. +48 577 928 734, www.firma.pl" value="${editingCustomerInModal ? editingCustomerInModal.contact || '' : ''}" class="bg-slate-900 border border-slate-700 focus:border-indigo-500 p-1.5 rounded-lg text-white" />
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2 mt-1">
+                <button id="btn-save-modal-customer" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-1.5 rounded-lg shadow-md transition-colors flex items-center gap-1 active:scale-95">
+                  <span class="material-symbols-outlined text-[15px]">save</span>
+                  <span>${editingCustomerInModal ? 'Zaktualizuj dane w bazie' : 'Zapisz nową firmę w bazie'}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Customers Cards List -->
+            <div class="flex-1 overflow-y-auto flex flex-col gap-2 max-h-[42vh] pr-1">
+              ${(() => {
+                const q = customerModalSearchQuery.toLowerCase().trim();
+                const filtered = currentCustomers.filter(c => 
+                  !q || 
+                  (c.name && c.name.toLowerCase().includes(q)) || 
+                  (c.nip && c.nip.toLowerCase().includes(q)) || 
+                  (c.address && c.address.toLowerCase().includes(q)) || 
+                  (c.contact && c.contact.toLowerCase().includes(q))
+                );
+
+                if (filtered.length === 0) {
+                  return `
+                    <div class="text-center py-8 text-slate-500 text-xs font-bold">
+                      Brak kontrahentów pasujących do frazy "${customerModalSearchQuery}".
+                    </div>
+                  `;
+                }
+
+                return filtered.map(c => `
+                  <div class="flex flex-wrap justify-between items-center p-3 bg-slate-800/80 border border-slate-700 rounded-xl hover:bg-slate-800 transition-all gap-3">
+                    <div class="flex flex-col gap-0.5 max-w-[65%]">
+                      <div class="flex items-center gap-2">
+                        <strong class="text-white text-xs sm:text-sm font-bold">${c.name}</strong>
+                        ${isCustomerEc(c) ? '<span class="bg-emerald-950 text-emerald-300 border border-emerald-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full">Odoo Auto-Sync</span>' : ''}
+                      </div>
+                      <div class="text-slate-300 text-xs">${c.address || 'Brak adresu'}</div>
+                      <div class="text-[11px] text-slate-400 flex flex-wrap gap-2">
+                        <span>NIP: <strong class="text-slate-200 font-mono">${c.nip || 'Brak'}</strong></span>
+                        ${c.regon ? `<span>REGON: <strong class="text-slate-200 font-mono">${c.regon}</strong></span>` : ''}
+                        ${c.contact ? `<span>• ${c.contact}</span>` : ''}
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-1.5">
+                      <button class="btn-select-customer-for-wz bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-all active:scale-95 shadow-sm flex items-center gap-1" data-id="${c.id}" title="Ustaw jako odbiorcę bieżącego dokumentu WZ">
+                        <span class="material-symbols-outlined text-[15px]">check</span>
+                        <span>Wybierz dla WZ</span>
+                      </button>
+                      <button class="btn-edit-customer-in-modal bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-xs p-1.5 rounded-lg transition-colors" data-id="${c.id}" title="Edytuj dane kontrahenta">
+                        <span class="material-symbols-outlined text-[16px]">edit</span>
+                      </button>
+                      <button class="btn-delete-customer-in-modal text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 p-1.5 rounded-lg transition-colors" data-id="${c.id}" title="Usuń z bazy kontrahentów">
+                        <span class="material-symbols-outlined text-[16px]">delete</span>
+                      </button>
+                    </div>
+                  </div>
+                `).join('');
+              })()}
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex flex-wrap justify-between items-center pt-2 border-t border-slate-800 gap-2">
+              <button id="btn-reset-default-customers" class="text-slate-400 hover:text-amber-300 text-xs font-bold flex items-center gap-1 hover:underline">
+                <span class="material-symbols-outlined text-[15px]">restart_alt</span>
+                <span>Przywróć domyślną listę firm (EC, KINAR, MV Center, ZMJ, MATMONT, Husqvarna)</span>
+              </button>
+              <button id="btn-close-customers-modal-bottom" class="bg-slate-800 hover:bg-slate-700 font-bold px-4 py-2 rounded-xl text-xs text-slate-200">
+                Zamknij
+              </button>
+            </div>
+
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- ═════════════════════════════════════════════════════════════════════
+           MODAL 2: ODOO PRODUCTS BROWSER / SELECTOR (DARK THEMED)
            ═════════════════════════════════════════════════════════════════════ -->
       ${showOdooPickerModal ? `
         <div id="odoo-picker-modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
@@ -745,7 +935,7 @@ export function renderWzGeneratorView(container, navigateTo) {
       ` : ''}
 
       <!-- ═════════════════════════════════════════════════════════════════════
-           MODAL: WZ BROWSER & MANAGER (2 TABS: SZKICE vs WYSTAWIONE WZ)
+           MODAL 3: WZ BROWSER & MANAGER (2 TABS: SZKICE vs WYSTAWIONE WZ)
            ═════════════════════════════════════════════════════════════════════ -->
       ${showHistoryModal ? `
         <div id="history-modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
@@ -872,6 +1062,8 @@ export function renderWzGeneratorView(container, navigateTo) {
   }
 
   function setupEventHandlers() {
+    const currentCustomers = getSavedCustomers();
+
     const backBtn = container.querySelector('#btn-back-mag');
     if (backBtn) backBtn.addEventListener('click', () => navigateTo('dashboard'));
 
@@ -883,6 +1075,156 @@ export function renderWzGeneratorView(container, navigateTo) {
       });
     }
 
+    // ═════════════════════════════════════════════════════════════════════════
+    // CUSTOMERS MODAL CONTROLS
+    // ═════════════════════════════════════════════════════════════════════════
+    const btnOpenCustTop = container.querySelector('#btn-open-customers-top');
+    const btnOpenCustRow = container.querySelector('#btn-manage-customers');
+    [btnOpenCustTop, btnOpenCustRow].forEach(b => {
+      if (b) b.addEventListener('click', () => {
+        showCustomersModal = true;
+        editingCustomerInModal = null;
+        customerModalSearchQuery = '';
+        renderUI();
+      });
+    });
+
+    const closeCustBtn = container.querySelector('#close-customers-modal-btn');
+    const closeCustBottom = container.querySelector('#btn-close-customers-modal-bottom');
+    [closeCustBtn, closeCustBottom].forEach(b => {
+      if (b) b.addEventListener('click', () => {
+        showCustomersModal = false;
+        editingCustomerInModal = null;
+        renderUI();
+      });
+    });
+
+    const searchCustInput = container.querySelector('#modal-customer-search-input');
+    if (searchCustInput) {
+      searchCustInput.addEventListener('input', (e) => {
+        customerModalSearchQuery = e.target.value;
+        renderUI();
+        const reInput = container.querySelector('#modal-customer-search-input');
+        if (reInput) {
+          reInput.focus();
+          reInput.setSelectionRange(reInput.value.length, reInput.value.length);
+        }
+      });
+    }
+
+    const cancelModalEditBtn = container.querySelector('#btn-cancel-modal-customer-edit');
+    if (cancelModalEditBtn) {
+      cancelModalEditBtn.addEventListener('click', () => {
+        editingCustomerInModal = null;
+        renderUI();
+      });
+    }
+
+    const saveModalCustBtn = container.querySelector('#btn-save-modal-customer');
+    if (saveModalCustBtn) {
+      saveModalCustBtn.addEventListener('click', () => {
+        const nameInp = container.querySelector('#modal-inp-cust-name');
+        const addrInp = container.querySelector('#modal-inp-cust-address');
+        const nipInp = container.querySelector('#modal-inp-cust-nip');
+        const regonInp = container.querySelector('#modal-inp-cust-regon');
+        const contactInp = container.querySelector('#modal-inp-cust-contact');
+
+        const nameVal = nameInp?.value.trim();
+        if (!nameVal) {
+          alert('Wpisz nazwę firmy!');
+          return;
+        }
+
+        const newCustObj = {
+          id: editingCustomerInModal ? editingCustomerInModal.id : `cust_${Date.now()}`,
+          name: nameVal,
+          address: addrInp?.value.trim() || '',
+          nip: nipInp?.value.trim() || '',
+          regon: regonInp?.value.trim() || '',
+          contact: contactInp?.value.trim() || ''
+        };
+
+        saveCustomer(newCustObj);
+
+        // If currently editing the selected customer on the WZ sheet, update wzState too
+        if (wzState.customer.id === newCustObj.id || wzState.customer.name === newCustObj.name) {
+          wzState.customer = { ...newCustObj };
+          wzState.deductFromOdoo = isCustomerEc(newCustObj);
+        }
+
+        statusBannerType = 'success';
+        statusBannerMsg = `Zapisano dane firmy: "${newCustObj.name}"!`;
+        editingCustomerInModal = null;
+        renderUI();
+      });
+    }
+
+    // Modal Cards: Select for WZ
+    container.querySelectorAll('.btn-select-customer-for-wz').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const found = currentCustomers.find(c => c.id === id);
+        if (found) {
+          wzState.customer = { ...found };
+          wzState.deductFromOdoo = isCustomerEc(found);
+          showCustomersModal = false;
+          statusBannerType = 'info';
+          statusBannerMsg = `Ustawiono kontrahenta: "${found.name}" na dokumencie WZ.`;
+          renderUI();
+        }
+      });
+    });
+
+    // Modal Cards: Edit
+    container.querySelectorAll('.btn-edit-customer-in-modal').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const found = currentCustomers.find(c => c.id === id);
+        if (found) {
+          editingCustomerInModal = { ...found };
+          renderUI();
+        }
+      });
+    });
+
+    // Modal Cards: Delete
+    container.querySelectorAll('.btn-delete-customer-in-modal').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const found = currentCustomers.find(c => c.id === id);
+        if (confirm(`Czy na pewno chcesz usunąć firmę "${found?.name || id}" z bazy kontrahentów?`)) {
+          deleteCustomer(id);
+          if (wzState.customer.id === id) {
+            const remaining = getSavedCustomers();
+            wzState.customer = remaining[0] || { name: '', address: '', nip: '', contact: '' };
+            wzState.deductFromOdoo = isCustomerEc(wzState.customer);
+          }
+          statusBannerType = 'info';
+          statusBannerMsg = `Usunięto firmę "${found?.name || id}" z bazy.`;
+          renderUI();
+        }
+      });
+    });
+
+    // Reset default customers
+    const resetDefCustBtn = container.querySelector('#btn-reset-default-customers');
+    if (resetDefCustBtn) {
+      resetDefCustBtn.addEventListener('click', () => {
+        if (confirm('Czy na pewno przywrócić domyślną listę firm (EC Engineering, KINAR, MV Center, ZMJ Metals, MATMONT, Husqvarna)?')) {
+          resetCustomersToDefault();
+          const refreshed = getSavedCustomers();
+          wzState.customer = { ...refreshed[0] };
+          wzState.deductFromOdoo = isCustomerEc(refreshed[0]);
+          statusBannerType = 'success';
+          statusBannerMsg = 'Przywrócono domyślną bazę kontrahentów!';
+          renderUI();
+        }
+      });
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // WZ HISTORY / DRAFTS MODAL CONTROLS
+    // ═════════════════════════════════════════════════════════════════════════
     const histToggle = container.querySelector('#btn-toggle-wz-history');
     if (histToggle) {
       histToggle.addEventListener('click', () => {
@@ -1071,7 +1413,7 @@ export function renderWzGeneratorView(container, navigateTo) {
       });
     }
 
-    // Customer Selection
+    // Customer Selection Dropdown
     const selectCust = container.querySelector('#select-customer-preset');
     const custEditBox = container.querySelector('#customer-edit-box');
     const btnEditCust = container.querySelector('#btn-edit-customer');
@@ -1082,14 +1424,21 @@ export function renderWzGeneratorView(container, navigateTo) {
       });
     }
 
+    const closeCustDrawer = container.querySelector('#btn-close-cust-drawer');
+    if (closeCustDrawer) {
+      closeCustDrawer.addEventListener('click', () => {
+        custEditBox.classList.add('hidden');
+      });
+    }
+
     if (selectCust) {
       selectCust.addEventListener('change', (e) => {
         if (e.target.value === 'NEW') {
           custEditBox.classList.remove('hidden');
-          wzState.customer = { name: '', address: '', nip: '', regon: '', contact: '' };
+          wzState.customer = { id: '', name: '', address: '', nip: '', regon: '', contact: '' };
           wzState.deductFromOdoo = false;
         } else {
-          const found = customers.find(c => c.id === e.target.value);
+          const found = currentCustomers.find(c => c.id === e.target.value);
           if (found) {
             wzState.customer = { ...found };
             custEditBox.classList.add('hidden');
@@ -1103,21 +1452,25 @@ export function renderWzGeneratorView(container, navigateTo) {
     const editName = container.querySelector('#edit-cust-name');
     const editAddr = container.querySelector('#edit-cust-address');
     const editNip = container.querySelector('#edit-cust-nip');
+    const editRegon = container.querySelector('#edit-cust-regon');
     const editContact = container.querySelector('#edit-cust-contact');
     const btnSaveCust = container.querySelector('#btn-save-cust-preset');
+    const btnDeleteCustDrawer = container.querySelector('#btn-delete-cust-drawer');
 
     const updateCustFromInputs = () => {
       wzState.customer = {
+        id: wzState.customer.id || '',
         name: editName?.value || '',
         address: editAddr?.value || '',
         nip: editNip?.value || '',
+        regon: editRegon?.value || '',
         contact: editContact?.value || ''
       };
       wzState.deductFromOdoo = isCustomerEc(wzState.customer);
       updatePreview();
     };
 
-    [editName, editAddr, editNip, editContact].forEach(inp => {
+    [editName, editAddr, editNip, editRegon, editContact].forEach(inp => {
       if (inp) inp.addEventListener('input', updateCustFromInputs);
     });
 
@@ -1126,8 +1479,23 @@ export function renderWzGeneratorView(container, navigateTo) {
         updateCustFromInputs();
         if (!wzState.customer.name) { alert('Wpisz nazwę firmy!'); return; }
         saveCustomer(wzState.customer);
-        alert('Zapisano kontrahenta!');
+        statusBannerType = 'success';
+        statusBannerMsg = `Zapisano kontrahenta "${wzState.customer.name}" w bazie!`;
         renderUI();
+      });
+    }
+
+    if (btnDeleteCustDrawer) {
+      btnDeleteCustDrawer.addEventListener('click', () => {
+        if (wzState.customer.id && confirm(`Czy usunąć firmę "${wzState.customer.name}" z bazy kontrahentów?`)) {
+          deleteCustomer(wzState.customer.id);
+          const remaining = getSavedCustomers();
+          wzState.customer = remaining[0] || { name: '', address: '', nip: '', contact: '' };
+          wzState.deductFromOdoo = isCustomerEc(wzState.customer);
+          statusBannerType = 'info';
+          statusBannerMsg = 'Usunięto kontrahenta z bazy.';
+          renderUI();
+        }
       });
     }
 
