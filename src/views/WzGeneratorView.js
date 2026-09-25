@@ -428,10 +428,15 @@ export function renderWzGeneratorView(container, navigateTo) {
             <div class="md:col-span-5 flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
               <span class="font-bold text-slate-300 whitespace-nowrap">Odbiorca:</span>
               <select id="select-customer-preset" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold py-1 px-2 text-white focus:ring-1 focus:ring-blue-500 text-xs">
-                ${currentCustomers.map(c => `
-                  <option value="${c.id}" ${(wzState.customer.id === c.id || wzState.customer.name === c.name) ? 'selected' : ''}>${c.name}</option>
-                `).join('')}
-                <option value="NEW">+ Wpisz / Dodaj nowego...</option>
+                ${currentCustomers.map(c => {
+                  const isSelected = wzState.customer && (
+                    wzState.customer.id === c.id || 
+                    (wzState.customer.nip && c.nip && wzState.customer.nip.trim().replace(/[\s-]/g, '').toUpperCase() === c.nip.trim().replace(/[\s-]/g, '').toUpperCase()) ||
+                    (wzState.customer.name && c.name && wzState.customer.name.trim().toLowerCase() === c.name.trim().toLowerCase())
+                  );
+                  return `<option value="${c.id}" ${isSelected ? 'selected' : ''}>${c.name}</option>`;
+                }).join('')}
+                <option value="NEW" ${(!wzState.customer || !wzState.customer.name || !currentCustomers.some(c => c.id === wzState.customer.id || (c.name && wzState.customer.name && c.name.trim().toLowerCase() === wzState.customer.name.trim().toLowerCase()))) ? 'selected' : ''}>+ Wpisz / Dodaj nowego...</option>
               </select>
               <button id="btn-edit-customer" title="Szybka edycja danych bieżącego odbiorcy" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-1.5 rounded-lg transition-colors flex items-center gap-0.5">
                 <span class="material-symbols-outlined text-[16px]">edit</span>
@@ -817,55 +822,41 @@ export function renderWzGeneratorView(container, navigateTo) {
             </div>
 
             <!-- Customers Cards List -->
-            <div class="flex-1 overflow-y-auto flex flex-col gap-2 max-h-[42vh] pr-1">
-              ${(() => {
-                const q = customerModalSearchQuery.toLowerCase().trim();
-                const filtered = currentCustomers.filter(c => 
-                  !q || 
-                  (c.name && c.name.toLowerCase().includes(q)) || 
-                  (c.nip && c.nip.toLowerCase().includes(q)) || 
-                  (c.address && c.address.toLowerCase().includes(q)) || 
-                  (c.contact && c.contact.toLowerCase().includes(q))
-                );
-
-                if (filtered.length === 0) {
-                  return `
-                    <div class="text-center py-8 text-slate-500 text-xs font-bold">
-                      Brak kontrahentów pasujących do frazy "${customerModalSearchQuery}".
+            <div id="modal-customers-list-container" class="flex-1 overflow-y-auto flex flex-col gap-2 max-h-[42vh] pr-1">
+              ${currentCustomers.map(c => `
+                <div class="customer-modal-card flex flex-wrap justify-between items-center p-3 bg-slate-800/80 border border-slate-700 rounded-xl hover:bg-slate-800 transition-all gap-3"
+                  data-id="${c.id}"
+                  data-search="${((c.name || '') + ' ' + (c.nip || '') + ' ' + (c.address || '') + ' ' + (c.contact || '') + ' ' + (c.regon || '')).toLowerCase()}">
+                  <div class="flex flex-col gap-0.5 max-w-[65%]">
+                    <div class="flex items-center gap-2">
+                      <strong class="text-white text-xs sm:text-sm font-bold">${c.name}</strong>
+                      ${isCustomerEc(c) ? '<span class="bg-emerald-950 text-emerald-300 border border-emerald-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full">Odoo Auto-Sync</span>' : ''}
                     </div>
-                  `;
-                }
-
-                return filtered.map(c => `
-                  <div class="flex flex-wrap justify-between items-center p-3 bg-slate-800/80 border border-slate-700 rounded-xl hover:bg-slate-800 transition-all gap-3">
-                    <div class="flex flex-col gap-0.5 max-w-[65%]">
-                      <div class="flex items-center gap-2">
-                        <strong class="text-white text-xs sm:text-sm font-bold">${c.name}</strong>
-                        ${isCustomerEc(c) ? '<span class="bg-emerald-950 text-emerald-300 border border-emerald-700/60 text-[10px] font-bold px-2 py-0.5 rounded-full">Odoo Auto-Sync</span>' : ''}
-                      </div>
-                      <div class="text-slate-300 text-xs">${c.address || 'Brak adresu'}</div>
-                      <div class="text-[11px] text-slate-400 flex flex-wrap gap-2">
-                        <span>NIP: <strong class="text-slate-200 font-mono">${c.nip || 'Brak'}</strong></span>
-                        ${c.regon ? `<span>REGON: <strong class="text-slate-200 font-mono">${c.regon}</strong></span>` : ''}
-                        ${c.contact ? `<span>• ${c.contact}</span>` : ''}
-                      </div>
-                    </div>
-                    
-                    <div class="flex items-center gap-1.5">
-                      <button class="btn-select-customer-for-wz bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-all active:scale-95 shadow-sm flex items-center gap-1" data-id="${c.id}" title="Ustaw jako odbiorcę bieżącego dokumentu WZ">
-                        <span class="material-symbols-outlined text-[15px]">check</span>
-                        <span>Wybierz dla WZ</span>
-                      </button>
-                      <button class="btn-edit-customer-in-modal bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-xs p-1.5 rounded-lg transition-colors" data-id="${c.id}" title="Edytuj dane kontrahenta">
-                        <span class="material-symbols-outlined text-[16px]">edit</span>
-                      </button>
-                      <button class="btn-delete-customer-in-modal text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 p-1.5 rounded-lg transition-colors" data-id="${c.id}" title="Usuń z bazy kontrahentów">
-                        <span class="material-symbols-outlined text-[16px]">delete</span>
-                      </button>
+                    <div class="text-slate-300 text-xs">${c.address || 'Brak adresu'}</div>
+                    <div class="text-[11px] text-slate-400 flex flex-wrap gap-2">
+                      <span>NIP: <strong class="text-slate-200 font-mono">${c.nip || 'Brak'}</strong></span>
+                      ${c.regon ? `<span>REGON: <strong class="text-slate-200 font-mono">${c.regon}</strong></span>` : ''}
+                      ${c.contact ? `<span>• ${c.contact}</span>` : ''}
                     </div>
                   </div>
-                `).join('');
-              })()}
+                  
+                  <div class="flex items-center gap-1.5">
+                    <button class="btn-select-customer-for-wz bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition-all active:scale-95 shadow-sm flex items-center gap-1" data-id="${c.id}" title="Ustaw jako odbiorcę bieżącego dokumentu WZ">
+                      <span class="material-symbols-outlined text-[15px]">check</span>
+                      <span>Wybierz dla WZ</span>
+                    </button>
+                    <button class="btn-edit-customer-in-modal bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-xs p-1.5 rounded-lg transition-colors" data-id="${c.id}" title="Edytuj dane kontrahenta">
+                      <span class="material-symbols-outlined text-[16px]">edit</span>
+                    </button>
+                    <button class="btn-delete-customer-in-modal text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 p-1.5 rounded-lg transition-colors" data-id="${c.id}" title="Usuń z bazy kontrahentów">
+                      <span class="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+              <div id="modal-customer-no-results" class="hidden text-center py-8 text-slate-500 text-xs font-bold">
+                Brak kontrahentów pasujących do szukanej frazy.
+              </div>
             </div>
 
             <!-- Modal Footer -->
@@ -1102,12 +1093,19 @@ export function renderWzGeneratorView(container, navigateTo) {
     const searchCustInput = container.querySelector('#modal-customer-search-input');
     if (searchCustInput) {
       searchCustInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
         customerModalSearchQuery = e.target.value;
-        renderUI();
-        const reInput = container.querySelector('#modal-customer-search-input');
-        if (reInput) {
-          reInput.focus();
-          reInput.setSelectionRange(reInput.value.length, reInput.value.length);
+        const cards = container.querySelectorAll('.customer-modal-card');
+        let matchCount = 0;
+        cards.forEach(card => {
+          const searchData = card.getAttribute('data-search') || '';
+          const match = !q || searchData.includes(q);
+          card.style.display = match ? '' : 'none';
+          if (match) matchCount++;
+        });
+        const noResultsEl = container.querySelector('#modal-customer-no-results');
+        if (noResultsEl) {
+          noResultsEl.classList.toggle('hidden', matchCount > 0);
         }
       });
     }
@@ -1144,17 +1142,17 @@ export function renderWzGeneratorView(container, navigateTo) {
           contact: contactInp?.value.trim() || ''
         };
 
-        saveCustomer(newCustObj);
+        const { savedCustomer } = saveCustomer(newCustObj);
+        const activeCust = savedCustomer || newCustObj;
 
-        // If currently editing the selected customer on the WZ sheet, update wzState too
-        if (wzState.customer.id === newCustObj.id || wzState.customer.name === newCustObj.name) {
-          wzState.customer = { ...newCustObj };
-          wzState.deductFromOdoo = isCustomerEc(newCustObj);
-        }
+        // Auto-select as active customer on WZ sheet
+        wzState.customer = { ...activeCust };
+        wzState.deductFromOdoo = isCustomerEc(activeCust);
 
         statusBannerType = 'success';
-        statusBannerMsg = `Zapisano dane firmy: "${newCustObj.name}"!`;
+        statusBannerMsg = `Zapisano dane firmy: "${activeCust.name}" i wybrano dla WZ!`;
         editingCustomerInModal = null;
+        showCustomersModal = false;
         renderUI();
       });
     }
@@ -1435,8 +1433,19 @@ export function renderWzGeneratorView(container, navigateTo) {
       selectCust.addEventListener('change', (e) => {
         if (e.target.value === 'NEW') {
           custEditBox.classList.remove('hidden');
-          wzState.customer = { id: '', name: '', address: '', nip: '', regon: '', contact: '' };
+          wzState.customer = { id: `cust_${Date.now()}`, name: '', address: '', nip: '', regon: '', contact: '' };
           wzState.deductFromOdoo = false;
+          const editName = container.querySelector('#edit-cust-name');
+          const editAddr = container.querySelector('#edit-cust-address');
+          const editNip = container.querySelector('#edit-cust-nip');
+          const editRegon = container.querySelector('#edit-cust-regon');
+          const editContact = container.querySelector('#edit-cust-contact');
+          if (editName) { editName.value = ''; setTimeout(() => editName.focus(), 50); }
+          if (editAddr) editAddr.value = '';
+          if (editNip) editNip.value = '';
+          if (editRegon) editRegon.value = '';
+          if (editContact) editContact.value = '';
+          updatePreview();
         } else {
           const found = currentCustomers.find(c => c.id === e.target.value);
           if (found) {
@@ -1444,8 +1453,8 @@ export function renderWzGeneratorView(container, navigateTo) {
             custEditBox.classList.add('hidden');
             wzState.deductFromOdoo = isCustomerEc(found);
           }
+          renderUI();
         }
-        renderUI();
       });
     }
 
@@ -1477,8 +1486,16 @@ export function renderWzGeneratorView(container, navigateTo) {
     if (btnSaveCust) {
       btnSaveCust.addEventListener('click', () => {
         updateCustFromInputs();
-        if (!wzState.customer.name) { alert('Wpisz nazwę firmy!'); return; }
-        saveCustomer(wzState.customer);
+        if (!wzState.customer.name || !wzState.customer.name.trim()) { 
+          alert('Wpisz nazwę firmy!'); 
+          return; 
+        }
+        const { savedCustomer } = saveCustomer(wzState.customer);
+        if (savedCustomer) {
+          wzState.customer = { ...savedCustomer };
+          wzState.deductFromOdoo = isCustomerEc(savedCustomer);
+        }
+        custEditBox.classList.add('hidden');
         statusBannerType = 'success';
         statusBannerMsg = `Zapisano kontrahenta "${wzState.customer.name}" w bazie!`;
         renderUI();
@@ -1747,6 +1764,13 @@ export function renderWzGeneratorView(container, navigateTo) {
     const btnSaveDraft = container.querySelector('#btn-save-draft');
     if (btnSaveDraft) {
       btnSaveDraft.addEventListener('click', () => {
+        // Auto-save customer to database if has name
+        if (wzState.customer && wzState.customer.name && wzState.customer.name.trim()) {
+          const { savedCustomer } = saveCustomer(wzState.customer);
+          if (savedCustomer) {
+            wzState.customer = { ...savedCustomer };
+          }
+        }
         saveWzDraft(wzState);
         statusBannerType = 'success';
         statusBannerMsg = `Zapisano szkic dokumentu (${formatFullWzNumber()}) dla "${wzState.customer?.name || 'Klient'}". Dostępny w zakładce „Baza WZ -> Szkice Robocze”.`;
@@ -1768,6 +1792,14 @@ export function renderWzGeneratorView(container, navigateTo) {
         let deductedSummary = [];
 
         try {
+          // Auto-save customer to database if has name
+          if (wzState.customer && wzState.customer.name && wzState.customer.name.trim()) {
+            const { savedCustomer } = saveCustomer(wzState.customer);
+            if (savedCustomer) {
+              wzState.customer = { ...savedCustomer };
+            }
+          }
+
           // 1. Deduct Stock in Odoo 19 ONLY if deductFromOdoo is enabled
           if (wzState.deductFromOdoo) {
             for (const it of wzState.items) {

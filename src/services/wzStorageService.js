@@ -62,26 +62,31 @@ export const DEFAULT_CUSTOMERS = [
   }
 ];
 
+const CUSTOMERS_SCHEMA_VERSION = 'v3';
+const STORAGE_KEY_CUSTOMERS_INIT = 'bluemake_wz_customers_init_ver';
+
 export function getSavedCustomers() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY_WZ_CUSTOMERS);
+    const initVer = localStorage.getItem(STORAGE_KEY_CUSTOMERS_INIT);
+    
     if (saved) {
       let parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        let modified = false;
-        for (const def of DEFAULT_CUSTOMERS) {
-          const exists = parsed.some(c => 
-            c.id === def.id || 
-            (def.nip && c.nip === def.nip) || 
-            (c.name && c.name.toLowerCase() === def.name.toLowerCase())
-          );
-          if (!exists) {
-            parsed.push(def);
-            modified = true;
+        // If first time running v3 schema, merge new default customers (KINAR, MV Center, ZMJ, MATMONT)
+        if (initVer !== CUSTOMERS_SCHEMA_VERSION) {
+          for (const def of DEFAULT_CUSTOMERS) {
+            const exists = parsed.some(c => 
+              c.id === def.id || 
+              (def.nip && c.nip && c.nip.trim().replace(/[\s-]/g, '').toUpperCase() === def.nip.trim().replace(/[\s-]/g, '').toUpperCase()) || 
+              (c.name && c.name.trim().toLowerCase() === def.name.trim().toLowerCase())
+            );
+            if (!exists) {
+              parsed.push(def);
+            }
           }
-        }
-        if (modified) {
           localStorage.setItem(STORAGE_KEY_WZ_CUSTOMERS, JSON.stringify(parsed));
+          localStorage.setItem(STORAGE_KEY_CUSTOMERS_INIT, CUSTOMERS_SCHEMA_VERSION);
         }
         return parsed;
       }
@@ -89,30 +94,57 @@ export function getSavedCustomers() {
   } catch (e) {
     console.error('Error loading WZ customers:', e);
   }
+  
   localStorage.setItem(STORAGE_KEY_WZ_CUSTOMERS, JSON.stringify(DEFAULT_CUSTOMERS));
+  localStorage.setItem(STORAGE_KEY_CUSTOMERS_INIT, CUSTOMERS_SCHEMA_VERSION);
   return DEFAULT_CUSTOMERS;
 }
 
 export function saveCustomer(customer, operatorName = null) {
-  const list = getSavedCustomers();
-  const existingIdx = list.findIndex(c => c.id === customer.id || (customer.nip && c.nip && c.nip === customer.nip));
-  const isNew = existingIdx < 0;
-  if (existingIdx >= 0) {
-    list[existingIdx] = { ...list[existingIdx], ...customer };
-  } else {
-    list.unshift({ ...customer, id: customer.id || `cust_${Date.now()}` });
+  if (!customer || !customer.name || !customer.name.trim()) {
+    return { list: getSavedCustomers(), savedCustomer: customer };
   }
+
+  const list = getSavedCustomers();
+  const cleanName = customer.name.trim().toLowerCase();
+  const cleanNip = customer.nip ? String(customer.nip).trim().replace(/[\s-]/g, '').toUpperCase() : '';
+
+  const existingIdx = list.findIndex(c => {
+    if (customer.id && c.id === customer.id) return true;
+    if (cleanNip && c.nip && String(c.nip).trim().replace(/[\s-]/g, '').toUpperCase() === cleanNip) return true;
+    if (c.name && String(c.name).trim().toLowerCase() === cleanName) return true;
+    return false;
+  });
+
+  const isNew = existingIdx < 0;
+  const targetId = (existingIdx >= 0 && list[existingIdx].id) ? list[existingIdx].id : (customer.id && customer.id !== 'NEW' ? customer.id : `cust_${Date.now()}`);
+
+  const customerToSave = {
+    id: targetId,
+    name: customer.name.trim(),
+    address: customer.address ? customer.address.trim() : '',
+    nip: customer.nip ? customer.nip.trim() : '',
+    regon: customer.regon ? customer.regon.trim() : '',
+    contact: customer.contact ? customer.contact.trim() : ''
+  };
+
+  if (existingIdx >= 0) {
+    list[existingIdx] = { ...list[existingIdx], ...customerToSave };
+  } else {
+    list.unshift(customerToSave);
+  }
+
   localStorage.setItem(STORAGE_KEY_WZ_CUSTOMERS, JSON.stringify(list));
 
   logAuditAction({
     category: 'WZ',
     action: isNew ? '🏢 NOWY KONTRAHENT WZ' : '🏢 EDYCJA KONTRAHENTA WZ',
-    details: `Zapisano dane kontrahenta: "${customer.name}" (NIP: ${customer.nip || 'Brak'})`,
+    details: `Zapisano dane kontrahenta: "${customerToSave.name}" (NIP: ${customerToSave.nip || 'Brak'})`,
     operator: operatorName || getCurrentOperator()?.name,
     status: 'SUCCESS'
   });
 
-  return list;
+  return { list, savedCustomer: customerToSave };
 }
 
 export function deleteCustomer(customerId, operatorName = null) {
@@ -134,6 +166,7 @@ export function deleteCustomer(customerId, operatorName = null) {
 
 export function resetCustomersToDefault(operatorName = null) {
   localStorage.setItem(STORAGE_KEY_WZ_CUSTOMERS, JSON.stringify(DEFAULT_CUSTOMERS));
+  localStorage.setItem(STORAGE_KEY_CUSTOMERS_INIT, CUSTOMERS_SCHEMA_VERSION);
   logAuditAction({
     category: 'WZ',
     action: '🏢 RESET BAZY KONTRAHENTÓW',
