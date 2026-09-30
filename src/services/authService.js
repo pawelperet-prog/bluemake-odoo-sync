@@ -298,6 +298,7 @@ async function sendOdooSecurityAlert(targetUserName, attemptsCount, lockDuration
  * Universal Audit Logging - Complete History of all System Actions
  */
 export function logAuditAction({ 
+  id = null,
   action, 
   details, 
   operator = null, 
@@ -315,8 +316,12 @@ export function logAuditAction({
     const logs = getAuditLogs();
     
     const now = new Date();
+    const entryId = id || (Date.now() + Math.floor(Math.random() * 1000));
+    
+    // Check if an entry with this ID already exists
+    const existingIdx = logs.findIndex(l => l.id === entryId);
     const entry = {
-      id: Date.now() + Math.floor(Math.random() * 1000),
+      id: entryId,
       timestamp: now.toISOString(),
       dateFormatted: now.toLocaleString('pl-PL'),
       timeShort: now.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
@@ -332,13 +337,34 @@ export function logAuditAction({
       metadata: metadata || null
     };
     
-    logs.unshift(entry);
+    if (existingIdx >= 0) {
+      logs[existingIdx] = { ...logs[existingIdx], ...entry };
+    } else {
+      logs.unshift(entry);
+    }
+    
     // Keep last 1000 actions in persistent storage
     localStorage.setItem(LOCAL_STORAGE_AUDIT_LOGS_KEY, JSON.stringify(logs.slice(0, 1000)));
     return entry;
   } catch (e) {
     console.warn('Could not save audit log:', e);
   }
+}
+
+export function updateAuditLogStatus(id, newStatus, errorMsg = null) {
+  try {
+    const logs = getAuditLogs();
+    const found = logs.find(l => l.id === id);
+    if (found) {
+      found.status = newStatus;
+      if (errorMsg !== undefined) found.error = errorMsg;
+      localStorage.setItem(LOCAL_STORAGE_AUDIT_LOGS_KEY, JSON.stringify(logs));
+      return true;
+    }
+  } catch (e) {
+    console.warn('Could not update audit log status:', e);
+  }
+  return false;
 }
 
 export function getAuditLogs() {

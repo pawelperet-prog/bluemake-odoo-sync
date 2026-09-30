@@ -45,10 +45,15 @@ export function renderDashboardView(container, navigateTo) {
           <span class="material-symbols-outlined text-[16px]">badge</span>
           <span>PRACOWNICY</span>
         </button>
-        <!-- Zlecenia Produkcyjne & Zamówienia Button (Dostępne dla wszystkich) -->
+        <!-- Zlecenia Produkcyjne & Zamówienia Button -->
         <button id="hdr-orders" title="Zlecenia Produkcyjne & Zamówienia (EC, MV Center, ZMJ, Matmont, Alpha, Nikmet)" class="hidden sm:flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
           <span class="material-symbols-outlined text-[16px]">precision_manufacturing</span>
           <span>PRODUKCJA</span>
+        </button>
+        <!-- Historia Działań Button -->
+        <button id="hdr-history-btn" title="Dziennik ostatnich operacji i audyt" class="hidden sm:flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
+          <span class="material-symbols-outlined text-[16px] text-amber-400">history</span>
+          <span>HISTORIA</span>
         </button>
         ${isOpAdmin ? `
           <button id="hdr-valuation" title="Podstrona Wyceny i Raportu Magazynu" class="hidden sm:flex items-center gap-1 bg-primary text-on-primary font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
@@ -65,6 +70,59 @@ export function renderDashboardView(container, navigateTo) {
     </header>
 
     <main class="flex-1 w-full max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-stack-md flex flex-col gap-3 mt-14 mb-24">
+      
+      <!-- QUICK MODULES ACCESS BANNER (PRODUKCJA FIRM ZEWNĘTRZNYCH & HISTORIA DZIAŁAŃ) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-1">
+        <!-- Banner 1: Zlecenia i Produkcja Firm Zewnętrznych -->
+        <div id="card-open-orders" class="bg-gradient-to-r from-indigo-950 via-slate-900 to-slate-950 border-2 border-indigo-500/70 hover:border-indigo-400 rounded-2xl p-4 shadow-lg cursor-pointer transition-all active:scale-[0.99] flex items-center justify-between gap-3 group">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-indigo-600/30 text-indigo-400 border border-indigo-500/50 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-3xl">precision_manufacturing</span>
+            </div>
+            <div>
+              <div class="text-[11px] font-black text-indigo-400 uppercase tracking-wider flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                ZLECENIA FIRM ZEWNĘTRZNYCH & PRODUKCJA
+              </div>
+              <div class="text-sm sm:text-base font-black text-white">
+                EC • MV Center • ZMJ • Matmont • Alpha • Nikmet
+              </div>
+              <div class="text-[11px] text-slate-400 mt-0.5">
+                Kontrola statusów (Do produkcji / Zrealizowane) & Wystawianie WZ
+              </div>
+            </div>
+          </div>
+          <div class="hidden sm:flex items-center gap-1 bg-indigo-600 group-hover:bg-indigo-500 text-white text-xs font-black px-3 py-2 rounded-xl shadow-md transition-colors">
+            <span>OTWÓRZ</span>
+            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+          </div>
+        </div>
+
+        <!-- Banner 2: Ostatnie Działania i Dziennik Zdarzeń -->
+        <div id="card-open-history" class="bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-950 border-2 border-amber-500/60 hover:border-amber-400 rounded-2xl p-4 shadow-lg cursor-pointer transition-all active:scale-[0.99] flex items-center justify-between gap-3 group">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-amber-600/30 text-amber-400 border border-amber-500/50 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+              <span class="material-symbols-outlined text-3xl">history</span>
+            </div>
+            <div>
+              <div class="text-[11px] font-black text-amber-400 uppercase tracking-wider">
+                OSTATNIE DZIAŁANIA & DZIENNIK ZMIAN
+              </div>
+              <div class="text-sm sm:text-base font-black text-white">
+                Audyt operacji, ucięć, wydań i Odoo
+              </div>
+              <div class="text-[11px] text-slate-400 mt-0.5">
+                Sprawdzaj historię operatorów i statusy synchronizacji
+              </div>
+            </div>
+          </div>
+          <div class="hidden sm:flex items-center gap-1 bg-amber-600 group-hover:bg-amber-500 text-slate-950 text-xs font-black px-3 py-2 rounded-xl shadow-md transition-colors">
+            <span>HISTORIA</span>
+            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Search & Action Buttons Bar -->
       <div class="flex flex-col sm:flex-row gap-2 w-full flex-wrap">
         <div class="relative flex-1 h-touch-target-min min-w-[200px]">
@@ -423,7 +481,10 @@ export function renderDashboardView(container, navigateTo) {
     container.querySelector('#cat-modal').classList.add('hidden');
   });
 
-  // Navigation Event Listeners (Top Header Bar)
+  // Navigation Event Listeners (Top Header Bar & Quick Cards)
+  container.querySelector('#card-open-orders')?.addEventListener('click', () => navigateTo('orders'));
+  container.querySelector('#card-open-history')?.addEventListener('click', () => navigateTo('history'));
+  container.querySelector('#hdr-history-btn')?.addEventListener('click', () => navigateTo('history'));
   container.querySelector('#hdr-jaws')?.addEventListener('click', () => navigateTo('jaws'));
   container.querySelector('#hdr-wz')?.addEventListener('click', () => navigateTo('wz'));
   container.querySelector('#hdr-employees')?.addEventListener('click', () => navigateTo('employees'));

@@ -1,5 +1,5 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
-import { getCurrentOperator, logAuditAction } from './authService.js';
+import { getCurrentOperator, logAuditAction, updateAuditLogStatus } from './authService.js';
 
 // Odoo Config with LocalStorage persistence support
 const DEFAULT_CONFIG = {
@@ -508,6 +508,7 @@ export async function applyStockAdjustment(productId, newQuantity, sku, oldQuant
     : (diff > 0 ? `📦 PRZYJĘCIE (+${diff})` : `📦 WYDANIE / ZUŻYCIE (${diff})`);
 
   logAuditAction({
+    id: historyItem.id,
     category: 'STOCK',
     action: actionTitle,
     details: `Korekta dla ${sku}: ${oldQuantity} → ${newQuantity} (${diff > 0 ? '+' : ''}${diff}). Lokalizacja ID #${targetLoc}`,
@@ -621,6 +622,7 @@ function updateHistoryItemStatus(id, newStatus, errorMsg = null) {
     found.error = errorMsg;
     localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(current));
   }
+  updateAuditLogStatus(id, newStatus, errorMsg);
 }
 
 function queuePendingSync(item) {
