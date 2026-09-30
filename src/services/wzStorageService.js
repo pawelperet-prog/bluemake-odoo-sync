@@ -21,14 +21,6 @@ export const DEFAULT_CUSTOMERS = [
     contact: 'office@ec-e.pl, www.ec-e.pl'
   },
   {
-    id: 'cust_kinar',
-    name: 'KINAR Kamil Janiszewski',
-    address: 'Modra 24/16, 54-151 Wrocław',
-    nip: 'PL8982138720',
-    regon: '',
-    contact: 'kamil.janiszewski@kinar.pl, tel. +48 577 928 734, www.kinar.pl'
-  },
-  {
     id: 'cust_mv_center',
     name: 'MV Center Systemy Wizyjne Sp. z o.o.',
     address: 'ul. Krakowska 50, 32-083 Balice (Kraków)',
@@ -53,6 +45,30 @@ export const DEFAULT_CUSTOMERS = [
     contact: 'biuro@matmont.pl, www.matmont.pl'
   },
   {
+    id: 'cust_alpha',
+    name: 'ALPHA TECHNOLOGY Sp. z o.o. Sp. k.',
+    address: 'ul. Półłanki 29, 30-740 Kraków',
+    nip: 'PL6790025708',
+    regon: '350811985',
+    contact: 'biuro@alphatechnology.com.pl, www.alphatechnology.com.pl'
+  },
+  {
+    id: 'cust_nikmet',
+    name: 'NIKMET Sp. z o.o.',
+    address: 'Rzemień 44, 39-322 Rzemień',
+    nip: 'PL8172088517',
+    regon: '180295110',
+    contact: 'biuro@nikmet.pl, www.nikmet.pl'
+  },
+  {
+    id: 'cust_kinar',
+    name: 'KINAR Kamil Janiszewski',
+    address: 'Modra 24/16, 54-151 Wrocław',
+    nip: 'PL8982138720',
+    regon: '',
+    contact: 'kamil.janiszewski@kinar.pl, tel. +48 577 928 734, www.kinar.pl'
+  },
+  {
     id: 'cust_husqvarna',
     name: 'Husqvarna Poland Sp. z o.o.',
     address: 'ul. Wysockiego 15A, 03-371 Warszawa',
@@ -62,8 +78,65 @@ export const DEFAULT_CUSTOMERS = [
   }
 ];
 
-const CUSTOMERS_SCHEMA_VERSION = 'v3';
+const CUSTOMERS_SCHEMA_VERSION = 'v4';
 const STORAGE_KEY_CUSTOMERS_INIT = 'bluemake_wz_customers_init_ver';
+
+export function findCustomerMatch(nameOrSearch) {
+  if (!nameOrSearch) return null;
+  const customers = getSavedCustomers();
+  const clean = String(nameOrSearch).toLowerCase().trim();
+
+  // 1. Direct match or id match
+  let found = customers.find(c => c.id === nameOrSearch || (c.name && c.name.toLowerCase().trim() === clean));
+  if (found) return found;
+
+  // 2. Keyword match
+  if (clean.includes('ec') || clean.includes('engineering')) {
+    found = customers.find(c => c.id === 'cust_ec_eng' || c.name.toLowerCase().includes('ec engineering'));
+    if (found) return found;
+  }
+  if (clean.includes('mv') || clean.includes('center')) {
+    found = customers.find(c => c.id === 'cust_mv_center' || c.name.toLowerCase().includes('mv center'));
+    if (found) return found;
+  }
+  if (clean.includes('zmj')) {
+    found = customers.find(c => c.id === 'cust_zmj' || c.name.toLowerCase().includes('zmj'));
+    if (found) return found;
+  }
+  if (clean.includes('matmont')) {
+    found = customers.find(c => c.id === 'cust_matmont' || c.name.toLowerCase().includes('matmont'));
+    if (found) return found;
+  }
+  if (clean.includes('alpha')) {
+    found = customers.find(c => c.id === 'cust_alpha' || c.name.toLowerCase().includes('alpha'));
+    if (found) return found;
+  }
+  if (clean.includes('nikmet')) {
+    found = customers.find(c => c.id === 'cust_nikmet' || c.name.toLowerCase().includes('nikmet'));
+    if (found) return found;
+  }
+  if (clean.includes('kinar')) {
+    found = customers.find(c => c.id === 'cust_kinar' || c.name.toLowerCase().includes('kinar'));
+    if (found) return found;
+  }
+  if (clean.includes('husqvarna')) {
+    found = customers.find(c => c.id === 'cust_husqvarna' || c.name.toLowerCase().includes('husqvarna'));
+    if (found) return found;
+  }
+
+  // 3. Substring match
+  found = customers.find(c => (c.name && (c.name.toLowerCase().includes(clean) || clean.includes(c.name.toLowerCase()))));
+  if (found) return found;
+
+  return {
+    id: `cust_custom_${Date.now()}`,
+    name: nameOrSearch,
+    address: '',
+    nip: '',
+    regon: '',
+    contact: ''
+  };
+}
 
 export function getSavedCustomers() {
   try {
@@ -73,7 +146,7 @@ export function getSavedCustomers() {
     if (saved) {
       let parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // If first time running v3 schema, merge new default customers (KINAR, MV Center, ZMJ, MATMONT)
+        // If first time running v4 schema, merge new default customers (ALPHA, NIKMET, etc.)
         if (initVer !== CUSTOMERS_SCHEMA_VERSION) {
           for (const def of DEFAULT_CUSTOMERS) {
             const exists = parsed.some(c => 

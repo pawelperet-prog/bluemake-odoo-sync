@@ -35,9 +35,9 @@ function navigateTo(route, params = null) {
     return;
   }
 
-  // 3. Zabezpieczenie: Zamówienia i Wyceny tylko dla Adminów (Paweł, Mateusz)
-  if ((route === 'orders' || route === 'valuation') && !isAdmin()) {
-    alert(`⛔ Brak uprawnień: Moduł "${route === 'orders' ? 'Zamówienia' : 'Wycena'}" jest dostępny wyłącznie dla Administratorów.`);
+  // 3. Zabezpieczenie: Wycena tylko dla Adminów (Paweł, Mateusz)
+  if (route === 'valuation' && !isAdmin()) {
+    alert(`⛔ Brak uprawnień: Moduł "Wycena" jest dostępny wyłącznie dla Administratorów.`);
     route = 'dashboard';
   }
 
@@ -68,7 +68,7 @@ function navigateTo(route, params = null) {
       renderSoftJawsView(app, navigateTo, params);
       break;
     case 'wz':
-      renderWzGeneratorView(app, navigateTo);
+      renderWzGeneratorView(app, navigateTo, params);
       break;
     case 'employees':
       renderEmployeesView(app, navigateTo);

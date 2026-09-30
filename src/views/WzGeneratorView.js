@@ -16,10 +16,11 @@ import {
   deleteWzDocument, 
   getNextWzNumber, 
   incrementWzCounter,
+  findCustomerMatch,
   isCustomerEc
 } from '../services/wzStorageService.js';
 
-export function renderWzGeneratorView(container, navigateTo) {
+export function renderWzGeneratorView(container, navigateTo, params = null) {
   const currentOp = getCurrentOperator();
 
   const now = new Date();
@@ -31,13 +32,60 @@ export function renderWzGeneratorView(container, navigateTo) {
   const nextNumInfo = getNextWzNumber(currentMonthStr, currentYearStr);
 
   const customers = getSavedCustomers();
-  const initialCustomer = customers[0] || {
+  const fromOrder = params?.fromOrder || params?.order;
+
+  let initialCustomer = customers[0] || {
     name: 'EC Engineering Sp. z o.o.',
     address: 'ul. Armii Krajowej 28, 30-150 Kraków',
     nip: 'PL9452024663',
     regon: '35690824',
     contact: 'office@ec-e.pl, www.ec-e.pl'
   };
+
+  let initialOrderNumber = `ZZ-72/${nextNumInfo.month}/${nextNumInfo.year}/EC`;
+  let initialOrderDate = orderDefaultDate;
+  let initialItems = [
+    { 
+      id: 1, 
+      name: '00229 - EC-VAC 0108000-004-01 - Podkladka gniazdo', 
+      sku: '00229',
+      productId: null,
+      currentStock: 0,
+      locationId: 5,
+      quantity: 10, 
+      uom: 'szt' 
+    }
+  ];
+
+  if (fromOrder) {
+    const matched = findCustomerMatch(fromOrder.customerName || fromOrder.category);
+    if (matched) {
+      initialCustomer = matched;
+    } else if (fromOrder.customerName) {
+      initialCustomer = {
+        id: `cust_${Date.now()}`,
+        name: fromOrder.customerName,
+        address: '',
+        nip: '',
+        regon: '',
+        contact: ''
+      };
+    }
+    initialOrderNumber = fromOrder.orderRef || '';
+    initialOrderDate = fromOrder.orderDate || todayStr;
+    if (Array.isArray(fromOrder.items) && fromOrder.items.length > 0) {
+      initialItems = fromOrder.items.map((it, idx) => ({
+        id: idx + 1,
+        name: it.sku && !it.name.includes(it.sku) ? `${it.sku} - ${it.name}` : it.name,
+        sku: it.sku || '',
+        productId: it.odooProductId || null,
+        currentStock: 0,
+        locationId: 5,
+        quantity: parseFloat(it.shippedQty || it.orderedQty || 1),
+        uom: it.uom || 'szt'
+      }));
+    }
+  }
 
   let wzState = {
     id: `WZ_${Date.now()}`,
@@ -50,23 +98,12 @@ export function renderWzGeneratorView(container, navigateTo) {
     wzSuffix: '/BM',
     issueDate: todayStr,
     issuePlace: 'MIELEC',
-    orderNumber: `ZZ-72/${nextNumInfo.month}/${nextNumInfo.year}/EC`,
-    orderDate: orderDefaultDate,
+    orderNumber: initialOrderNumber,
+    orderDate: initialOrderDate,
     issuerName: currentOp ? (currentOp.name === 'Mateusz' ? 'Mateusz Klimkowski' : (currentOp.name === 'Paweł' ? 'Paweł Peret' : currentOp.name)) : 'Mateusz Klimkowski',
     supplier: { ...DEFAULT_SUPPLIER },
     customer: { ...initialCustomer },
-    items: [
-      { 
-        id: 1, 
-        name: '00229 - EC-VAC 0108000-004-01 - Podkladka gniazdo', 
-        sku: '00229',
-        productId: null,
-        currentStock: 0,
-        locationId: 5,
-        quantity: 10, 
-        uom: 'szt' 
-      }
-    ]
+    items: initialItems
   };
 
   let odooProductsList = [];
@@ -78,8 +115,8 @@ export function renderWzGeneratorView(container, navigateTo) {
   let showOdooPickerModal = false;
   let targetPickerItemIdx = null;
   let isProcessing = false;
-  let statusBannerMsg = '';
-  let statusBannerType = 'info'; // 'success' | 'info' | 'error'
+  let statusBannerMsg = fromOrder ? `✅ Wczytano dane zlecenia ${fromOrder.orderRef} dla "${initialCustomer.name}" (${initialItems.length} pozycji). Gotowe do wystawienia WZ!` : '';
+  let statusBannerType = 'success'; // 'success' | 'info' | 'error'
 
   // Asynchronously fetch Odoo products for SKU autocomplete
   getProducts().then(prods => {
@@ -1056,7 +1093,7 @@ export function renderWzGeneratorView(container, navigateTo) {
     const currentCustomers = getSavedCustomers();
 
     const backBtn = container.querySelector('#btn-back-mag');
-    if (backBtn) backBtn.addEventListener('click', () => navigateTo('dashboard'));
+    if (backBtn) backBtn.addEventListener('click', () => navigateTo(params?.returnTo || 'dashboard'));
 
     const dismissStatus = container.querySelector('#btn-dismiss-status');
     if (dismissStatus) {

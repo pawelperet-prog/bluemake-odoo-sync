@@ -45,11 +45,12 @@ export function renderDashboardView(container, navigateTo) {
           <span class="material-symbols-outlined text-[16px]">badge</span>
           <span>PRACOWNICY</span>
         </button>
+        <!-- Zlecenia Produkcyjne & Zamówienia Button (Dostępne dla wszystkich) -->
+        <button id="hdr-orders" title="Zlecenia Produkcyjne & Zamówienia (EC, MV Center, ZMJ, Matmont, Alpha, Nikmet)" class="hidden sm:flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
+          <span class="material-symbols-outlined text-[16px]">precision_manufacturing</span>
+          <span>PRODUKCJA</span>
+        </button>
         ${isOpAdmin ? `
-          <button id="hdr-orders" title="Import i Wysyłka Zamówień" class="hidden sm:flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
-            <span class="material-symbols-outlined text-[16px]">receipt_long</span>
-            <span>ZAMÓWIENIA</span>
-          </button>
           <button id="hdr-valuation" title="Podstrona Wyceny i Raportu Magazynu" class="hidden sm:flex items-center gap-1 bg-primary text-on-primary font-label-caps px-3 py-1.5 rounded text-xs font-bold transition-all active:scale-95 shadow-sm">
             <span class="material-symbols-outlined text-[16px]">payments</span>
             <span>WYCENA</span>
@@ -136,11 +137,11 @@ export function renderDashboardView(container, navigateTo) {
         <span class="material-symbols-outlined mb-1">dashboard</span>
         <span class="font-label-caps text-[10px]">Magazyn</span>
       </div>
+      <div id="nav-orders" class="flex flex-col items-center justify-center text-on-surface-variant px-2.5 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
+        <span class="material-symbols-outlined mb-1 text-indigo-600">precision_manufacturing</span>
+        <span class="font-label-caps text-[10px]">Produkcja</span>
+      </div>
       ${isOpAdmin ? `
-        <div id="nav-orders" class="flex flex-col items-center justify-center text-on-surface-variant px-2.5 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
-          <span class="material-symbols-outlined mb-1 text-indigo-600">receipt_long</span>
-          <span class="font-label-caps text-[10px]">Zamówienia</span>
-        </div>
         <div id="nav-val" class="flex flex-col items-center justify-center text-on-surface-variant px-2.5 py-1 cursor-pointer transition-all duration-150 hover:bg-surface-container-highest active:scale-90 rounded-xl">
           <span class="material-symbols-outlined mb-1">payments</span>
           <span class="font-label-caps text-[10px]">Wycena</span>
