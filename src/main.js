@@ -14,15 +14,50 @@ import { isSiteUnlocked, isUserLoggedIn, isAdmin, getCurrentOperator } from './s
 
 const app = document.getElementById('app');
 
-function navigateTo(route, params = null) {
+let currentRouteParams = null;
+let isInternalNavigation = false;
+
+export function parseHash() {
+  const hash = window.location.hash || '';
+  const clean = hash.replace(/^#\/?/, '').trim();
+  const [routePart] = clean.split('?');
+  const route = routePart || 'dashboard';
+  return { route };
+}
+
+export function navigateTo(route, params = null, replace = false) {
+  if (route === 'warehouse') route = 'dashboard';
+  if (params !== null) {
+    currentRouteParams = params;
+  }
+
+  const targetHash = `#/${route}`;
+  if (window.location.hash !== targetHash) {
+    isInternalNavigation = true;
+    if (replace) {
+      const url = new URL(window.location.href);
+      url.hash = targetHash;
+      window.location.replace(url.href);
+    } else {
+      window.location.hash = targetHash;
+    }
+  }
+
+  renderRoute(route, params);
+}
+
+function renderRoute(route, params = null) {
+  if (route === 'warehouse') route = 'dashboard';
+
   // 1. Zabezpieczenie Główne Strony: Wymagane hasło dostępowe Szymon_Mateusz2025
   if (!isSiteUnlocked()) {
     app.innerHTML = '';
     renderSiteGateView(app, () => {
       if (!isUserLoggedIn()) {
-        navigateTo('login');
+        navigateTo('login', null, true);
       } else {
-        navigateTo('dashboard');
+        const { route: savedRoute } = parseHash();
+        navigateTo(savedRoute && savedRoute !== 'login' ? savedRoute : 'dashboard', null, true);
       }
     });
     return;
@@ -38,22 +73,26 @@ function navigateTo(route, params = null) {
   // 3. Zabezpieczenie: Wycena tylko dla Adminów (Paweł, Mateusz)
   if (route === 'valuation' && !isAdmin()) {
     alert(`⛔ Brak uprawnień: Moduł "Wycena" jest dostępny wyłącznie dla Administratorów.`);
-    route = 'dashboard';
+    navigateTo('dashboard', null, true);
+    return;
   }
 
   app.innerHTML = '';
+  const effectiveParams = params !== null ? params : currentRouteParams;
+
   switch (route) {
     case 'login':
       renderLoginView(app, navigateTo);
       break;
     case 'dashboard':
+    case 'warehouse':
       renderDashboardView(app, navigateTo);
       break;
     case 'scanner':
       renderScannerView(app, navigateTo);
       break;
     case 'product':
-      renderProductView(app, navigateTo, params);
+      renderProductView(app, navigateTo, effectiveParams);
       break;
     case 'history':
       renderHistoryView(app, navigateTo);
@@ -65,10 +104,10 @@ function navigateTo(route, params = null) {
       renderOrderImportView(app, navigateTo);
       break;
     case 'jaws':
-      renderSoftJawsView(app, navigateTo, params);
+      renderSoftJawsView(app, navigateTo, effectiveParams);
       break;
     case 'wz':
-      renderWzGeneratorView(app, navigateTo, params);
+      renderWzGeneratorView(app, navigateTo, effectiveParams);
       break;
     case 'employees':
       renderEmployeesView(app, navigateTo);
@@ -78,18 +117,31 @@ function navigateTo(route, params = null) {
   }
 }
 
-// Initial route
+// Obsługa przycisków przeglądarki Wstecz / Dalej (Back / Forward oraz gestów na telefonie)
+window.addEventListener('hashchange', () => {
+  if (isInternalNavigation) {
+    isInternalNavigation = false;
+    return;
+  }
+  const { route } = parseHash();
+  renderRoute(route, currentRouteParams);
+});
+
+// Start aplikacji - sprawdzenie hasła i zalogowania oraz załadowanie właściwej podstrony z URL
+const initial = parseHash();
 if (!isSiteUnlocked()) {
   renderSiteGateView(app, () => {
     if (!isUserLoggedIn()) {
-      navigateTo('login');
+      navigateTo('login', null, true);
     } else {
-      navigateTo('dashboard');
+      const { route: r } = parseHash();
+      navigateTo(r && r !== 'login' ? r : 'dashboard', null, true);
     }
   });
 } else if (!isUserLoggedIn()) {
-  navigateTo('login');
+  navigateTo('login', null, true);
 } else {
-  navigateTo('dashboard');
+  // Przejdź do trasy z adresu URL (np. /sync/#/orders) lub domyślnie /sync/#/dashboard
+  const target = initial.route && initial.route !== 'login' ? initial.route : 'dashboard';
+  navigateTo(target, null, true);
 }
-

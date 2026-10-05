@@ -32,7 +32,7 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
   const nextNumInfo = getNextWzNumber(currentMonthStr, currentYearStr);
 
   const customers = getSavedCustomers();
-  const fromOrder = params?.fromOrder || params?.order;
+  const fromOrder = params?.fromOrder || params?.order || (params?.orderRef ? params : null) || window.__ACTIVE_WZ_ORDER_PARAMS;
 
   let initialCustomer = customers[0] || {
     name: 'EC Engineering Sp. z o.o.',
@@ -58,17 +58,18 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
   ];
 
   if (fromOrder) {
-    const matched = findCustomerMatch(fromOrder.customerName || fromOrder.category);
+    const custSearch = fromOrder.customerName || fromOrder.category || fromOrder.customer;
+    const matched = findCustomerMatch(custSearch);
     if (matched) {
       initialCustomer = matched;
-    } else if (fromOrder.customerName) {
+    } else if (custSearch) {
       initialCustomer = {
         id: `cust_${Date.now()}`,
-        name: fromOrder.customerName,
-        address: '',
-        nip: '',
-        regon: '',
-        contact: ''
+        name: typeof custSearch === 'string' ? custSearch : (custSearch.name || 'Kontrahent'),
+        address: custSearch.address || '',
+        nip: custSearch.nip || '',
+        regon: custSearch.regon || '',
+        contact: custSearch.contact || ''
       };
     }
     initialOrderNumber = fromOrder.orderRef || '';
@@ -76,12 +77,12 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
     if (Array.isArray(fromOrder.items) && fromOrder.items.length > 0) {
       initialItems = fromOrder.items.map((it, idx) => ({
         id: idx + 1,
-        name: it.sku && !it.name.includes(it.sku) ? `${it.sku} - ${it.name}` : it.name,
-        sku: it.sku || '',
-        productId: it.odooProductId || null,
+        name: it.sku && it.name && !it.name.includes(it.sku) ? `${it.sku} - ${it.name}` : (it.name || it.sku || `Detal ${idx + 1}`),
+        sku: it.sku || it.symbol || '',
+        productId: it.odooProductId || it.productId || null,
         currentStock: 0,
         locationId: 5,
-        quantity: parseFloat(it.shippedQty || it.orderedQty || 1),
+        quantity: parseFloat(it.shippedQty || it.orderedQty || it.quantity || 1),
         uom: it.uom || 'szt'
       }));
     }
