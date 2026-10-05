@@ -72,8 +72,16 @@ export function renderOrderImportView(container, navigateTo) {
     'ZZ-78/09/2026/EC': '/orders_pdf/ZZ-78-09-2026.pdf',
     'ZZ-241/09/2026/EC': '/orders_pdf/ZZ-241-09-2026.pdf',
     '73-Z-09-2026 BLUEMAKE': '/orders_pdf/MATMONT-73.pdf',
+    '73/Z/09/26': '/orders_pdf/MATMONT-73.pdf',
     '42-Z-07-2026 BLUEMAKE': '/orders_pdf/MATMONT-42.pdf',
-    'I2601653': '/orders_pdf/ALPHA-1653.pdf',
+    '42/Z/07/26': '/orders_pdf/MATMONT-42.pdf',
+    'I2601653': '/orders_pdf/I2601653.pdf',
+    'Bluemake-I2601412': '/orders_pdf/Bluemake-I2601412.pdf',
+    'Bluemake-I2601094': '/orders_pdf/Bluemake-I2601094.pdf',
+    'BLM-04-2026': '/orders_pdf/Zamówienie nr BLM-04-2026.pdf',
+    'BLM-02-2026': '/orders_pdf/Zamówienie nr BLM-02-2026.pdf',
+    'BLM-03-2026': '/orders_pdf/Zamówienie nr BLM-03-2026.pdf',
+    'BLM-05-2026': '/orders_pdf/Zamówienie nr BLM-05-2026.pdf',
     'ZZ-247-03-2026': '/orders_pdf/ZZ-247-03-2026.pdf'
   };
 

@@ -1,6 +1,6 @@
 import { logAuditAction, getCurrentOperator } from './authService.js';
 
-const ORDERS_STORAGE_KEY = 'bluemake_saved_orders_db_v10';
+const ORDERS_STORAGE_KEY = 'bluemake_saved_orders_db_v11';
 
 // Complete combined database: All Odoo synced orders (59 orders) + All external companies (MV CENTER, ZMJ, MATMONT, ALPHA, NIKMET, KINAR, Husqvarna)
 export const INITIAL_ORDERS_2026 = [
@@ -3372,21 +3372,23 @@ export const INITIAL_ORDERS_2026 = [
     "orderRef": "73-Z-09-2026 BLUEMAKE",
     "customerName": "MATMONT",
     "category": "MATMONT",
-    "orderDate": "2026-09-22",
-    "deliveryDate": "2026-10-10",
+    "orderDate": "2026-09-10",
+    "deliveryDate": "2026-09-15",
     "productionStatus": "IN_PRODUCTION",
     "syncStatus": "DRAFT",
+    "pdfUrl": "/orders_pdf/MATMONT-73.pdf",
     "items": [
       {
         "id": "mat_73_1",
-        "sku": "MATMONT_ZLEC_73",
-        "name": "Komplet detali frezowanych i toczonych (73-Z-09-2026)",
-        "orderedQty": 1,
-        "shippedQty": 1,
+        "symbol": "Fazowanie blach",
+        "sku": "Fazowanie blach na próbki spawalnicze",
+        "name": "Fazowanie blach na próbki spawalnicze (wg rys. palnika)",
+        "orderedQty": 48,
+        "shippedQty": 48,
         "producedQty": 0,
         "productionStatus": "IN_PRODUCTION",
-        "unitPrice": 6800,
-        "uom": "kpl"
+        "unitPrice": 20.00,
+        "uom": "szt"
       }
     ]
   },
@@ -3395,21 +3397,35 @@ export const INITIAL_ORDERS_2026 = [
     "orderRef": "42-Z-07-2026 BLUEMAKE",
     "customerName": "MATMONT",
     "category": "MATMONT",
-    "orderDate": "2026-07-22",
-    "deliveryDate": "2026-08-05",
+    "orderDate": "2026-07-01",
+    "deliveryDate": "2026-07-04",
     "productionStatus": "PRODUCED",
     "syncStatus": "DRAFT",
+    "pdfUrl": "/orders_pdf/MATMONT-42.pdf",
     "items": [
       {
         "id": "mat_42_1",
-        "sku": "MATMONT_ZLEC_42",
-        "name": "Zlecenie obrĂłbki czÄ™Ĺ›ci maszyn (42-Z-07-2026)",
-        "orderedQty": 1,
-        "shippedQty": 1,
-        "producedQty": 1,
+        "symbol": "35.001.32.000.002.0",
+        "sku": "35.001.32.000.002.0",
+        "name": "Wrzeciono z mat. X39CrMo17-1 (Zasuwa odcinająca S15 DN100 PN250)",
+        "orderedQty": 3,
+        "shippedQty": 3,
+        "producedQty": 3,
         "productionStatus": "PRODUCED",
-        "unitPrice": 8400,
-        "uom": "kpl"
+        "unitPrice": 855.00,
+        "uom": "szt"
+      },
+      {
+        "id": "mat_42_2",
+        "symbol": "35.001.32.000.003.0",
+        "sku": "35.001.32.000.003.0",
+        "name": "Nakrętka BA1032 (Nakrętka wrzeciona - Zasuwa odcinająca S15 DN100 PN250)",
+        "orderedQty": 4,
+        "shippedQty": 4,
+        "producedQty": 4,
+        "productionStatus": "PRODUCED",
+        "unitPrice": 1200.00,
+        "uom": "szt"
       }
     ]
   },
@@ -3425,8 +3441,9 @@ export const INITIAL_ORDERS_2026 = [
     "items": [
       {
         "id": "mat_2_1",
+        "symbol": "CZESC01",
         "sku": "CZESC01",
-        "name": "CzÄ™Ĺ›Ä‡01",
+        "name": "Część01",
         "orderedQty": 4,
         "shippedQty": 4,
         "producedQty": 4,
@@ -3436,8 +3453,9 @@ export const INITIAL_ORDERS_2026 = [
       },
       {
         "id": "mat_2_2",
+        "symbol": "CZESC03A",
         "sku": "CZESC03A",
-        "name": "CzÄ™Ĺ›Ä‡03a",
+        "name": "Część03a",
         "orderedQty": 4,
         "shippedQty": 4,
         "producedQty": 4,
@@ -3447,8 +3465,9 @@ export const INITIAL_ORDERS_2026 = [
       },
       {
         "id": "mat_2_3",
+        "symbol": "CZESC_BL5",
         "sku": "CZESC_BL5",
-        "name": "CzÄ™Ĺ›Ä‡ blaszana5",
+        "name": "Część blaszana 5",
         "orderedQty": 4,
         "shippedQty": 4,
         "producedQty": 4,
@@ -3458,8 +3477,9 @@ export const INITIAL_ORDERS_2026 = [
       },
       {
         "id": "mat_2_4",
+        "symbol": "CZESC11",
         "sku": "CZESC11",
-        "name": "CzÄ™Ĺ›Ä‡11",
+        "name": "Część 11",
         "orderedQty": 4,
         "shippedQty": 4,
         "producedQty": 4,
@@ -3469,8 +3489,9 @@ export const INITIAL_ORDERS_2026 = [
       },
       {
         "id": "mat_2_5",
+        "symbol": "OS_PRY",
         "sku": "OS_PRY",
-        "name": "OĹ› 1 szt pry",
+        "name": "Oś 1 szt pry",
         "orderedQty": 1,
         "shippedQty": 1,
         "producedQty": 1,
@@ -3485,21 +3506,23 @@ export const INITIAL_ORDERS_2026 = [
     "orderRef": "I2601653",
     "customerName": "ALPHA TECHNOLOGY",
     "category": "ALPHA",
-    "orderDate": "2026-09-23",
-    "deliveryDate": "2026-10-07",
+    "orderDate": "2026-09-22",
+    "deliveryDate": "2026-09-29",
     "productionStatus": "IN_PRODUCTION",
     "syncStatus": "DRAFT",
+    "pdfUrl": "/orders_pdf/I2601653.pdf",
     "items": [
       {
         "id": "alpha_1",
-        "sku": "ALPHA_I2601653",
-        "name": "Pakiet detali precyzyjnych ALPHA (I2601653)",
-        "orderedQty": 1,
-        "shippedQty": 1,
+        "symbol": "LIC-444269",
+        "sku": "LIC-444269-2090402-02-FR1",
+        "name": "LIC-444269-2090402-02 Stellplatte 200x200x15 4L 4G (Frezowanie otw. fasolowych +otw gw)",
+        "orderedQty": 12,
+        "shippedQty": 12,
         "producedQty": 0,
         "productionStatus": "IN_PRODUCTION",
-        "unitPrice": 18485,
-        "uom": "kpl"
+        "unitPrice": 41.00,
+        "uom": "szt"
       }
     ]
   },
@@ -3508,21 +3531,23 @@ export const INITIAL_ORDERS_2026 = [
     "orderRef": "Bluemake-I2601412",
     "customerName": "ALPHA TECHNOLOGY",
     "category": "ALPHA",
-    "orderDate": "2026-09-09",
-    "deliveryDate": "2026-09-18",
+    "orderDate": "2026-08-05",
+    "deliveryDate": "2026-09-11",
     "productionStatus": "PRODUCED",
     "syncStatus": "DRAFT",
+    "pdfUrl": "/orders_pdf/Bluemake-I2601412.pdf",
     "items": [
       {
         "id": "alpha_2",
-        "sku": "ALPHA_1412",
-        "name": "Zlecenie seryjne ALPHA I2601412",
-        "orderedQty": 1,
-        "shippedQty": 1,
-        "producedQty": 1,
+        "symbol": "WTC-3043336",
+        "sku": "WTC-3043336",
+        "name": "Gewindebuchse M8x20 RD13,8x34LG",
+        "orderedQty": 700,
+        "shippedQty": 700,
+        "producedQty": 700,
         "productionStatus": "PRODUCED",
-        "unitPrice": 5200,
-        "uom": "kpl"
+        "unitPrice": 4.90,
+        "uom": "szt"
       }
     ]
   },
@@ -3531,21 +3556,23 @@ export const INITIAL_ORDERS_2026 = [
     "orderRef": "Bluemake-I2601094",
     "customerName": "ALPHA TECHNOLOGY",
     "category": "ALPHA",
-    "orderDate": "2026-07-16",
-    "deliveryDate": "2026-07-28",
+    "orderDate": "2026-06-16",
+    "deliveryDate": "2026-06-30",
     "productionStatus": "PRODUCED",
     "syncStatus": "DRAFT",
+    "pdfUrl": "/orders_pdf/Bluemake-I2601094.pdf",
     "items": [
       {
         "id": "alpha_3",
-        "sku": "ALPHA_1094",
-        "name": "Zlecenie seryjne ALPHA I2601094",
-        "orderedQty": 1,
-        "shippedQty": 1,
-        "producedQty": 1,
+        "symbol": "WTC-3043336",
+        "sku": "WTC-3043336",
+        "name": "Gewindebuchse M8x20 RD13,8x34LG",
+        "orderedQty": 710,
+        "shippedQty": 710,
+        "producedQty": 710,
         "productionStatus": "PRODUCED",
-        "unitPrice": 4800,
-        "uom": "kpl"
+        "unitPrice": 9.00,
+        "uom": "szt"
       }
     ]
   },
@@ -3554,21 +3581,71 @@ export const INITIAL_ORDERS_2026 = [
     "orderRef": "BLM-04-2026",
     "customerName": "NIKMET",
     "category": "NIKMET",
-    "orderDate": "2026-07-30",
-    "deliveryDate": "2026-08-15",
-    "productionStatus": "IN_PRODUCTION",
+    "orderDate": "2026-05-07",
+    "deliveryDate": "2026-05-15",
+    "productionStatus": "PRODUCED",
     "syncStatus": "DRAFT",
+    "pdfUrl": "/orders_pdf/Zamówienie nr BLM-04-2026.pdf",
     "items": [
       {
         "id": "nik_4_1",
-        "sku": "NIKMET_KAT_ALU",
-        "name": "KÄ…towniki aluminiowe i ksztaĹ‚towniki",
-        "orderedQty": 1,
-        "shippedQty": 1,
-        "producedQty": 0,
-        "productionStatus": "IN_PRODUCTION",
-        "unitPrice": 12400,
-        "uom": "kpl"
+        "symbol": "PR_2191401",
+        "sku": "PR_2191401",
+        "name": "PR_2191401, materiał AW-6060 T66 Kątownik 160x60x8",
+        "orderedQty": 25,
+        "shippedQty": 25,
+        "producedQty": 25,
+        "productionStatus": "PRODUCED",
+        "unitPrice": 100.00,
+        "uom": "szt"
+      },
+      {
+        "id": "nik_4_2",
+        "symbol": "PR_2191403",
+        "sku": "PR_2191403",
+        "name": "PR_2191403, materiał AW-6060 T66 Kątownik 80x50x8",
+        "orderedQty": 25,
+        "shippedQty": 25,
+        "producedQty": 25,
+        "productionStatus": "PRODUCED",
+        "unitPrice": 130.00,
+        "uom": "szt"
+      },
+      {
+        "id": "nik_4_3",
+        "symbol": "PR_2205131",
+        "sku": "PR_2205131",
+        "name": "PR_2205131, materiał AW-6082 T6 T-Profil 80x50x5",
+        "orderedQty": 25,
+        "shippedQty": 25,
+        "producedQty": 25,
+        "productionStatus": "PRODUCED",
+        "unitPrice": 85.00,
+        "uom": "szt"
+      },
+      {
+        "id": "nik_4_4",
+        "symbol": "PR_2202601",
+        "sku": "PR_2202601",
+        "name": "PR_2202601, materiał AW-6060 T66 U-Profil 60x35x5x6",
+        "orderedQty": 25,
+        "shippedQty": 25,
+        "producedQty": 25,
+        "productionStatus": "PRODUCED",
+        "unitPrice": 115.00,
+        "uom": "szt"
+      },
+      {
+        "id": "nik_4_5",
+        "symbol": "PR_2201955",
+        "sku": "PR_2201955",
+        "name": "PR_2201955, materiał AW-6082 T6 T-Profil 80x50x5",
+        "orderedQty": 25,
+        "shippedQty": 25,
+        "producedQty": 25,
+        "productionStatus": "PRODUCED",
+        "unitPrice": 75.00,
+        "uom": "szt"
       }
     ]
   },
@@ -3577,21 +3654,35 @@ export const INITIAL_ORDERS_2026 = [
     "orderRef": "BLM-02-2026",
     "customerName": "NIKMET",
     "category": "NIKMET",
-    "orderDate": "2026-05-24",
-    "deliveryDate": "2026-06-10",
-    "productionStatus": "IN_PRODUCTION",
+    "orderDate": "2026-03-17",
+    "deliveryDate": "2026-04-06",
+    "productionStatus": "PRODUCED",
     "syncStatus": "DRAFT",
+    "pdfUrl": "/orders_pdf/Zamówienie nr BLM-02-2026.pdf",
     "items": [
       {
         "id": "nik_2_1",
-        "sku": "BU_6553919",
-        "name": "Blachy - promienie (BU_6553919)",
-        "orderedQty": 1,
-        "shippedQty": 1,
-        "producedQty": 0,
-        "productionStatus": "IN_PRODUCTION",
-        "unitPrice": 18817.84,
-        "uom": "kpl"
+        "symbol": "BU_6553919_001",
+        "sku": "13000124",
+        "name": "13000124 usługa frezowania wg rys. BU_6553919_001",
+        "orderedQty": 496,
+        "shippedQty": 496,
+        "producedQty": 496,
+        "productionStatus": "PRODUCED",
+        "unitPrice": 33.13,
+        "uom": "szt"
+      },
+      {
+        "id": "nik_2_2",
+        "symbol": "BU_6553919_002",
+        "sku": "13000125",
+        "name": "13000125 usługa frezowania wg rys. BU_6553919_002",
+        "orderedQty": 496,
+        "shippedQty": 496,
+        "producedQty": 496,
+        "productionStatus": "PRODUCED",
+        "unitPrice": 33.13,
+        "uom": "szt"
       }
     ]
   },
@@ -3601,20 +3692,34 @@ export const INITIAL_ORDERS_2026 = [
     "customerName": "NIKMET",
     "category": "NIKMET",
     "orderDate": "2026-05-29",
-    "deliveryDate": "2026-06-15",
-    "productionStatus": "IN_PRODUCTION",
+    "deliveryDate": "2026-06-02",
+    "productionStatus": "PRODUCED",
     "syncStatus": "DRAFT",
+    "pdfUrl": "/orders_pdf/Zamówienie nr BLM-05-2026.pdf",
     "items": [
       {
         "id": "nik_5_1",
-        "sku": "ZD_K_10_05_2026",
-        "name": "DuĹĽe zam - elementy dodatkowe (ZD_K_10_05_2026)",
-        "orderedQty": 1,
-        "shippedQty": 1,
-        "producedQty": 0,
-        "productionStatus": "IN_PRODUCTION",
-        "unitPrice": 14250,
-        "uom": "kpl"
+        "symbol": "BU_6553919_001",
+        "sku": "13000124",
+        "name": "13000124 usługa frezowania wg rys. BU_6553919_001",
+        "orderedQty": 8,
+        "shippedQty": 8,
+        "producedQty": 8,
+        "productionStatus": "PRODUCED",
+        "unitPrice": 33.13,
+        "uom": "szt"
+      },
+      {
+        "id": "nik_5_2",
+        "symbol": "BU_6553919_002",
+        "sku": "13000125",
+        "name": "13000125 usługa frezowania wg rys. BU_6553919_002",
+        "orderedQty": 8,
+        "shippedQty": 8,
+        "producedQty": 8,
+        "productionStatus": "PRODUCED",
+        "unitPrice": 33.13,
+        "uom": "szt"
       }
     ]
   },
@@ -3690,20 +3795,21 @@ export const INITIAL_ORDERS_2026 = [
     "orderRef": "BLM-03-2026",
     "customerName": "NIKMET",
     "category": "NIKMET",
-    "orderDate": "2026-03-04",
-    "deliveryDate": "2026-03-20",
+    "orderDate": "2026-03-20",
+    "deliveryDate": "2026-03-30",
     "productionStatus": "PRODUCED",
     "syncStatus": "DRAFT",
+    "pdfUrl": "/orders_pdf/Zamówienie nr BLM-03-2026.pdf",
     "items": [
       {
         "id": "nik_3_1",
-        "sku": "SZUFLADY",
-        "name": "Szuflady aluminiowe kpl",
-        "orderedQty": 1,
-        "shippedQty": 1,
-        "producedQty": 1,
+        "sku": "CLA_C1_2026_SZ_02",
+        "name": "Komplet obrzeży aluminiowych (Obrzeże 1..6 + Uchwyt) - 13 kpl",
+        "orderedQty": 13,
+        "shippedQty": 13,
+        "producedQty": 13,
         "productionStatus": "PRODUCED",
-        "unitPrice": 9600,
+        "unitPrice": 450.00,
         "uom": "kpl"
       }
     ]
