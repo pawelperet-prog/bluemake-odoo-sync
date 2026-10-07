@@ -12,7 +12,10 @@ import {
   updateOrderSyncStatus,
   archiveOrder,
   unarchiveOrder,
-  setOrderPdf
+  setOrderPdf,
+  getOrderYear,
+  getAvailableOrderYears,
+  getAnnualOrdersSummary
 } from '../services/orderStorageService.js';
 import { getSavedCustomers, getOrderWzShipmentSummary, prepareOrderItemsForWz } from '../services/wzStorageService.js';
 import { printCustomerLabelsHtml } from '../utils/customerLabelGenerator.js';
@@ -24,6 +27,10 @@ export function renderOrderImportView(container, navigateTo) {
 
   // Color Theme: 'warm-cream' | 'soft-dark'
   let currentTheme = localStorage.getItem('bluemake_ui_theme') || 'warm-cream';
+
+  // Year Selection: '2026' (Bieżący domyślny) | '2025' | '2027' | 'ALL'
+  let activeYear = '2026';
+  let showAnnualBreakdown = false;
 
   // Category Tabs: 'ALL' (Wszystkie domyślnie) | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED'
   let activeTab = 'ALL';
@@ -132,6 +139,9 @@ export function renderOrderImportView(container, navigateTo) {
     const monthMap = {};
 
     allOrders.forEach(o => {
+      // If a specific year is chosen, only include months for that year
+      if (activeYear !== 'ALL' && getOrderYear(o) !== activeYear) return;
+
       const d = o.orderDate || o.deliveryDate || '';
       const m = d.substring(0, 7);
       if (m && m.length === 7) {
@@ -202,6 +212,11 @@ export function renderOrderImportView(container, navigateTo) {
   function getFilteredOrders() {
     const all = getSavedOrders();
     return all.filter(ord => {
+      // 0. Year filter (Default 2026, or chosen year - 2025 is kept but excluded from general view)
+      if (activeYear !== 'ALL') {
+        if (getOrderYear(ord) !== activeYear) return false;
+      }
+
       // 1. Tab filter
       if (activeTab === 'ACTIVE') {
         if (ord.productionStatus === 'PRODUCED' || ord.productionStatus === 'ARCHIVED') return false;
@@ -241,8 +256,16 @@ export function renderOrderImportView(container, navigateTo) {
   }
 
   function renderUI() {
-    const filteredOrders = getFilteredOrders();
     const allOrders = getSavedOrders();
+    const availableYears = getAvailableOrderYears();
+    const annualSummary = getAnnualOrdersSummary();
+
+    // Reset activeMonthFilter if it doesn't match active year
+    if (activeYear !== 'ALL' && activeMonthFilter !== 'ALL' && !activeMonthFilter.startsWith(activeYear)) {
+      activeMonthFilter = 'ALL';
+    }
+
+    const filteredOrders = getFilteredOrders();
     const companyFilters = getUniqueCompanyFilters();
     const monthFilters = getUniqueMonths();
 
@@ -270,11 +293,12 @@ export function renderOrderImportView(container, navigateTo) {
     });
     viewTotalBrutto = viewTotalNetto * 1.23;
 
-    // Grand counts across all orders
+    // Grand counts across selected active year
+    const activeYearOrders = allOrders.filter(o => activeYear === 'ALL' || getOrderYear(o) === activeYear);
     let grandActiveCount = 0;
     let grandCompletedCount = 0;
     let grandArchivedCount = 0;
-    allOrders.forEach(o => {
+    activeYearOrders.forEach(o => {
       if (o.productionStatus === 'ARCHIVED') grandArchivedCount++;
       else if (o.productionStatus === 'PRODUCED') grandCompletedCount++;
       else grandActiveCount++;
@@ -312,7 +336,7 @@ export function renderOrderImportView(container, navigateTo) {
           <div class="h-4 w-px ${isCream ? 'bg-[#d8ccb8]' : 'bg-slate-800'}"></div>
           <div class="flex items-center gap-2">
             <span class="material-symbols-outlined text-amber-600 text-[22px]">precision_manufacturing</span>
-            <h1 class="font-bold text-sm sm:text-base tracking-tight ${isCream ? 'text-[#2a241e]' : 'text-white'}">Zlecenia Firm & Produkcja 2026</h1>
+            <h1 class="font-bold text-sm sm:text-base tracking-tight ${isCream ? 'text-[#2a241e]' : 'text-white'}">Zlecenia Firm & Produkcja <span class="text-amber-600 font-mono">${activeYear === 'ALL' ? 'Wszystkie Lata' : activeYear}</span></h1>
           </div>
         </div>
 
@@ -357,6 +381,161 @@ export function renderOrderImportView(container, navigateTo) {
 
       <main class="w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 flex flex-col gap-4 mt-14 mb-20 ${themeStyles.mainText}">
 
+        <!-- Year Selection & Annual Summary Controls Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-2.5 p-2.5 rounded-2xl border ${isCream ? 'bg-[#ede5d6] border-[#d8ccb8]' : 'bg-slate-900 border-slate-800'} shadow-sm">
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex items-center gap-1.5 mr-1">
+              <span class="material-symbols-outlined text-amber-600 text-[18px]">calendar_today</span>
+              <span class="text-xs font-black uppercase tracking-wider ${isCream ? 'text-[#574a38]' : 'text-slate-400'}">ROK ZLECEŃ:</span>
+            </div>
+            
+            <!-- Year Pills -->
+            ${availableYears.map(y => {
+              const isSelected = activeYear === y;
+              const count = annualSummary[y]?.totalOrders || 0;
+              return `
+                <button class="btn-select-year flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                  isSelected 
+                    ? (isCream ? 'bg-[#84532b] text-white shadow-md' : 'bg-amber-500 text-slate-950 shadow-md')
+                    : (isCream ? 'bg-[#fbf8f2] hover:bg-[#ded1bd] text-[#4d4233] border border-[#d8ccb8]' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700')
+                }" data-year="${y}">
+                  <span>${y}</span>
+                  ${y === '2026' ? '<span class="text-[9px] uppercase px-1.5 py-0.2 rounded font-extrabold ' + (isSelected ? 'bg-amber-950 text-amber-200' : 'bg-amber-100 text-amber-900 border border-amber-300') + '">BIEŻĄCY</span>' : ''}
+                  ${y === '2025' ? '<span class="text-[9px] uppercase px-1.5 py-0.2 rounded font-extrabold ' + (isSelected ? 'bg-stone-900 text-stone-200' : 'bg-stone-200 text-stone-800 border border-stone-300') + '">ARCHIWUM</span>' : ''}
+                  ${y === '2027' ? '<span class="text-[9px] uppercase px-1.5 py-0.2 rounded font-extrabold ' + (isSelected ? 'bg-indigo-950 text-indigo-200' : 'bg-indigo-100 text-indigo-900 border border-indigo-200') + '">NOWY</span>' : ''}
+                  <span class="px-1.5 py-0.5 rounded-md text-[10px] font-mono ${isSelected ? 'bg-black/20 text-white' : (isCream ? 'bg-[#ede5d6] text-[#3d3224]' : 'bg-slate-900 text-slate-400')}">
+                    ${count} zlec.
+                  </span>
+                </button>
+              `;
+            }).join('')}
+
+            <!-- Wszystkie lata pill -->
+            <button class="btn-select-year flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeYear === 'ALL'
+                ? (isCream ? 'bg-[#292524] text-white shadow-md' : 'bg-indigo-600 text-white shadow-md')
+                : (isCream ? 'bg-[#fbf8f2] hover:bg-[#ded1bd] text-[#574a38] border border-[#d8ccb8]' : 'bg-slate-800/80 hover:bg-slate-700 text-slate-400 border border-slate-700')
+            }" data-year="ALL" title="Zobacz łącznie wszystkie lata">
+              <span>Wszystkie lata</span>
+              <span class="px-1.5 py-0.5 rounded-md text-[10px] font-mono ${activeYear === 'ALL' ? 'bg-black/20 text-white' : (isCream ? 'bg-[#ede5d6] text-[#3d3224]' : 'bg-slate-900 text-slate-400')}">
+                ${allOrders.length}
+              </span>
+            </button>
+          </div>
+
+          <!-- Toggle Annual Summary Breakdown Button -->
+          <button id="btn-toggle-annual-breakdown" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border text-xs font-black transition-all cursor-pointer ${
+            showAnnualBreakdown
+              ? (isCream ? 'bg-[#5c3e1e] text-white border-[#4d3215] shadow-md' : 'bg-indigo-600 text-white border-indigo-500 shadow-md')
+              : (isCream ? 'bg-[#f5efe4] hover:bg-[#ebdcc7] text-[#4d4233] border-[#d8ccb8]' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700')
+          }">
+            <span class="material-symbols-outlined text-[18px] text-amber-500">analytics</span>
+            <span>📊 Podliczenie Roczne</span>
+            <span class="material-symbols-outlined text-[16px] transition-transform ${showAnnualBreakdown ? 'rotate-180' : ''}">expand_more</span>
+          </button>
+        </div>
+
+        <!-- Expandable Annual Summary Breakdown Panel -->
+        ${showAnnualBreakdown ? `
+          <div class="border rounded-2xl p-4 sm:p-5 ${isCream ? 'bg-[#fbf8f2] border-[#dfd3bf]' : 'bg-slate-900 border-slate-800'} shadow-md flex flex-col gap-3.5 transition-all">
+            <div class="flex items-center justify-between border-b ${isCream ? 'border-[#e8decb]' : 'border-slate-800'} pb-3">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-amber-600 text-2xl">analytics</span>
+                <div>
+                  <h3 class="font-black text-sm sm:text-base ${isCream ? 'text-[#2a241e]' : 'text-white'}">
+                    Podliczenie i Zestawienie Roczne Zleceń (2025 / 2026 / 2027)
+                  </h3>
+                  <p class="text-[11px] ${isCream ? 'text-[#736350]' : 'text-slate-400'}">
+                    Porównanie wartości netto/brutto, liczby zleceń i wykonanych detali dla poszczególnych lat
+                  </p>
+                </div>
+              </div>
+              <button id="btn-close-annual-breakdown" class="w-8 h-8 rounded-xl ${isCream ? 'bg-[#ede5d6] text-[#4d4233] hover:bg-[#ded1bd]' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'} flex items-center justify-center transition-all cursor-pointer">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+
+            <!-- Yearly Comparison Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              ${['2025', '2026', '2027'].map(yr => {
+                const stats = annualSummary[yr] || { totalOrders: 0, activeOrders: 0, completedOrders: 0, archivedOrders: 0, totalPieces: 0, totalNetto: 0, totalBrutto: 0 };
+                const isCurrentActive = activeYear === yr;
+                const isCurrentYear = yr === '2026';
+                const isPastYear = yr === '2025';
+                const isFutureYear = yr === '2027';
+
+                return `
+                  <div class="border rounded-xl p-3.5 flex flex-col justify-between gap-3 transition-all ${
+                    isCurrentActive
+                      ? (isCream ? 'bg-[#fffdf9] border-amber-600/60 ring-2 ring-amber-600/20 shadow-md' : 'bg-slate-900 border-amber-500/60 ring-2 ring-amber-500/20 shadow-md')
+                      : (isCream ? 'bg-[#f7f2e9] border-[#e2d7c5]' : 'bg-slate-950/70 border-slate-800')
+                  }">
+                    <div>
+                      <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-1.5">
+                          <span class="text-base sm:text-lg font-black font-mono ${isCream ? 'text-[#1c1917]' : 'text-white'}">ROK ${yr}</span>
+                          ${isCurrentYear ? '<span class="text-[9px] px-2 py-0.5 rounded font-black bg-amber-500 text-slate-950">BIEŻĄCY</span>' : ''}
+                          ${isPastYear ? '<span class="text-[9px] px-2 py-0.5 rounded font-bold ' + (isCream ? 'bg-stone-300 text-stone-900' : 'bg-slate-800 text-slate-300') + '">ARCHIWUM</span>' : ''}
+                          ${isFutureYear ? '<span class="text-[9px] px-2 py-0.5 rounded font-bold ' + (isCream ? 'bg-indigo-100 text-indigo-900' : 'bg-indigo-950 text-indigo-300') + '">NOWY</span>' : ''}
+                        </div>
+                        ${isCurrentActive ? '<span class="text-[10px] font-bold text-amber-600 flex items-center gap-0.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span> AKTYWNY</span>' : ''}
+                      </div>
+
+                      <!-- Main Values -->
+                      <div class="space-y-1 mb-3">
+                        <div class="flex justify-between items-baseline">
+                          <span class="text-[11px] font-semibold ${isCream ? 'text-[#6e604f]' : 'text-slate-400'}">Wartość Netto:</span>
+                          <span class="text-base font-black font-mono ${isCream ? 'text-[#1c1917]' : 'text-white'}">
+                            ${stats.totalNetto.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} zł
+                          </span>
+                        </div>
+                        <div class="flex justify-between items-baseline">
+                          <span class="text-[10px] ${isCream ? 'text-stone-500' : 'text-slate-500'}">Wartość Brutto:</span>
+                          <span class="text-xs font-mono font-bold ${isCream ? 'text-[#44403c]' : 'text-slate-300'}">
+                            ${stats.totalBrutto.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} zł
+                          </span>
+                        </div>
+                        <div class="flex justify-between items-baseline pt-1 border-t ${isCream ? 'border-[#e8decb]' : 'border-slate-800'}">
+                          <span class="text-[11px] font-semibold ${isCream ? 'text-[#6e604f]' : 'text-slate-400'}">Suma detali (szt.):</span>
+                          <span class="text-sm font-black font-mono text-indigo-600 dark:text-indigo-400">
+                            ${stats.totalPieces.toLocaleString('pl-PL')} szt.
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- Counts Breakdown -->
+                      <div class="grid grid-cols-3 gap-1.5 text-center p-2 rounded-lg ${isCream ? 'bg-[#ede5d6]' : 'bg-slate-900 border border-slate-800'} text-[10px] font-mono">
+                        <div>
+                          <div class="text-amber-600 font-bold font-sans">W realizacji</div>
+                          <div class="font-black text-xs ${isCream ? 'text-[#2a241e]' : 'text-white'}">${stats.activeOrders}</div>
+                        </div>
+                        <div>
+                          <div class="text-emerald-600 font-bold font-sans">Gotowe</div>
+                          <div class="font-black text-xs ${isCream ? 'text-[#2a241e]' : 'text-white'}">${stats.completedOrders}</div>
+                        </div>
+                        <div>
+                          <div class="text-stone-500 font-bold font-sans">Archiwum</div>
+                          <div class="font-black text-xs ${isCream ? 'text-[#2a241e]' : 'text-white'}">${stats.archivedOrders}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Switch year button -->
+                    <button class="btn-switch-year-from-summary w-full py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      isCurrentActive
+                        ? (isCream ? 'bg-amber-600 text-white shadow-sm' : 'bg-amber-500 text-slate-950 shadow-sm')
+                        : (isCream ? 'bg-[#e2d5c1] hover:bg-[#d8c7b0] text-[#3d3224]' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700')
+                    }" data-year="${yr}">
+                      <span class="material-symbols-outlined text-[16px]">${isCurrentActive ? 'visibility' : 'filter_alt'}</span>
+                      <span>${isCurrentActive ? 'Aktualnie przeglądasz' : 'Pokaż zlecenia ' + yr}</span>
+                    </button>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+
         <!-- Category Tabs (W TRAKCIE vs ZREALIZOWANE vs ARCHIWUM vs WSZYSTKIE) -->
         <div class="flex flex-wrap items-center justify-between gap-3 border-b ${isCream ? 'border-[#dfd3bf]' : 'border-slate-800'} pb-3">
           <div class="flex items-center gap-2 p-1.5 rounded-2xl border ${isCream ? 'bg-[#ede5d6] border-[#d8ccb8]' : 'bg-slate-900 border-slate-800'} shadow-sm flex-wrap">
@@ -366,7 +545,7 @@ export function renderOrderImportView(container, navigateTo) {
               <span class="material-symbols-outlined text-[18px]">list_alt</span>
               <span>WSZYSTKIE ZLECENIA</span>
               <span class="px-2 py-0.5 rounded-full text-[10px] font-mono ${activeTab === 'ALL' ? (isCream ? 'bg-stone-900 text-stone-200' : 'bg-slate-950 text-indigo-300') : (isCream ? 'bg-[#d8ccb8] text-[#3d3224]' : 'bg-slate-800 text-slate-300')}">
-                ${allOrders.length}
+                ${activeYearOrders.length}
               </span>
             </button>
 
@@ -412,7 +591,7 @@ export function renderOrderImportView(container, navigateTo) {
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div class="${themeStyles.metricBoxValue} border rounded-2xl p-3.5 flex items-center justify-between shadow-sm">
             <div>
-              <span class="text-[10px] uppercase font-bold block tracking-wider ${isCream ? 'text-[#736350]' : 'text-slate-400'}">Wartość Netto (Widok)</span>
+              <span class="text-[10px] uppercase font-bold block tracking-wider ${isCream ? 'text-[#736350]' : 'text-slate-400'}">Wartość Netto (${activeYear === 'ALL' ? 'Wszystkie Lata' : 'Rok ' + activeYear})</span>
               <span class="text-xl sm:text-2xl font-black font-mono ${isCream ? 'text-[#1c1917]' : 'text-white'}">${viewTotalNetto.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} zł</span>
               <span class="text-[10px] ${isCream ? 'text-stone-500' : 'text-slate-400'} block font-semibold">Brutto: ${viewTotalBrutto.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} zł</span>
             </div>
@@ -463,7 +642,7 @@ export function renderOrderImportView(container, navigateTo) {
             <div class="sm:col-span-4 flex items-center gap-2">
               <span class="material-symbols-outlined text-amber-600 text-[18px]">calendar_month</span>
               <select id="month-filter-select" class="w-full ${themeStyles.inputSearch} border rounded-xl px-3 py-2 text-xs font-bold outline-none cursor-pointer">
-                <option value="ALL" ${activeMonthFilter === 'ALL' ? 'selected' : ''}>📅 Wszystkie miesiące (Łącznie ${allOrders.length} zleceń)</option>
+                <option value="ALL" ${activeMonthFilter === 'ALL' ? 'selected' : ''}>📅 Wszystkie miesiące (${activeYear === 'ALL' ? 'Wszystkie lata: ' + allOrders.length : activeYear + ': ' + activeYearOrders.length} zleceń)</option>
                 ${monthFilters.map(m => `
                   <option value="${m.id}" ${activeMonthFilter === m.id ? 'selected' : ''}>${m.label}</option>
                 `).join('')}
@@ -501,8 +680,8 @@ export function renderOrderImportView(container, navigateTo) {
           ${filteredOrders.length === 0 ? `
             <div class="border-2 border-dashed ${isCream ? 'border-[#d8ccb8] bg-[#fbf8f2]' : 'border-slate-800 bg-slate-900/50'} rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3">
               <span class="material-symbols-outlined text-5xl ${isCream ? 'text-[#a89985]' : 'text-slate-600'}">search_off</span>
-              <div class="text-sm font-bold ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Brak zleceń w tej kategorii</div>
-              <p class="text-xs ${isCream ? 'text-[#7d6f5e]' : 'text-slate-500'}">Zmień zakładkę, wybierz inny miesiąc lub wyczyść wyszukiwanie.</p>
+              <div class="text-sm font-bold ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Brak zleceń dla roku ${activeYear === 'ALL' ? 'w tej kategorii' : activeYear}</div>
+              <p class="text-xs ${isCream ? 'text-[#7d6f5e]' : 'text-slate-500'}">Zmień rok (np. 2026 / 2025), wybierz inny miesiąc lub wyczyść filtry.</p>
               <button id="btn-reset-filters" class="mt-2 px-4 py-2 ${isCream ? 'bg-[#ede5d6] text-[#2c2825] border-[#d8ccb8]' : 'bg-slate-800 text-white border-slate-700'} rounded-xl border text-xs font-bold cursor-pointer">
                 Resetuj Filtry
               </button>
@@ -1060,6 +1239,42 @@ export function renderOrderImportView(container, navigateTo) {
       });
     }
 
+    // Year selection buttons
+    container.querySelectorAll('.btn-select-year').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeYear = btn.getAttribute('data-year');
+        activeMonthFilter = 'ALL';
+        renderUI();
+      });
+    });
+
+    // Toggle Annual Breakdown Panel
+    const btnToggleBreakdown = container.querySelector('#btn-toggle-annual-breakdown');
+    if (btnToggleBreakdown) {
+      btnToggleBreakdown.addEventListener('click', () => {
+        showAnnualBreakdown = !showAnnualBreakdown;
+        renderUI();
+      });
+    }
+
+    // Close Annual Breakdown Panel
+    const btnCloseBreakdown = container.querySelector('#btn-close-annual-breakdown');
+    if (btnCloseBreakdown) {
+      btnCloseBreakdown.addEventListener('click', () => {
+        showAnnualBreakdown = false;
+        renderUI();
+      });
+    }
+
+    // Switch Year from inside summary cards
+    container.querySelectorAll('.btn-switch-year-from-summary').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeYear = btn.getAttribute('data-year');
+        activeMonthFilter = 'ALL';
+        renderUI();
+      });
+    });
+
     // Expand / Collapse all toggle
     const btnToggleAllExpand = container.querySelector('#btn-toggle-all-expand');
     if (btnToggleAllExpand) {
@@ -1108,7 +1323,8 @@ export function renderOrderImportView(container, navigateTo) {
     const btnReset = container.querySelector('#btn-reset-filters');
     if (btnReset) {
       btnReset.addEventListener('click', () => {
-        activeTab = 'ACTIVE';
+        activeTab = 'ALL';
+        activeYear = '2026';
         activeCustomerFilter = 'ALL';
         activeMonthFilter = 'ALL';
         searchQuery = '';

@@ -8439,3 +8439,94 @@ export function setOrderPdf(orderId, pdfUrl, pdfName) {
   return null;
 }
 
+export function getOrderYear(order) {
+  if (!order) return '2026';
+  // 1. Check orderRef for 4-digit year (2020 - 2035)
+  if (order.orderRef && typeof order.orderRef === 'string') {
+    const m = order.orderRef.match(/[\/\-_](202[0-9]|203[0-9])(?:\b|[\/\-_])/);
+    if (m) return m[1];
+    // Check 2-digit year at delimiter, e.g. /26, -26, /25
+    const m2 = order.orderRef.match(/[\/\-_](2[4-9])(?:\b|[\/\-_])/);
+    if (m2) return `20${m2[1]}`;
+  }
+  // 2. Check orderDate YYYY-MM-DD
+  if (order.orderDate && typeof order.orderDate === 'string') {
+    const m = order.orderDate.match(/^(202[0-9]|203[0-9])/);
+    if (m) return m[1];
+  }
+  // 3. Check deliveryDate YYYY-MM-DD
+  if (order.deliveryDate && typeof order.deliveryDate === 'string') {
+    const m = order.deliveryDate.match(/^(202[0-9]|203[0-9])/);
+    if (m) return m[1];
+  }
+  // 4. Check ID
+  if (order.id && typeof order.id === 'string') {
+    const m = order.id.match(/[\/\-_](202[0-9]|203[0-9])[\/\-_]/);
+    if (m) return m[1];
+  }
+  return '2026';
+}
+
+export function getAvailableOrderYears() {
+  const orders = getSavedOrders();
+  const years = new Set(['2025', '2026', '2027']);
+  orders.forEach(o => {
+    const y = getOrderYear(o);
+    if (y) years.add(y);
+  });
+  return Array.from(years).sort().reverse();
+}
+
+export function getAnnualOrdersSummary() {
+  const orders = getSavedOrders();
+  const availableYears = getAvailableOrderYears();
+  const summaryMap = {};
+
+  availableYears.forEach(y => {
+    summaryMap[y] = {
+      year: y,
+      totalOrders: 0,
+      activeOrders: 0,
+      completedOrders: 0,
+      archivedOrders: 0,
+      totalPieces: 0,
+      totalNetto: 0,
+      totalBrutto: 0
+    };
+  });
+
+  orders.forEach(o => {
+    const y = getOrderYear(o);
+    if (!summaryMap[y]) {
+      summaryMap[y] = {
+        year: y,
+        totalOrders: 0,
+        activeOrders: 0,
+        completedOrders: 0,
+        archivedOrders: 0,
+        totalPieces: 0,
+        totalNetto: 0,
+        totalBrutto: 0
+      };
+    }
+    const stat = summaryMap[y];
+    stat.totalOrders++;
+    if (o.productionStatus === 'ARCHIVED') stat.archivedOrders++;
+    else if (o.productionStatus === 'PRODUCED') stat.completedOrders++;
+    else stat.activeOrders++;
+
+    if (Array.isArray(o.items)) {
+      o.items.forEach(it => {
+        const q = parseFloat(it.shippedQty || it.orderedQty || 0);
+        const p = parseFloat(it.unitPrice || 0);
+        stat.totalPieces += q;
+        stat.totalNetto += q * p;
+      });
+    }
+    stat.totalBrutto = stat.totalNetto * 1.23;
+  });
+
+  return summaryMap;
+}
+
+
