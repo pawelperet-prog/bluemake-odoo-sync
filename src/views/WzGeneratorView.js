@@ -42,10 +42,9 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
   let fromOrder = params?.fromOrder || params?.order || (params?.orderRef ? params : null) || window.__ACTIVE_WZ_ORDER_PARAMS;
   if (!fromOrder) {
     try {
-      const storedPrefill = sessionStorage.getItem('bluemake_wz_prefill');
+      const storedPrefill = sessionStorage.getItem('bluemake_wz_prefill') || localStorage.getItem('bluemake_wz_active_draft');
       if (storedPrefill) {
         fromOrder = JSON.parse(storedPrefill);
-        sessionStorage.removeItem('bluemake_wz_prefill');
       }
     } catch (e) {}
   }
@@ -110,21 +109,30 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
     }
 
     if (Array.isArray(fromOrder.items) && fromOrder.items.length > 0) {
-      initialItems = fromOrder.items.map((it, idx) => ({
-        id: idx + 1,
-        orderItemId: it.orderItemId || it.id || null,
-        name: it.sku && it.name && !it.name.includes(it.sku) ? `${it.sku} - ${it.name}` : (it.name || it.sku || `Detal ${idx + 1}`),
-        sku: it.sku || it.symbol || '',
-        symbol: it.symbol || it.sku || '',
-        productId: it.odooProductId || it.productId || null,
-        currentStock: 0,
-        locationId: 5,
-        quantity: parseFloat(it.quantity || it.remainingQty || it.shippedQty || it.orderedQty || 1),
-        orderedQty: parseFloat(it.orderedQty !== undefined ? it.orderedQty : (it.quantity || 1)),
-        alreadyShippedQty: parseFloat(it.alreadyShippedQty || 0),
-        remainingQty: parseFloat(it.remainingQty !== undefined ? it.remainingQty : (it.quantity || 1)),
-        uom: it.uom || 'szt'
-      }));
+      initialItems = fromOrder.items.map((it, idx) => {
+        const qtyVal = (it.quantity !== undefined && it.quantity !== null && it.quantity !== '')
+          ? parseFloat(it.quantity)
+          : (it.producedQty !== undefined && it.producedQty > 0
+              ? parseFloat(it.producedQty)
+              : (it.remainingQty !== undefined ? parseFloat(it.remainingQty) : parseFloat(it.orderedQty || 1)));
+
+        return {
+          id: idx + 1,
+          orderItemId: it.orderItemId || it.id || null,
+          name: it.sku && it.name && !it.name.includes(it.sku) ? `${it.sku} - ${it.name}` : (it.name || it.sku || `Detal ${idx + 1}`),
+          sku: it.sku || it.symbol || '',
+          symbol: it.symbol || it.sku || '',
+          productId: it.odooProductId || it.productId || null,
+          currentStock: 0,
+          locationId: 5,
+          quantity: qtyVal,
+          orderedQty: parseFloat(it.orderedQty !== undefined ? it.orderedQty : (it.quantity || 1)),
+          alreadyShippedQty: parseFloat(it.alreadyShippedQty || 0),
+          remainingQty: parseFloat(it.remainingQty !== undefined ? it.remainingQty : (it.quantity || 1)),
+          producedQty: it.producedQty !== undefined ? parseFloat(it.producedQty) : 0,
+          uom: it.uom || 'szt'
+        };
+      });
     }
   }
 

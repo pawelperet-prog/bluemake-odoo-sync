@@ -1139,7 +1139,7 @@ export function renderOrderImportView(container, navigateTo) {
 
     // Partial Quantity input change
     container.querySelectorAll('.input-item-qty').forEach(input => {
-      input.addEventListener('change', (e) => {
+      const flushInputQty = () => {
         const orderId = input.getAttribute('data-order-id');
         const itemId = input.getAttribute('data-item-id');
         const orderedQty = parseFloat(input.getAttribute('data-ordered-qty') || 1);
@@ -1147,6 +1147,10 @@ export function renderOrderImportView(container, navigateTo) {
         if (val < 0) val = 0;
         if (val > orderedQty) val = orderedQty;
         updateItemProducedQty(orderId, itemId, val);
+      };
+      input.addEventListener('input', flushInputQty);
+      input.addEventListener('change', () => {
+        flushInputQty();
         renderUI();
       });
     });
@@ -1250,6 +1254,23 @@ export function renderOrderImportView(container, navigateTo) {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const orderId = btn.getAttribute('data-order-id');
+
+        // CRITICAL FIX: Flush any pending input-item-qty in the DOM immediately before reading DB!
+        const card = btn.closest('[data-order-card-id]') || container.querySelector(`[data-order-card-id="${orderId}"]`);
+        if (card) {
+          card.querySelectorAll('.input-item-qty').forEach(input => {
+            const iOrderId = input.getAttribute('data-order-id');
+            const iItemId = input.getAttribute('data-item-id');
+            const maxVal = parseFloat(input.getAttribute('data-ordered-qty') || 1);
+            let val = parseFloat(input.value);
+            if (!isNaN(val)) {
+              if (val < 0) val = 0;
+              if (val > maxVal) val = maxVal;
+              updateItemProducedQty(iOrderId, iItemId, val);
+            }
+          });
+        }
+
         const all = getSavedOrders();
         const order = all.find(o => o.id === orderId);
         if (!order) return;
@@ -1265,10 +1286,13 @@ export function renderOrderImportView(container, navigateTo) {
           if (!confirmReopen) return;
         }
 
-        // DEDUCT previous WZs so only remaining unfulfilled items and quantities are passed!
+        // DEDUCT previous WZs and prioritize produced quantities (e.g. 5 szt.)!
         const wzDraft = prepareOrderItemsForWz(order);
 
+        window.__ACTIVE_WZ_ORDER_PARAMS = wzDraft;
         sessionStorage.setItem('bluemake_wz_prefill', JSON.stringify(wzDraft));
+        localStorage.setItem('bluemake_wz_active_draft', JSON.stringify(wzDraft));
+
         navigateTo('wz', { fromOrder: wzDraft });
       });
     });

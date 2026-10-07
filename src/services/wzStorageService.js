@@ -560,20 +560,43 @@ export function getOrderWzShipmentSummary(order, wzHistory = null) {
 export function prepareOrderItemsForWz(order, wzHistory = null) {
   const summary = getOrderWzShipmentSummary(order, wzHistory);
 
-  // Filter items: ONLY those with remainingQty > 0
-  const remainingItems = summary.itemsSummary.filter(it => it.remainingQty > 0);
-  
-  // If all items are already shipped, keep all items (to allow re-issuing if explicitly forced)
-  const sourceItems = remainingItems.length > 0 ? remainingItems : summary.itemsSummary;
+  // Check if any items have recorded production (producedQty > 0 or status PRODUCED)
+  const hasProducedItems = (order.items || []).some(it => 
+    (it.producedQty !== undefined && Number(it.producedQty) > 0) || it.productionStatus === 'PRODUCED'
+  );
 
-  const itemsToWz = sourceItems.map((entry, idx) => {
+  let sourceEntries;
+  if (hasProducedItems) {
+    // If the operator marked specific quantities as produced (e.g. 5 szt.):
+    // ONLY take items that have producedQty > 0 or are PRODUCED!
+    sourceEntries = summary.itemsSummary.filter(entry => {
+      const it = entry.item;
+      const prod = it.producedQty !== undefined ? parseFloat(it.producedQty) : 0;
+      return (prod > 0 || it.productionStatus === 'PRODUCED') && entry.remainingQty > 0;
+    });
+    // If all produced items happen to be fully shipped already, fallback to remaining
+    if (sourceEntries.length === 0) {
+      sourceEntries = summary.itemsSummary.filter(entry => entry.remainingQty > 0);
+    }
+  } else {
+    // If no items were specifically marked produced, include all remaining unfulfilled items
+    sourceEntries = summary.itemsSummary.filter(entry => entry.remainingQty > 0);
+  }
+
+  // Final fallback to all items if order is 100% shipped
+  if (sourceEntries.length === 0) {
+    sourceEntries = summary.itemsSummary;
+  }
+
+  const itemsToWz = sourceEntries.map((entry, idx) => {
     const it = entry.item;
     const producedQty = it.producedQty !== undefined ? parseFloat(it.producedQty) : 0;
     
-    // Propose remaining quantity (or produced quantity if partial production was recorded)
+    // Propose quantity:
+    // If user entered producedQty (e.g. 5 szt.), use EXACTLY that produced quantity!
     let proposedQty = entry.remainingQty;
-    if (producedQty > 0 && producedQty < entry.remainingQty) {
-      proposedQty = producedQty;
+    if (producedQty > 0) {
+      proposedQty = Math.min(producedQty, entry.remainingQty > 0 ? entry.remainingQty : producedQty);
     }
 
     return {
@@ -585,6 +608,7 @@ export function prepareOrderItemsForWz(order, wzHistory = null) {
       orderedQty: entry.orderedQty,
       alreadyShippedQty: entry.shippedQty,
       remainingQty: entry.remainingQty,
+      producedQty: producedQty,
       quantity: proposedQty > 0 ? proposedQty : (entry.remainingQty > 0 ? entry.remainingQty : entry.orderedQty),
       unit: it.uom || 'szt',
       uom: it.uom || 'szt',
