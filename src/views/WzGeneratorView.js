@@ -1,6 +1,7 @@
 import html2pdf from 'html2pdf.js';
 import { getProducts, applyStockAdjustment } from '../services/odooApi.js';
 import { getCurrentOperator } from '../services/authService.js';
+import { getSavedOrders } from '../services/orderStorageService.js';
 import { 
   DEFAULT_SUPPLIER, 
   DEFAULT_CUSTOMERS,
@@ -17,7 +18,11 @@ import {
   getNextWzNumber, 
   incrementWzCounter,
   findCustomerMatch,
-  isCustomerEc
+  isCustomerEc,
+  getOrderWzShipmentSummary,
+  prepareOrderItemsForWz,
+  syncOrderFromWzHistory,
+  normalizeOrderRef
 } from '../services/wzStorageService.js';
 
 export function renderWzGeneratorView(container, navigateTo, params = null) {
@@ -32,7 +37,18 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
   const nextNumInfo = getNextWzNumber(currentMonthStr, currentYearStr);
 
   const customers = getSavedCustomers();
-  const fromOrder = params?.fromOrder || params?.order || (params?.orderRef ? params : null) || window.__ACTIVE_WZ_ORDER_PARAMS;
+  const allSavedOrders = getSavedOrders();
+
+  let fromOrder = params?.fromOrder || params?.order || (params?.orderRef ? params : null) || window.__ACTIVE_WZ_ORDER_PARAMS;
+  if (!fromOrder) {
+    try {
+      const storedPrefill = sessionStorage.getItem('bluemake_wz_prefill');
+      if (storedPrefill) {
+        fromOrder = JSON.parse(storedPrefill);
+        sessionStorage.removeItem('bluemake_wz_prefill');
+      }
+    } catch (e) {}
+  }
 
   let initialCustomer = customers[0] || {
     name: 'EC Engineering Sp. z o.o.',
@@ -44,6 +60,9 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
 
   let initialOrderNumber = `ZZ-72/${nextNumInfo.month}/${nextNumInfo.year}/EC`;
   let initialOrderDate = orderDefaultDate;
+  let initialOrderId = null;
+  let orderShipmentSummary = null;
+
   let initialItems = [
     { 
       id: 1, 
@@ -59,9 +78,9 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
 
   if (fromOrder) {
     const custSearch = fromOrder.customerName || fromOrder.category || fromOrder.customer;
-    const matched = findCustomerMatch(custSearch);
-    if (matched) {
-      initialCustomer = matched;
+    const matchedCust = findCustomerMatch(custSearch);
+    if (matchedCust) {
+      initialCustomer = matchedCust;
     } else if (custSearch) {
       initialCustomer = {
         id: `cust_${Date.now()}`,
@@ -72,17 +91,38 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
         contact: custSearch.contact || ''
       };
     }
-    initialOrderNumber = fromOrder.orderRef || '';
+    initialOrderNumber = fromOrder.orderNumber || fromOrder.orderRef || '';
     initialOrderDate = fromOrder.orderDate || todayStr;
+    initialOrderId = fromOrder.orderId || fromOrder.id || null;
+
+    // Find linked order in database to get accurate shipment summary across previous WZs
+    const matchedOrder = allSavedOrders.find(o => 
+      (initialOrderId && o.id === initialOrderId) ||
+      normalizeOrderRef(o.orderRef) === normalizeOrderRef(initialOrderNumber) ||
+      normalizeOrderRef(o.odooOrderName) === normalizeOrderRef(initialOrderNumber)
+    );
+
+    if (matchedOrder) {
+      initialOrderId = matchedOrder.id;
+      orderShipmentSummary = getOrderWzShipmentSummary(matchedOrder);
+    } else if (fromOrder.summary) {
+      orderShipmentSummary = fromOrder.summary;
+    }
+
     if (Array.isArray(fromOrder.items) && fromOrder.items.length > 0) {
       initialItems = fromOrder.items.map((it, idx) => ({
         id: idx + 1,
+        orderItemId: it.orderItemId || it.id || null,
         name: it.sku && it.name && !it.name.includes(it.sku) ? `${it.sku} - ${it.name}` : (it.name || it.sku || `Detal ${idx + 1}`),
         sku: it.sku || it.symbol || '',
+        symbol: it.symbol || it.sku || '',
         productId: it.odooProductId || it.productId || null,
         currentStock: 0,
         locationId: 5,
-        quantity: parseFloat(it.shippedQty || it.orderedQty || it.quantity || 1),
+        quantity: parseFloat(it.quantity || it.remainingQty || it.shippedQty || it.orderedQty || 1),
+        orderedQty: parseFloat(it.orderedQty !== undefined ? it.orderedQty : (it.quantity || 1)),
+        alreadyShippedQty: parseFloat(it.alreadyShippedQty || 0),
+        remainingQty: parseFloat(it.remainingQty !== undefined ? it.remainingQty : (it.quantity || 1)),
         uom: it.uom || 'szt'
       }));
     }
@@ -99,6 +139,7 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
     wzSuffix: '/BM',
     issueDate: todayStr,
     issuePlace: 'MIELEC',
+    orderId: initialOrderId,
     orderNumber: initialOrderNumber,
     orderDate: initialOrderDate,
     issuerName: currentOp ? (currentOp.name === 'Mateusz' ? 'Mateusz Klimkowski' : (currentOp.name === 'Paweł' ? 'Paweł Peret' : currentOp.name)) : 'Mateusz Klimkowski',
@@ -436,7 +477,10 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
             <!-- Nr zamówienia & Data zamówienia -->
             <div class="md:col-span-4 flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 p-2 rounded-xl">
               <span class="font-bold text-slate-300 whitespace-nowrap">Nr zam.:</span>
-              <input id="input-order-num" type="text" value="${wzState.orderNumber}" placeholder="ZZ-72/09/2026/EC" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold font-mono py-1 px-2 text-white focus:ring-1 focus:ring-blue-500" />
+              <input id="input-order-num" list="order-numbers-datalist" type="text" value="${wzState.orderNumber}" placeholder="ZZ-72/09/2026/EC" class="flex-1 bg-slate-950 border border-slate-700 rounded font-bold font-mono py-1 px-2 text-white focus:ring-1 focus:ring-blue-500" />
+              <datalist id="order-numbers-datalist">
+                ${allSavedOrders.slice(0, 100).map(o => `<option value="${o.orderRef || o.odooOrderName}">${o.customerName || ''} (${(o.items || []).length} poz.)</option>`).join('')}
+              </datalist>
             </div>
 
           </div>
@@ -606,13 +650,44 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
 
           <!-- Items Interactive Edit Form List with Autocomplete & Direct Odoo Picker -->
           <div class="flex flex-col gap-2 pt-2 border-t border-slate-800">
-            <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center flex-wrap gap-2">
               <span class="font-bold text-slate-300 text-xs uppercase tracking-wide">Pozycje towarowe (Wpisz numer / SKU lub wybierz z bazy):</span>
               <span class="text-[11px] ${wzState.deductFromOdoo ? 'text-emerald-400 bg-emerald-950/60 border-emerald-700/50' : 'text-slate-400 bg-slate-800/80 border-slate-700'} font-bold px-2 py-0.5 rounded-md border flex items-center gap-1">
                 <span class="material-symbols-outlined text-[14px]">${wzState.deductFromOdoo ? 'inventory_2' : 'do_not_disturb_on'}</span>
                 ${wzState.deductFromOdoo ? 'Odejmowanie z Odoo 19 AKTYWNE (EC)' : 'Odejmowanie z Odoo WYŁĄCZONE (Inny klient)'}
               </span>
             </div>
+
+            <!-- Multi-Dispatch History Summary Card -->
+            ${orderShipmentSummary && orderShipmentSummary.relatedWzs.length > 0 ? `
+              <div class="bg-gradient-to-r from-amber-950/70 to-slate-900 border border-amber-500/60 p-3 rounded-xl flex flex-col gap-2 text-xs">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                  <div class="flex items-center gap-2 font-bold text-amber-300">
+                    <span class="material-symbols-outlined text-[18px]">local_shipping</span>
+                    <span>Wieloetapowa realizacja zlecenia: <strong class="font-mono text-white underline">${wzState.orderNumber}</strong></span>
+                    <span class="bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded text-[10px]">WZ #${orderShipmentSummary.relatedWzs.length + 1}</span>
+                  </div>
+                  <div class="font-mono text-[11px] bg-slate-950 px-2.5 py-1 rounded-lg text-amber-300 border border-amber-600/40 font-bold">
+                    Wysłano wcześniej: ${orderShipmentSummary.totalShipped} / ${orderShipmentSummary.totalOrdered} szt. (Pozostało: ${orderShipmentSummary.totalRemaining} szt.)
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-[11px] text-slate-400 font-semibold">Poprzednio wystawione WZ:</span>
+                  ${orderShipmentSummary.relatedWzs.map(w => `
+                    <span class="bg-slate-950/90 border border-slate-700 px-2 py-0.5 rounded text-[11px] font-mono text-slate-200 flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[12px] text-emerald-400">check_circle</span>
+                      <strong>${w.formattedNumber || w.wzNum}</strong> (${w.issueDate})
+                    </span>
+                  `).join('')}
+                </div>
+
+                <div class="text-[11px] text-emerald-300 flex items-center gap-1 font-medium bg-emerald-950/40 p-2 rounded-lg border border-emerald-800/40">
+                  <span class="material-symbols-outlined text-[15px] text-emerald-400">task_alt</span>
+                  <span>Automatycznie odliczono pozycje z poprzednich WZ. Poniżej znajdują się wyłącznie brakujące sztuki do wysłania.</span>
+                </div>
+              </div>
+            ` : ''}
 
             <div class="flex flex-col gap-2" id="wz-items-inputs-container">
               ${wzState.items.map((it, idx) => `
@@ -668,6 +743,19 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
                       <option value="kg" ${it.uom === 'kg' ? 'selected' : ''}>kg</option>
                     </select>
                   </div>
+
+                  <!-- Remaining / Ordered Qty Badge if from Order -->
+                  ${it.orderedQty ? `
+                    <div class="text-[10px] font-mono font-semibold bg-slate-900/90 text-slate-300 border border-slate-700/80 px-2 py-1 rounded-lg flex items-center gap-1.5 flex-wrap">
+                      <span>Zamówiono: <strong class="text-white">${it.orderedQty} ${it.uom}</strong></span>
+                      ${it.alreadyShippedQty > 0 ? `
+                        <span>•</span>
+                        <span class="text-amber-400 font-bold">Wysłano: ${it.alreadyShippedQty}</span>
+                      ` : ''}
+                      <span>•</span>
+                      <span class="text-emerald-400 font-bold">Pozostało: ${it.remainingQty || it.quantity}</span>
+                    </div>
+                  ` : ''}
 
                   <!-- Stock badge if matched with Odoo -->
                   ${it.productId ? `
@@ -1432,8 +1520,33 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
     }
 
     if (inputIssuePlace) inputIssuePlace.addEventListener('input', (e) => { wzState.issuePlace = e.target.value.toUpperCase(); updatePreview(); });
-    if (inputOrderNum) inputOrderNum.addEventListener('input', (e) => { wzState.orderNumber = e.target.value; updatePreview(); });
     if (inputOrderDate) inputOrderDate.addEventListener('input', (e) => { wzState.orderDate = e.target.value; updatePreview(); });
+
+    if (inputOrderNum) {
+      inputOrderNum.addEventListener('input', (e) => { wzState.orderNumber = e.target.value; updatePreview(); });
+      inputOrderNum.addEventListener('change', (e) => {
+        const val = e.target.value.trim();
+        if (!val) return;
+        const allOrders = getSavedOrders();
+        const matched = allOrders.find(o => 
+          normalizeOrderRef(o.orderRef) === normalizeOrderRef(val) ||
+          normalizeOrderRef(o.odooOrderName) === normalizeOrderRef(val)
+        );
+        if (matched) {
+          const prefill = prepareOrderItemsForWz(matched);
+          const cust = findCustomerMatch(matched.customerName);
+          if (cust) wzState.customer = { ...cust };
+          wzState.orderId = matched.id;
+          wzState.orderNumber = matched.orderRef || matched.odooOrderName;
+          wzState.orderDate = matched.orderDate || wzState.orderDate;
+          orderShipmentSummary = prefill.summary;
+          wzState.items = prefill.items;
+          statusBannerMsg = `✅ Załadowano pozycje ze zlecenia ${wzState.orderNumber} (${wzState.items.length} pozycji, odliczono poprzednie WZ).`;
+          statusBannerType = 'success';
+          renderUI();
+        }
+      });
+    }
 
     // Issuer
     const selectIssuer = container.querySelector('#select-issuer-name');

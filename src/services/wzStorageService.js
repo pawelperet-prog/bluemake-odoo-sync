@@ -321,6 +321,11 @@ export function saveWzDocument(wzDoc, operatorName = null) {
     status: 'SUCCESS'
   });
 
+  // Automatically sync linked order shipment status
+  if (!isDraft && (wzDoc.orderNumber || wzDoc.orderId)) {
+    syncOrderFromWzHistory(wzDoc.orderId || wzDoc.orderNumber);
+  }
+
   return history;
 }
 
@@ -330,6 +335,11 @@ export function deleteWzDocument(wzId, operatorName = null) {
   const isDraft = doc?.status === 'DRAFT' || doc?.isDraft === true;
   const updated = history.filter(w => w.id !== wzId);
   localStorage.setItem(STORAGE_KEY_WZ_HISTORY, JSON.stringify(updated));
+
+  // If was issued, sync the order back
+  if (doc && !isDraft && (doc.orderNumber || doc.orderId)) {
+    syncOrderFromWzHistory(doc.orderId || doc.orderNumber);
+  }
 
   logAuditAction({
     category: 'WZ',
@@ -407,4 +417,240 @@ export function incrementWzCounter(usedNum, month, year) {
   counters[key] = nextNum;
   localStorage.setItem(STORAGE_KEY_WZ_COUNTERS, JSON.stringify(counters));
   return nextNum;
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * PARTIAL WZ SHIPMENT TRACKING & MULTI-DISPATCH ENGINE (WZ 1, WZ 2, WZ 3...)
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+export function normalizeOrderRef(ref) {
+  if (!ref) return '';
+  return String(ref).trim().toUpperCase().replace(/[\s\-_\\/]/g, '');
+}
+
+export function normalizeItemKey(str) {
+  if (!str) return '';
+  return String(str).trim().toUpperCase().replace(/[\s\-_\\/]/g, '');
+}
+
+export function isItemMatching(orderItem, wzItem) {
+  if (!orderItem || !wzItem) return false;
+  if (wzItem.orderItemId && orderItem.id && wzItem.orderItemId === orderItem.id) {
+    return true;
+  }
+  
+  const oSku = normalizeItemKey(orderItem.sku);
+  const oSym = normalizeItemKey(orderItem.symbol);
+  const wSku = normalizeItemKey(wzItem.sku);
+  const wSym = normalizeItemKey(wzItem.symbol);
+
+  if (oSku && (oSku === wSku || oSku === wSym)) return true;
+  if (oSym && (oSym === wSym || oSym === wSku)) return true;
+
+  // Exact or contains name matching
+  const oName = (orderItem.name || '').trim().toLowerCase();
+  const wName = (wzItem.name || '').trim().toLowerCase();
+  if (oName && wName && (oName === wName || wName.includes(oName) || oName.includes(wName))) {
+    return true;
+  }
+
+  // SKU contained in name
+  if (oSku && wzItem.name && normalizeItemKey(wzItem.name).includes(oSku)) return true;
+  if (oSym && wzItem.name && normalizeItemKey(wzItem.name).includes(oSym)) return true;
+
+  return false;
+}
+
+/**
+ * Analyzes all issued WZ documents for a specific order and computes
+ * shipped vs remaining quantities per item, and which previous WZs were issued.
+ */
+export function getOrderWzShipmentSummary(order, wzHistory = null) {
+  if (!order) {
+    return {
+      orderId: null,
+      orderRef: '',
+      relatedWzs: [],
+      itemsSummary: [],
+      totalOrdered: 0,
+      totalShipped: 0,
+      totalRemaining: 0,
+      isAllShipped: false,
+      isPartiallyShipped: false
+    };
+  }
+
+  const history = wzHistory || getWzIssued();
+  const orderRefNorm = normalizeOrderRef(order.orderRef || order.odooOrderName || order.id);
+  const odooOrderNorm = normalizeOrderRef(order.odooOrderName);
+
+  // Find all ISSUED WZs for this order
+  const relatedWzs = history.filter(wz => {
+    if (wz.isDraft || wz.status === 'DRAFT') return false;
+    if (wz.orderId && order.id && wz.orderId === order.id) return true;
+    const wzRefNorm = normalizeOrderRef(wz.orderNumber);
+    if (!wzRefNorm) return false;
+    if (orderRefNorm && wzRefNorm === orderRefNorm) return true;
+    if (odooOrderNorm && wzRefNorm === odooOrderNorm) return true;
+    return false;
+  });
+
+  // Calculate shipped quantities per item
+  const itemsSummary = (order.items || []).map(orderItem => {
+    const orderedQty = parseFloat(orderItem.orderedQty !== undefined ? orderItem.orderedQty : (orderItem.shippedQty || 1)) || 0;
+    let shippedQty = 0;
+    const shipments = [];
+
+    relatedWzs.forEach(wz => {
+      (wz.items || []).forEach(wzItem => {
+        if (isItemMatching(orderItem, wzItem)) {
+          const qty = parseFloat(wzItem.quantity) || 0;
+          shippedQty += qty;
+          shipments.push({
+            wzId: wz.id,
+            wzNumber: wz.formattedNumber || `Nr ${wz.wzNum}/${wz.wzMonth}/${wz.wzYear}${wz.wzSuffix || '/BM'}`,
+            date: wz.issueDate,
+            quantity: qty
+          });
+        }
+      });
+    });
+
+    const remainingQty = Math.max(0, parseFloat((orderedQty - shippedQty).toFixed(4)));
+    const isFullyShipped = remainingQty === 0 && orderedQty > 0 && shippedQty > 0;
+    const isPartiallyShipped = shippedQty > 0 && remainingQty > 0;
+
+    return {
+      orderItemId: orderItem.id,
+      item: orderItem,
+      orderedQty,
+      shippedQty,
+      remainingQty,
+      isFullyShipped,
+      isPartiallyShipped,
+      shipments
+    };
+  });
+
+  const totalOrdered = itemsSummary.reduce((sum, it) => sum + it.orderedQty, 0);
+  const totalShipped = itemsSummary.reduce((sum, it) => sum + it.shippedQty, 0);
+  const totalRemaining = itemsSummary.reduce((sum, it) => sum + it.remainingQty, 0);
+  const isAllShipped = totalRemaining === 0 && totalOrdered > 0 && relatedWzs.length > 0;
+  const isPartiallyShipped = totalShipped > 0 && totalRemaining > 0;
+
+  return {
+    orderId: order.id,
+    orderRef: order.orderRef || order.odooOrderName || '',
+    relatedWzs,
+    itemsSummary,
+    totalOrdered,
+    totalShipped,
+    totalRemaining,
+    isAllShipped,
+    isPartiallyShipped
+  };
+}
+
+/**
+ * Prepares prefill items for WZ generator:
+ * DEDUCTS previous WZs so only remaining unfulfilled items and quantities are included!
+ */
+export function prepareOrderItemsForWz(order, wzHistory = null) {
+  const summary = getOrderWzShipmentSummary(order, wzHistory);
+
+  // Filter items: ONLY those with remainingQty > 0
+  const remainingItems = summary.itemsSummary.filter(it => it.remainingQty > 0);
+  
+  // If all items are already shipped, keep all items (to allow re-issuing if explicitly forced)
+  const sourceItems = remainingItems.length > 0 ? remainingItems : summary.itemsSummary;
+
+  const itemsToWz = sourceItems.map((entry, idx) => {
+    const it = entry.item;
+    const producedQty = it.producedQty !== undefined ? parseFloat(it.producedQty) : 0;
+    
+    // Propose remaining quantity (or produced quantity if partial production was recorded)
+    let proposedQty = entry.remainingQty;
+    if (producedQty > 0 && producedQty < entry.remainingQty) {
+      proposedQty = producedQty;
+    }
+
+    return {
+      id: `wz_it_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 6)}`,
+      orderItemId: it.id,
+      symbol: it.symbol || it.sku || '',
+      sku: it.sku || it.symbol || '',
+      name: it.sku && it.name && !it.name.includes(it.sku) ? `${it.sku} - ${it.name}` : (it.name || it.sku || it.symbol || `Detal ${idx + 1}`),
+      orderedQty: entry.orderedQty,
+      alreadyShippedQty: entry.shippedQty,
+      remainingQty: entry.remainingQty,
+      quantity: proposedQty > 0 ? proposedQty : (entry.remainingQty > 0 ? entry.remainingQty : entry.orderedQty),
+      unit: it.uom || 'szt',
+      uom: it.uom || 'szt',
+      price: it.unitPrice || 0,
+      productId: it.odooProductId || it.productId || null
+    };
+  });
+
+  return {
+    orderId: order.id,
+    orderRef: order.orderRef || order.odooOrderName || '',
+    orderNumber: order.orderRef || order.odooOrderName || '',
+    orderDate: order.orderDate || new Date().toISOString().split('T')[0],
+    customerName: order.customerName || order.category || 'EC Engineering',
+    items: itemsToWz,
+    summary: summary
+  };
+}
+
+/**
+ * Updates orders storage to reflect newly issued or deleted WZ documents
+ */
+export function syncOrderFromWzHistory(orderRefOrId) {
+  try {
+    const STORAGE_KEY = 'bluemake_saved_orders_db_v14';
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const orders = JSON.parse(raw);
+    if (!Array.isArray(orders)) return null;
+
+    const normTarget = normalizeOrderRef(orderRefOrId);
+    const orderIdx = orders.findIndex(o => 
+      o.id === orderRefOrId || 
+      normalizeOrderRef(o.orderRef) === normTarget || 
+      normalizeOrderRef(o.odooOrderName) === normTarget
+    );
+    if (orderIdx === -1) return null;
+
+    const order = orders[orderIdx];
+    const summary = getOrderWzShipmentSummary(order);
+
+    // Update shippedQty on order items
+    order.items = (order.items || []).map(orderItem => {
+      const match = summary.itemsSummary.find(s => s.orderItemId === orderItem.id);
+      if (match) {
+        return {
+          ...orderItem,
+          shippedQty: match.shippedQty,
+          remainingQty: match.remainingQty
+        };
+      }
+      return orderItem;
+    });
+
+    order.wzSummary = {
+      wzCount: summary.relatedWzs.length,
+      wzNumbers: summary.relatedWzs.map(w => w.formattedNumber || w.wzNum),
+      totalShipped: summary.totalShipped,
+      totalRemaining: summary.totalRemaining,
+      isAllShipped: summary.isAllShipped
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+    return order;
+  } catch (e) {
+    console.error('Error syncing order from WZ history:', e);
+    return null;
+  }
 }

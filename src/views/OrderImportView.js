@@ -14,7 +14,7 @@ import {
   unarchiveOrder,
   setOrderPdf
 } from '../services/orderStorageService.js';
-import { getSavedCustomers } from '../services/wzStorageService.js';
+import { getSavedCustomers, getOrderWzShipmentSummary, prepareOrderItemsForWz } from '../services/wzStorageService.js';
 import { printCustomerLabelsHtml } from '../utils/customerLabelGenerator.js';
 import { isAdmin, getCurrentOperator } from '../services/authService.js';
 
@@ -31,6 +31,8 @@ export function renderOrderImportView(container, navigateTo) {
   let activeCustomerFilter = 'ALL';
   let activeMonthFilter = 'ALL';
   let searchQuery = '';
+  let searchCursorPos = 0;
+  let isSearchingFocus = false;
   let showImportModal = false;
 
   // PDF Preview Modal state
@@ -508,6 +510,7 @@ export function renderOrderImportView(container, navigateTo) {
           ` : filteredOrders.map(order => {
             const isExpanded = expandedOrderIds.has(order.id);
             const totals = calculateTotals(order.items || []);
+            const wzSummary = getOrderWzShipmentSummary(order);
             const isArchived = order.productionStatus === 'ARCHIVED';
             const isFullyProduced = order.productionStatus === 'PRODUCED';
             const isPartiallyProduced = order.productionStatus === 'PARTIALLY_PRODUCED' || (totals.totalProducedQty > 0 && totals.totalProducedQty < totals.totalOrderedQty);
@@ -563,6 +566,21 @@ export function renderOrderImportView(container, navigateTo) {
                             🔧 W PRODUKCJI
                           </span>
                         `}
+
+                        <!-- WZ Dispatch Tag in Header -->
+                        ${wzSummary.relatedWzs.length > 0 ? (
+                          wzSummary.isAllShipped ? `
+                            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold ${isCream ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-emerald-950/80 text-emerald-300 border border-emerald-600'} flex items-center gap-1" title="Wszystkie pozycje zlecenia wysłane na ${wzSummary.relatedWzs.length} dok. WZ">
+                              <span class="material-symbols-outlined text-[13px]">verified</span>
+                              <span>WZ: 100% WYSŁANE (${wzSummary.relatedWzs.length})</span>
+                            </span>
+                          ` : `
+                            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold ${isCream ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-amber-950/80 text-amber-300 border border-amber-600'} flex items-center gap-1" title="Wysłano ${wzSummary.totalShipped} z ${wzSummary.totalOrdered} szt. Pozostało: ${wzSummary.totalRemaining} szt.">
+                              <span class="material-symbols-outlined text-[13px]">local_shipping</span>
+                              <span>WZ: ${wzSummary.totalShipped}/${wzSummary.totalOrdered} szt. (${wzSummary.relatedWzs.length} dok.)</span>
+                            </span>
+                          `
+                        ) : ''}
                       </div>
                       
                       <div class="flex items-center gap-2 mt-0.5 text-xs ${isCream ? 'text-[#6e604f]' : 'text-slate-400'} flex-wrap">
@@ -611,18 +629,25 @@ export function renderOrderImportView(container, navigateTo) {
                       <span class="text-[10px] ${isCream ? 'text-[#786c5e]' : 'text-slate-400'} font-semibold block">netto</span>
                     </div>
 
-                    <!-- Direct WZ Button (only if not archived) -->
-                    ${!isArchived ? (totals.totalProducedQty > 0 ? `
-                      <button class="btn-issue-wz-order flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs px-3 py-1.5 rounded-xl transition-all active:scale-95 shadow-sm cursor-pointer" data-order-id="${order.id}">
-                        <span class="material-symbols-outlined text-[16px]">description</span>
-                        <span class="hidden sm:inline">WZ</span>
-                      </button>
-                    ` : `
-                      <button class="btn-issue-wz-order flex items-center gap-1.5 ${isCream ? 'bg-[#e5dccf] text-[#8c7f6f] border-[#d4c6b2]' : 'bg-slate-800/80 text-slate-500 border-slate-700/80'} font-bold text-xs px-2.5 py-1.5 rounded-xl shadow-sm cursor-not-allowed border" data-order-id="${order.id}" data-locked="true" title="⚠️ Wymagane wyprodukowanie min. 1 sztuki przed wystawieniem WZ">
-                        <span class="material-symbols-outlined text-[16px]">lock</span>
-                        <span class="hidden sm:inline">WZ</span>
-                      </button>
-                    `) : ''}
+                    <!-- Direct WZ Button (Full Multi-Dispatch Support: WZ 1, WZ 2, WZ 3...) -->
+                    ${!isArchived ? (
+                      wzSummary.isAllShipped ? `
+                        <button class="btn-issue-wz-order flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition-all active:scale-95 shadow-sm cursor-pointer border border-emerald-500/60" data-order-id="${order.id}" data-wz-status="full" title="Wszystkie detale z tego zlecenia (${wzSummary.totalShipped} szt.) zostały już wysłane na ${wzSummary.relatedWzs.length} dok. WZ. Kliknij, aby zobaczyć lub wystawić kolejne.">
+                          <span class="material-symbols-outlined text-[16px]">verified</span>
+                          <span class="hidden sm:inline">WZ ✓ (${wzSummary.relatedWzs.length})</span>
+                        </button>
+                      ` : wzSummary.isPartiallyShipped ? `
+                        <button class="btn-issue-wz-order flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs px-3 py-1.5 rounded-xl transition-all active:scale-95 shadow-sm cursor-pointer border border-amber-400/80" data-order-id="${order.id}" data-wz-status="partial" title="Wysłano ${wzSummary.totalShipped} z ${wzSummary.totalOrdered} szt. Pozostało: ${wzSummary.totalRemaining} szt. Kliknij, aby wystawić kolejne WZ na brakujące pozycje.">
+                          <span class="material-symbols-outlined text-[16px]">local_shipping</span>
+                          <span class="hidden sm:inline">Kolejne WZ (#${wzSummary.relatedWzs.length + 1})</span>
+                        </button>
+                      ` : `
+                        <button class="btn-issue-wz-order flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs px-3 py-1.5 rounded-xl transition-all active:scale-95 shadow-sm cursor-pointer" data-order-id="${order.id}" data-wz-status="none" title="Wystaw dokument WZ dla tego zlecenia">
+                          <span class="material-symbols-outlined text-[16px]">description</span>
+                          <span class="hidden sm:inline">WZ</span>
+                        </button>
+                      `
+                    ) : ''}
 
                     <!-- Archiving / Status Quick Actions -->
                     ${isArchived ? `
@@ -673,6 +698,15 @@ export function renderOrderImportView(container, navigateTo) {
                           <span class="material-symbols-outlined text-[16px] text-amber-700">qr_code_2</span>
                           <span>Etykiety do paczek</span>
                         </button>
+
+                        ${wzSummary.relatedWzs.length > 0 ? `
+                          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border ${isCream ? 'bg-amber-100/90 border-amber-300 text-amber-950' : 'bg-amber-950/50 border-amber-700/70 text-amber-300'}" title="Historia wystawionych dokumentów WZ dla tego zlecenia">
+                            <span class="material-symbols-outlined text-[16px] text-amber-600">local_shipping</span>
+                            <span>WZ (${wzSummary.relatedWzs.length}):</span>
+                            <span class="font-mono">${wzSummary.relatedWzs.map(w => w.formattedNumber || w.wzNum).join(', ')}</span>
+                            <span class="text-[11px] opacity-80 font-normal">(${wzSummary.totalShipped}/${wzSummary.totalOrdered} szt.)</span>
+                          </div>
+                        ` : ''}
                       </div>
 
                       <div class="flex items-center gap-2">
@@ -698,7 +732,7 @@ export function renderOrderImportView(container, navigateTo) {
                             <th class="py-2 px-3 w-8 text-center">LP</th>
                             <th class="py-2 px-3 w-32">SKU / RYSUNEK</th>
                             <th class="py-2 px-3">NAZWA ELEMENTU</th>
-                            <th class="py-2 px-3 w-24 text-center">ZAMÓWIONO</th>
+                            <th class="py-2 px-3 w-28 text-center">ZAMÓWIONO</th>
                             <th class="py-2 px-3 w-40 text-center">WYPRODUKOWANO</th>
                             <th class="py-2 px-3 w-36 text-center">STATUS POZYCJI</th>
                             <th class="py-2 px-3 w-24 text-right">CENA JEDN.</th>
@@ -707,12 +741,16 @@ export function renderOrderImportView(container, navigateTo) {
                         </thead>
                         <tbody class="divide-y ${themeStyles.tableBorder}">
                           ${(order.items || []).map((it, idx) => {
-                            const orderedQty = parseFloat(it.shippedQty || it.orderedQty || 1);
+                            const orderedQty = parseFloat(it.orderedQty !== undefined ? it.orderedQty : (it.shippedQty || 1));
                             const producedQty = it.producedQty !== undefined ? parseFloat(it.producedQty) : (it.productionStatus === 'PRODUCED' ? orderedQty : 0);
                             const isItemProduced = it.productionStatus === 'PRODUCED' || producedQty >= orderedQty;
                             const isItemPartial = !isItemProduced && producedQty > 0;
                             const unitPrice = parseFloat(it.unitPrice || 0);
                             const rowNetto = (orderedQty * unitPrice).toFixed(2);
+
+                            const itemShipment = wzSummary.itemsSummary.find(s => s.orderItemId === it.id);
+                            const itShippedQty = itemShipment ? itemShipment.shippedQty : 0;
+                            const itRemainingQty = itemShipment ? itemShipment.remainingQty : orderedQty;
 
                             return `
                               <tr class="${themeStyles.tableRowBg} transition-colors">
@@ -723,7 +761,24 @@ export function renderOrderImportView(container, navigateTo) {
                                   ${it.symbol && it.symbol !== it.sku ? `<div class="text-[10px] ${isCream ? 'text-[#8c7f6f]' : 'text-slate-500'} font-mono font-normal">Symbol: ${it.symbol}</div>` : ''}
                                 </td>
                                 <td class="py-2.5 px-3 text-center font-bold font-mono ${isCream ? 'text-[#2a241e]' : 'text-slate-300'}">
-                                  ${orderedQty} ${it.uom || 'szt'}
+                                  <div>${orderedQty} ${it.uom || 'szt'}</div>
+                                  ${wzSummary.relatedWzs.length > 0 ? (
+                                    itRemainingQty === 0 ? `
+                                      <div class="text-[10px] text-emerald-600 font-bold flex items-center justify-center gap-0.5 mt-0.5" title="Wysłano w całości (${itShippedQty} szt.) na WZ">
+                                        <span class="material-symbols-outlined text-[13px]">verified</span>
+                                        <span>WZ: 100% (${itShippedQty})</span>
+                                      </div>
+                                    ` : itShippedQty > 0 ? `
+                                      <div class="text-[10px] text-amber-600 font-bold flex items-center justify-center gap-0.5 mt-0.5" title="Wysłano ${itShippedQty} z ${orderedQty} szt. Pozostało: ${itRemainingQty} szt.">
+                                        <span class="material-symbols-outlined text-[13px]">local_shipping</span>
+                                        <span>WZ: ${itShippedQty}/${orderedQty} (poz. ${itRemainingQty})</span>
+                                      </div>
+                                    ` : `
+                                      <div class="text-[10px] text-slate-400 font-normal mt-0.5" title="Brak WZ">
+                                        <span>WZ: 0/${orderedQty}</span>
+                                      </div>
+                                    `
+                                  ) : ''}
                                 </td>
                                 <td class="py-2 px-2 text-center">
                                   <div class="flex items-center justify-center gap-1">
@@ -1028,12 +1083,24 @@ export function renderOrderImportView(container, navigateTo) {
       });
     }
 
-    // Search input
+    // Search input with preserved focus & cursor position
     const searchInput = container.querySelector('#orders-search-input');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         searchQuery = e.target.value;
+        searchCursorPos = e.target.selectionStart || 0;
+        isSearchingFocus = true;
         renderUI();
+      });
+      searchInput.addEventListener('focus', () => {
+        isSearchingFocus = true;
+      });
+      searchInput.addEventListener('blur', () => {
+        setTimeout(() => {
+          if (document.activeElement !== container.querySelector('#orders-search-input')) {
+            isSearchingFocus = false;
+          }
+        }, 80);
       });
     }
 
@@ -1178,36 +1245,31 @@ export function renderOrderImportView(container, navigateTo) {
       });
     });
 
-    // Issue WZ document button
+    // Issue WZ document button (Multi-Dispatch Engine: WZ 1, WZ 2, WZ 3...)
     container.querySelectorAll('.btn-issue-wz-order').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (btn.getAttribute('data-locked') === 'true') {
-          alert('⚠️ Przed wystawieniem WZ należy oznaczyć przynajmniej część elementów jako wyprodukowane (wpisz ilość wyprodukowaną lub kliknij status pozycji).');
-          return;
-        }
         const orderId = btn.getAttribute('data-order-id');
         const all = getSavedOrders();
         const order = all.find(o => o.id === orderId);
-        if (order) {
-          const itemsToWz = (order.items || []).filter(it => (it.producedQty !== undefined ? it.producedQty > 0 : it.productionStatus === 'PRODUCED')).map(it => ({
-            id: `wz_it_${Date.now()}_${Math.random()}`,
-            symbol: it.symbol || it.sku || '',
-            name: it.name || '',
-            quantity: it.producedQty !== undefined ? it.producedQty : (it.shippedQty || it.orderedQty || 1),
-            unit: it.uom || 'szt',
-            price: it.unitPrice || 0
-          }));
+        if (!order) return;
 
-          const wzDraft = {
-            customerName: order.customerName || 'EC Engineering',
-            orderNumber: order.orderRef || order.odooOrderName || '',
-            items: itemsToWz
-          };
+        const summary = getOrderWzShipmentSummary(order);
 
-          sessionStorage.setItem('bluemake_wz_prefill', JSON.stringify(wzDraft));
-          navigateTo('wz');
+        // If ALL items were already 100% shipped on previous WZs:
+        if (summary.isAllShipped) {
+          const wzListStr = summary.relatedWzs.map(w => `• ${w.formattedNumber || w.wzNum} (z dn. ${w.issueDate})`).join('\n');
+          const confirmReopen = confirm(
+            `ℹ️ Wszystkie detale z tego zlecenia (${order.orderRef || order.odooOrderName}) zostały już w 100% zrealizowane na ${summary.relatedWzs.length} dokumentach WZ:\n\n${wzListStr}\n\nŁącznie wysłano: ${summary.totalShipped} szt. (Brak pozycji oczekujących na wysyłkę).\n\nCzy chcesz otworzyć generator WZ mimo to (np. dodatkowa wysyłka)?`
+          );
+          if (!confirmReopen) return;
         }
+
+        // DEDUCT previous WZs so only remaining unfulfilled items and quantities are passed!
+        const wzDraft = prepareOrderItemsForWz(order);
+
+        sessionStorage.setItem('bluemake_wz_prefill', JSON.stringify(wzDraft));
+        navigateTo('wz', { fromOrder: wzDraft });
       });
     });
 
@@ -1308,6 +1370,16 @@ export function renderOrderImportView(container, navigateTo) {
           alert('Błąd synchronizacji z Odoo: ' + err.message);
         }
       });
+    }
+    // Restore focus and cursor position in search bar after re-render
+    if (isSearchingFocus) {
+      const freshSearchInput = container.querySelector('#orders-search-input');
+      if (freshSearchInput) {
+        freshSearchInput.focus();
+        try {
+          freshSearchInput.setSelectionRange(searchCursorPos, searchCursorPos);
+        } catch (e) {}
+      }
     }
   }
 
