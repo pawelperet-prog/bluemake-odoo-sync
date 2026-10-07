@@ -19,6 +19,7 @@ import {
 } from '../services/orderStorageService.js';
 import { getSavedCustomers, getOrderWzShipmentSummary, prepareOrderItemsForWz } from '../services/wzStorageService.js';
 import { printCustomerLabelsHtml } from '../utils/customerLabelGenerator.js';
+import { getProductAttachments, getAttachmentData } from '../services/odooApi.js';
 import { isAdmin, getCurrentOperator } from '../services/authService.js';
 
 export function renderOrderImportView(container, navigateTo) {
@@ -828,6 +829,12 @@ export function renderOrderImportView(container, navigateTo) {
                       `
                     ) : ''}
 
+                    <!-- Drukuj Kody Kreskowe z Zamówienia (Etykiety do Paczek bez faktury) -->
+                    <button class="btn-print-order-label flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 border cursor-pointer ${isCream ? 'bg-[#ede5d6] hover:bg-[#ded1bd] text-[#2c2825] border-[#d8ccb8]' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'}" data-order-id="${order.id}" title="Drukuj kody kreskowe / etykiety wysyłkowe do paczek z zamówienia (bez faktury)">
+                      <span class="material-symbols-outlined text-[16px] text-amber-600">barcode</span>
+                      <span class="hidden sm:inline">Kody Kreskowe</span>
+                    </button>
+
                     <!-- Archiving / Status Quick Actions -->
                     ${isArchived ? `
                       <button class="btn-unarchive-order flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${isCream ? 'bg-[#ede5d6] hover:bg-[#ded1bd] text-[#2c2825] border-[#d8ccb8]' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'} cursor-pointer" data-order-id="${order.id}" title="Przywróć zlecenie z archiwum do zrealizowanych">
@@ -873,9 +880,9 @@ export function renderOrderImportView(container, navigateTo) {
                           </label>
                         `}
 
-                        <button class="btn-print-order-label flex items-center gap-1.5 ${isCream ? 'bg-[#ebe2d2] hover:bg-[#ded1bd] text-[#3d3224] border-[#d4c6b0]' : 'bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border-indigo-700/80'} font-bold text-xs px-3 py-1.5 rounded-xl transition-all active:scale-95 border cursor-pointer" data-order-id="${order.id}">
-                          <span class="material-symbols-outlined text-[16px] text-amber-700">qr_code_2</span>
-                          <span>Etykiety do paczek</span>
+                        <button class="btn-print-order-label flex items-center gap-1.5 ${isCream ? 'bg-[#ebe2d2] hover:bg-[#ded1bd] text-[#3d3224] border-[#d4c6b0]' : 'bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border-indigo-700/80'} font-bold text-xs px-3 py-1.5 rounded-xl transition-all active:scale-95 border cursor-pointer" data-order-id="${order.id}" title="Drukuj kody kreskowe / etykiety wysyłkowe z zamówienia (bez faktury)">
+                          <span class="material-symbols-outlined text-[16px] text-amber-600">barcode</span>
+                          <span>Drukuj Kody Kreskowe (Etykiety EC)</span>
                         </button>
 
                         ${wzSummary.relatedWzs.length > 0 ? `
@@ -934,7 +941,15 @@ export function renderOrderImportView(container, navigateTo) {
                             return `
                               <tr class="${themeStyles.tableRowBg} transition-colors">
                                 <td class="py-2.5 px-3 text-center font-mono ${isCream ? 'text-[#8c7f6f]' : 'text-slate-500'}">${idx + 1}</td>
-                                <td class="py-2.5 px-3 font-mono font-bold ${isCream ? 'text-[#2a241e]' : 'text-amber-400'}">${it.sku || it.symbol || '-'}</td>
+                                <td class="py-2.5 px-3 font-mono font-bold ${isCream ? 'text-[#2a241e]' : 'text-amber-400'}">
+                                  <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span>${it.sku || it.symbol || '-'}</span>
+                                    <button class="btn-preview-item-drawing p-1 rounded-lg ${isCream ? 'hover:bg-[#ebdcc7] text-rose-700 bg-[#f7f2ea]' : 'hover:bg-slate-800 text-rose-400 bg-slate-900'} border ${isCream ? 'border-[#d8ccb8]' : 'border-slate-800'} transition-all cursor-pointer flex items-center gap-0.5 shadow-sm" data-sku="${it.sku || ''}" data-symbol="${it.symbol || ''}" data-name="${it.name || ''}" title="Otwórz rysunek PDF dla tego detalu (${it.sku || it.symbol})">
+                                      <span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>
+                                      <span class="text-[9px] font-sans font-bold">RYS</span>
+                                    </button>
+                                  </div>
+                                </td>
                                 <td class="py-2.5 px-3 font-semibold ${isCream ? 'text-[#1c1917]' : 'text-slate-200'}">
                                   <div>${it.name || 'Brak nazwy'}</div>
                                   ${it.symbol && it.symbol !== it.sku ? `<div class="text-[10px] ${isCream ? 'text-[#8c7f6f]' : 'text-slate-500'} font-mono font-normal">Symbol: ${it.symbol}</div>` : ''}
@@ -1013,6 +1028,11 @@ export function renderOrderImportView(container, navigateTo) {
                             <span>WYSTAW DOKUMENT WZ (${totals.totalProducedQty} szt.)</span>
                           </button>
                         ` : ''}
+
+                        <button class="btn-print-order-label flex items-center gap-1.5 ${isCream ? 'bg-[#ede5d6] hover:bg-[#ded1bd] text-[#2c2825] border-[#d8ccb8]' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'} font-bold text-xs px-3.5 py-1.5 rounded-xl transition-all active:scale-95 border cursor-pointer" data-order-id="${order.id}" title="Drukuj kody kreskowe z zamówienia (bez faktury)">
+                          <span class="material-symbols-outlined text-[16px] text-amber-600">barcode</span>
+                          <span>DRUKUJ KODY KRESKOWE</span>
+                        </button>
                       </div>
                     </div>
 
@@ -1513,7 +1533,7 @@ export function renderOrderImportView(container, navigateTo) {
       });
     });
 
-    // Print label for order
+    // Print barcode labels for order (Code 128 / EC shipping labels)
     container.querySelectorAll('.btn-print-order-label').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1521,12 +1541,55 @@ export function renderOrderImportView(container, navigateTo) {
         const all = getSavedOrders();
         const order = all.find(o => o.id === orderId);
         if (order) {
-          printCustomerLabelsHtml(order.customerName, (order.items || []).map(it => ({
-            symbol: it.symbol || it.sku,
-            name: it.name,
-            quantity: it.producedQty || it.shippedQty || it.orderedQty || 1,
-            unit: it.uom || 'szt'
-          })));
+          printCustomerLabelsHtml(order);
+        }
+      });
+    });
+
+    // Preview technical drawing PDF for an item
+    container.querySelectorAll('.btn-preview-item-drawing').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const sku = (btn.getAttribute('data-sku') || '').trim();
+        const symbol = (btn.getAttribute('data-symbol') || '').trim();
+        const name = (btn.getAttribute('data-name') || '').trim();
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[15px]">sync</span>`;
+        btn.disabled = true;
+
+        try {
+          // 1. Search in Odoo attachments
+          let atts = await getProductAttachments(null, null, sku || symbol);
+          if ((!atts || atts.length === 0) && symbol && symbol !== sku) {
+            atts = await getProductAttachments(null, null, symbol);
+          }
+
+          if (atts && atts.length > 0) {
+            const attData = await getAttachmentData(atts[0].id);
+            if (attData && attData.datas) {
+              const byteCharacters = atob(attData.datas);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'application/pdf' });
+              const blobUrl = URL.createObjectURL(blob);
+
+              previewPdfUrl = blobUrl;
+              previewPdfTitle = `Rysunek detalu: ${sku || symbol} - ${name || atts[0].name}`;
+              renderUI();
+              return;
+            }
+          }
+
+          alert(`ℹ️ Brak podpiętego pliku PDF / rysunku dla detalu "${sku || symbol}" w systemie Odoo.\n\nMożesz wgrać rysunek bezpośrednio w Odoo w Karcie Produktu.`);
+        } catch (err) {
+          console.error('Błąd otwierania rysunku detalu:', err);
+          alert(`Błąd odczytu rysunku detalu z Odoo: ${err.message || err}`);
+        } finally {
+          btn.innerHTML = originalContent;
+          btn.disabled = false;
         }
       });
     });

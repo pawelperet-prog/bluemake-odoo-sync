@@ -24,6 +24,7 @@ import {
   syncOrderFromWzHistory,
   normalizeOrderRef
 } from '../services/wzStorageService.js';
+import { printCustomerLabelsHtml } from '../utils/customerLabelGenerator.js';
 
 export function renderWzGeneratorView(container, navigateTo, params = null) {
   const currentOp = getCurrentOperator();
@@ -650,7 +651,12 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
 
               <button id="btn-print-wz-doc" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/20 flex items-center gap-1.5 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-[18px]">print</span>
-                <span>Drukuj</span>
+                <span>Drukuj WZ</span>
+              </button>
+
+              <button id="btn-print-wz-barcodes" class="bg-indigo-700 hover:bg-indigo-600 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-lg shadow-indigo-700/20 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer" title="Drukuj etykiety wysyłkowe z kodami kreskowymi z zamówienia dla pozycji na tym WZ (bez faktury)">
+                <span class="material-symbols-outlined text-[18px]">barcode</span>
+                <span>Kody Kreskowe EC</span>
               </button>
             </div>
 
@@ -2020,6 +2026,18 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
           isProcessing = false;
           renderUI();
         }
+      });
+    }
+
+    // Print Barcode Shipping Labels for current WZ items
+    const btnPrintBarcodes = container.querySelector('#btn-print-wz-barcodes');
+    if (btnPrintBarcodes) {
+      btnPrintBarcodes.addEventListener('click', () => {
+        printCustomerLabelsHtml({
+          orderRef: wzState.orderNumber || wzState.orderId || '',
+          customerName: wzState.customer?.name || 'EC Engineering',
+          items: wzState.items
+        });
       });
     }
 

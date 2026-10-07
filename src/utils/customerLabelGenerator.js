@@ -30,16 +30,40 @@ export function generateCustomerBarcodeZpl(item, orderRef, customerName = 'BLUEM
 ^XZ`;
 }
 
-export function printCustomerLabelsHtml(order) {
-  const items = order.items || [];
-  const orderRef = order.orderRef || '';
+export function printCustomerLabelsHtml(orderOrCustomer, customItems = null) {
+  let orderRef = '';
+  let customerName = 'EC Engineering';
+  let rawItems = [];
+
+  if (orderOrCustomer && typeof orderOrCustomer === 'object') {
+    orderRef = orderOrCustomer.orderRef || orderOrCustomer.orderNumber || orderOrCustomer.odooOrderName || '';
+    customerName = orderOrCustomer.customerName || orderOrCustomer.category || 'EC Engineering';
+    rawItems = customItems || orderOrCustomer.items || [];
+  } else if (typeof orderOrCustomer === 'string') {
+    customerName = orderOrCustomer;
+    rawItems = customItems || [];
+    orderRef = rawItems[0]?.orderRef || '';
+  }
+
+  if (!rawItems || rawItems.length === 0) {
+    alert('Brak pozycji towarowych w zamówieniu do wygenerowania etykiet.');
+    return;
+  }
+
+  // Filter out items with 0 qty if specific produced quantities exist
+  const hasProduced = rawItems.some(it => it.producedQty !== undefined && parseFloat(it.producedQty) > 0);
+  const items = hasProduced ? rawItems.filter(it => (it.producedQty !== undefined ? parseFloat(it.producedQty) : (parseFloat(it.orderedQty) || 1)) > 0) : rawItems;
+
   const dateStr = new Date().toLocaleDateString('pl-PL');
 
   const labelsHtml = items.map((item, idx) => {
     const sku = (item.sku || '00000').trim();
     const symbol = (item.symbol || item.sku || '').trim();
     const name = (item.name || '').replace(`${symbol} - `, '').trim();
-    const qty = `${Number(item.shippedQty || item.orderedQty || 1).toFixed(2).replace('.', ',')} szt`;
+    const qVal = item.producedQty !== undefined && parseFloat(item.producedQty) > 0 
+      ? parseFloat(item.producedQty) 
+      : parseFloat(item.shippedQty || item.quantity || item.orderedQty || 1);
+    const qty = `${Number(qVal).toFixed(2).replace('.', ',')} szt`;
 
     return `
       <div class="customer-label-card">
