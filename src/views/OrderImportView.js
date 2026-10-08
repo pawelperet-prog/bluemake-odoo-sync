@@ -575,8 +575,14 @@ export function renderOrderImportView(container, navigateTo) {
             <span class="hidden lg:inline">DZIENNIK ZDARZEŃ</span>
           </button>
 
+          <!-- Przycisk Dodaj Notatkę / Zgłoś Wadę -->
+          <button id="btn-header-add-issue" class="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs px-3.5 py-1.5 rounded-xl transition-all active:scale-95 shadow-md cursor-pointer" title="Dodaj notatkę lub zgłoś usterkę/problem ze zdjęciem">
+            <span class="material-symbols-outlined text-[16px]">edit_note</span>
+            <span class="hidden sm:inline">+ NOTATKA / FOTO</span>
+          </button>
+
           <!-- Przycisk przejścia do Kreatora WZ -->
-          <button id="btn-nav-wz" class="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs px-3.5 py-1.5 rounded-xl transition-all active:scale-95 shadow-md cursor-pointer">
+          <button id="btn-nav-wz" class="flex items-center gap-1.5 bg-gradient-to-r from-stone-700 to-stone-800 hover:from-stone-600 hover:to-stone-700 text-white font-black text-xs px-3.5 py-1.5 rounded-xl transition-all active:scale-95 shadow-md cursor-pointer">
             <span class="material-symbols-outlined text-[16px]">description</span>
             <span class="hidden sm:inline">KREATOR WZ</span>
           </button>
@@ -941,10 +947,10 @@ export function renderOrderImportView(container, navigateTo) {
               </button>
 
               <!-- Workshop Issues / Photos Filter Toggle Button (Od Mateusza / Operatorów) -->
-              <button id="btn-toggle-issues-filter" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer border ${filterOnlyIssues ? 'bg-amber-600 text-white border-amber-500 shadow-md ring-2 ring-amber-500/50' : (isCream ? 'bg-[#f7efe1] hover:bg-[#ebdcc7] text-amber-950 border-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-amber-400 border-amber-500/40')}" title="Filtruj tylko zlecenia z uwagami lub problemami ze zdjęciem od Mateusza">
-                <span class="material-symbols-outlined text-[16px] text-amber-500 ${filterOnlyIssues ? 'text-white' : ''}">add_a_photo</span>
-                <span>ZGŁOSZENIA / FOTO</span>
-                <span class="px-1.5 py-0.2 rounded font-mono text-[10px] ${filterOnlyIssues ? 'bg-white/20 text-white' : 'bg-amber-500 text-white'}">
+              <button id="btn-toggle-issues-filter" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer border ${filterOnlyIssues ? 'bg-amber-600 text-white border-amber-500 shadow-md ring-2 ring-amber-500/50' : (isCream ? 'bg-[#f7efe1] hover:bg-[#ebdcc7] text-amber-950 border-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-amber-400 border-amber-500/40')}" title="Filtruj tylko zlecenia z notatkami, uwagami lub problemami ze zdjęciem">
+                <span class="material-symbols-outlined text-[16px] text-amber-500 ${filterOnlyIssues ? 'text-white' : ''}">edit_note</span>
+                <span>NOTATKI / USTERKI</span>
+                <span class="px-1.5 py-0.2 rounded font-mono text-[10px] ${filterOnlyIssues ? 'bg-white/20 text-white' : 'bg-amber-600 text-white font-black'}">
                   ${orderComments.filter(c => c.status !== 'RESOLVED').length}
                 </span>
               </button>
@@ -1098,6 +1104,53 @@ export function renderOrderImportView(container, navigateTo) {
                         <span>•</span>
                         <span>${(order.items || []).length} poz. (${totals.totalOrderedQty} szt.)</span>
                       </div>
+
+                      <!-- Prominent Workshop Notes & Defect Photos Box (Zawsze widoczne na karcie) -->
+                      ${orderIssues.length > 0 ? `
+                        <div class="mt-2.5 p-2.5 sm:p-3 rounded-xl border ${hasOpenIssues ? (isCream ? 'bg-amber-100/90 border-amber-400 text-amber-950' : 'bg-amber-950/40 border-amber-500/70 text-amber-200') : (isCream ? 'bg-[#ede5d6]/80 border-[#d8ccb8] text-[#3d3224]' : 'bg-slate-900 border-slate-800 text-slate-300')} shadow-xs flex flex-col gap-2" onclick="event.stopPropagation()">
+                          <div class="flex items-center justify-between border-b pb-1.5 ${hasOpenIssues ? (isCream ? 'border-amber-300' : 'border-amber-800/60') : (isCream ? 'border-[#ded3c0]' : 'border-slate-800')}">
+                            <div class="flex items-center gap-1.5 text-xs font-black">
+                              <span class="material-symbols-outlined text-[18px] text-amber-600">edit_note</span>
+                              <span>📝 NOTATKI Z WARSZTATU (${orderIssues.length}):</span>
+                              ${hasOpenIssues ? '<span class="px-2 py-0.2 rounded text-[10px] font-black bg-rose-600 text-white animate-pulse">DO WYJAŚNIENIA</span>' : '<span class="px-2 py-0.2 rounded text-[10px] font-bold bg-emerald-600 text-white">ROZWIĄZANE</span>'}
+                            </div>
+                            <button type="button" class="btn-open-issue-form text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer" data-order-id="${order.id}">
+                              <span class="material-symbols-outlined text-[15px]">add_circle</span>
+                              <span>+ Dopisz notatkę</span>
+                            </button>
+                          </div>
+
+                          <div class="space-y-1.5">
+                            ${orderIssues.map(issue => `
+                              <div class="p-2 sm:p-2.5 rounded-lg ${isCream ? 'bg-white/95 border border-amber-200/90' : 'bg-slate-950 border border-slate-800'} flex items-start justify-between gap-3 shadow-xs">
+                                <div class="flex items-start gap-2 min-w-0 flex-1">
+                                  <span class="material-symbols-outlined text-[18px] ${issue.type === 'DEFECT' ? 'text-rose-500' : (issue.type === 'PROBLEM' ? 'text-amber-500' : 'text-blue-500')} shrink-0 mt-0.5">
+                                    ${issue.photoUrl ? 'photo_camera' : 'chat'}
+                                  </span>
+                                  <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap mb-0.5">
+                                      <span class="font-black text-xs ${isCream ? 'text-[#1c1917]' : 'text-white'}">👤 ${issue.operator}</span>
+                                      <span class="text-[10px] font-mono opacity-70 ${isCream ? 'text-stone-600' : 'text-slate-400'}">${issue.dateFormatted || issue.createdAt}</span>
+                                      ${issue.sku ? `<span class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-stone-100 dark:bg-slate-800 text-stone-800 dark:text-stone-200 font-bold border">Detal: ${issue.sku}</span>` : ''}
+                                      <span class="px-1.5 py-0.2 rounded text-[9px] font-black ${issue.type === 'DEFECT' ? 'bg-rose-100 text-rose-800 border border-rose-300' : (issue.type === 'PROBLEM' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-blue-100 text-blue-800 border border-blue-300')}">
+                                        ${issue.type === 'DEFECT' ? 'WADA' : (issue.type === 'PROBLEM' ? 'PROBLEM' : 'UWAGA')}
+                                      </span>
+                                    </div>
+                                    <p class="text-xs font-semibold leading-relaxed ${isCream ? 'text-[#1e1913]' : 'text-slate-100'} whitespace-pre-wrap">${issue.text}</p>
+                                  </div>
+                                </div>
+
+                                ${issue.photoUrl ? `
+                                  <div class="shrink-0 flex flex-col items-center gap-0.5">
+                                    <img src="${issue.photoUrl}" class="btn-zoom-image h-12 w-12 sm:h-14 sm:w-14 object-cover rounded-lg border-2 border-amber-500 shadow-sm cursor-pointer hover:scale-105 transition-transform" data-img-url="${issue.photoUrl}" title="Kliknij aby powiększyć zdjęcie ze stanowiska" />
+                                    <span class="text-[9px] font-bold text-amber-600 cursor-pointer">🔍 Foto</span>
+                                  </div>
+                                ` : ''}
+                              </div>
+                            `).join('')}
+                          </div>
+                        </div>
+                      ` : ''}
                     </div>
                   </div>
 
@@ -1164,9 +1217,9 @@ export function renderOrderImportView(container, navigateTo) {
                     </button>
 
                     <!-- Zgłoś problem / dodaj komentarz ze zdjęciem od Mateusza -->
-                    <button class="btn-open-issue-form flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${hasOpenIssues ? 'bg-amber-500 text-slate-950 border-amber-600 font-black' : (isCream ? 'bg-[#ede5d6] hover:bg-[#ded1bd] text-[#2c2825] border-[#d8ccb8]' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700')}" data-order-id="${order.id}" title="Dodaj komentarz lub zgłoś usterkę ze zdjęciem (np. od Mateusza)">
-                      <span class="material-symbols-outlined text-[16px] text-amber-600">add_a_photo</span>
-                      <span class="hidden sm:inline">${orderIssues.length > 0 ? `Foto/Uwagi (${orderIssues.length})` : '+ Foto'}</span>
+                    <button class="btn-open-issue-form flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${hasOpenIssues ? 'bg-amber-500 text-slate-950 border-amber-600 font-black shadow-md' : (isCream ? 'bg-[#ede5d6] hover:bg-[#ded1bd] text-[#2c2825] border-[#d8ccb8]' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700')}" data-order-id="${order.id}" title="Dodaj notatkę lub zgłoś usterkę/brak ze zdjęciem ze stanowiska">
+                      <span class="material-symbols-outlined text-[16px] text-amber-600">edit_note</span>
+                      <span>${orderIssues.length > 0 ? `📝 Notatki (${orderIssues.length})` : '📝 Notatka / Foto'}</span>
                     </button>
 
                     <!-- Archiving / Status Quick Actions -->
@@ -1271,6 +1324,8 @@ export function renderOrderImportView(container, navigateTo) {
                             const itemShipment = wzSummary.itemsSummary.find(s => s.orderItemId === it.id);
                             const itShippedQty = itemShipment ? itemShipment.shippedQty : 0;
                             const itRemainingQty = itemShipment ? itemShipment.remainingQty : orderedQty;
+                            const itemIssues = orderIssues.filter(i => i.sku && (i.sku === it.sku || i.sku === it.symbol));
+                            const hasItemIssue = itemIssues.some(i => i.status !== 'RESOLVED');
 
                             return `
                               <tr class="${themeStyles.tableRowBg} transition-colors">
@@ -1282,11 +1337,30 @@ export function renderOrderImportView(container, navigateTo) {
                                       <span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>
                                       <span class="text-[9px] font-sans font-bold">RYS</span>
                                     </button>
+                                    <button class="btn-open-issue-form p-1 rounded-lg ${hasItemIssue ? 'bg-amber-500 text-slate-950 font-black border-amber-600 shadow-sm animate-pulse' : (isCream ? 'hover:bg-[#ebdcc7] text-amber-900 bg-[#f7f2ea]' : 'hover:bg-slate-800 text-amber-400 bg-slate-900')} border ${isCream ? 'border-[#d8ccb8]' : 'border-slate-800'} transition-all cursor-pointer flex items-center gap-0.5 shadow-sm" data-order-id="${order.id}" data-item-sku="${it.sku || it.symbol || ''}" title="Dodaj notatkę lub zgłoś wadę do detalu ${it.sku || it.symbol}">
+                                      <span class="material-symbols-outlined text-[15px]">${hasItemIssue ? 'report_problem' : 'edit_note'}</span>
+                                      <span class="text-[9px] font-sans font-bold">${itemIssues.length > 0 ? `WADA (${itemIssues.length})` : 'NOTATKA'}</span>
+                                    </button>
                                   </div>
                                 </td>
                                 <td class="py-2.5 px-3 font-semibold ${isCream ? 'text-[#1c1917]' : 'text-slate-200'}">
                                   <div>${it.name || 'Brak nazwy'}</div>
                                   ${it.symbol && it.symbol !== it.sku ? `<div class="text-[10px] ${isCream ? 'text-[#8c7f6f]' : 'text-slate-500'} font-mono font-normal">Symbol: ${it.symbol}</div>` : ''}
+                                  ${itemIssues.length > 0 ? `
+                                    <div class="space-y-1 mt-1">
+                                      ${itemIssues.map(iss => `
+                                        <div class="text-[11px] p-1.5 rounded-lg ${iss.type === 'DEFECT' ? 'bg-rose-500/15 border-rose-500/40 text-rose-700 dark:text-rose-300' : 'bg-amber-500/15 border-amber-500/40 text-amber-800 dark:text-amber-300'} border flex items-center justify-between gap-1 shadow-xs">
+                                          <div class="flex items-center gap-1.5 min-w-0">
+                                            <span class="font-bold text-[10px]">⚠️ ${iss.operator}:</span>
+                                            <span class="truncate">${iss.text}</span>
+                                          </div>
+                                          ${iss.photoUrl ? `
+                                            <img src="${iss.photoUrl}" class="btn-zoom-image h-6 w-6 object-cover rounded cursor-pointer border border-amber-500 shrink-0" data-img-url="${iss.photoUrl}" title="Kliknij aby powiększyć zdjęcie" />
+                                          ` : ''}
+                                        </div>
+                                      `).join('')}
+                                    </div>
+                                  ` : ''}
                                 </td>
                                 <td class="py-2.5 px-3 text-center font-bold font-mono ${isCream ? 'text-[#2a241e]' : 'text-slate-300'}">
                                   <div>${orderedQty} ${it.uom || 'szt'}</div>
@@ -1694,10 +1768,10 @@ export function renderOrderImportView(container, navigateTo) {
           
           <div class="flex justify-between items-center border-b ${isCream ? 'border-[#ded3c0]' : 'border-slate-800'} pb-3">
             <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-amber-500 text-2xl">add_a_photo</span>
+              <span class="material-symbols-outlined text-amber-500 text-3xl">edit_note</span>
               <div>
-                <h3 class="font-bold text-base ${isCream ? 'text-[#2a241e]' : 'text-white'}">Zgłoszenie / Komentarz ze zdjęciem</h3>
-                <p class="text-[11px] ${isCream ? 'text-[#7d6f5e]' : 'text-slate-400'}">${activeCommentOrder ? (activeCommentOrder.orderRef || activeCommentOrder.odooOrderName || 'Zlecenie') + ' • ' + (activeCommentOrder.customerName || '') : 'Warsztat'}</p>
+                <h3 class="font-bold text-base ${isCream ? 'text-[#2a241e]' : 'text-white'}">📝 Notatka / Zgłoszenie Usterki ze Zdjęciem</h3>
+                <p class="text-[11px] ${isCream ? 'text-[#7d6f5e]' : 'text-slate-400'}">Wpisz co jest nie tak, opisz problem i załącz fotkę ze stanowiska</p>
               </div>
             </div>
             <button id="close-comment-modal" class="p-1.5 ${isCream ? 'text-[#786c5e] hover:bg-[#ede5d6]' : 'text-slate-400 hover:text-white hover:bg-slate-800'} rounded-full cursor-pointer">
@@ -1721,17 +1795,29 @@ export function renderOrderImportView(container, navigateTo) {
                 <label class="text-[11px] font-bold block mb-1 ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Typ zgłoszenia:</label>
                 <select id="issue-type" class="w-full ${isCream ? 'bg-white border-[#d8ccb8] text-[#1e1913]' : 'bg-slate-950 border-slate-700 text-white'} border rounded-xl px-2.5 py-2 text-xs font-bold outline-none cursor-pointer">
                   <option value="PROBLEM">⚠️ Awaria / Problem ze zleceniem</option>
-                  <option value="DEFECT">❌ Wada materiału / błąd detalu</option>
-                  <option value="NOTE">💬 Zwykła uwaga / informacja</option>
+                  <option value="DEFECT">❌ Wada materiału / błąd detalu / bubel</option>
+                  <option value="NOTE">📝 Ważna notatka warsztatowa</option>
+                  <option value="INFO">ℹ️ Informacja ogólna</option>
                 </select>
               </div>
+            </div>
+
+            <!-- Order selection -->
+            <div>
+              <label class="text-[11px] font-bold block mb-1 ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Dotyczy zlecenia:</label>
+              <select id="issue-order-select" class="w-full ${isCream ? 'bg-white border-[#d8ccb8] text-[#1e1913]' : 'bg-slate-950 border-slate-700 text-white'} border rounded-xl px-2.5 py-2 text-xs font-bold outline-none cursor-pointer">
+                <option value="">-- Cały warsztat / Uwaga ogólna --</option>
+                ${allOrders.map(o => `
+                  <option value="${o.id}" ${activeCommentOrder?.id === o.id ? 'selected' : ''}>${o.orderRef || o.odooOrderName || o.id} (${o.customerName || 'Klient'})</option>
+                `).join('')}
+              </select>
             </div>
 
             <!-- Item selection if order has items -->
             ${activeCommentOrder && Array.isArray(activeCommentOrder.items) && activeCommentOrder.items.length > 0 ? `
               <div>
-                <label class="text-[11px] font-bold block mb-1 ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Dotyczy detalu / SKU (opcjonalnie):</label>
-                <select id="issue-sku" class="w-full ${isCream ? 'bg-white border-[#d8ccb8] text-[#1e1913]' : 'bg-slate-950 border-slate-700 text-white'} border rounded-xl px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer">
+                <label class="text-[11px] font-bold block mb-1 ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Dotyczy konkretnego detalu / SKU (opcjonalnie):</label>
+                <select id="issue-sku" class="w-full ${isCream ? 'bg-white border-[#d8ccb8] text-[#1e1913]' : 'bg-slate-950 border-slate-700 text-white'} border rounded-xl px-2.5 py-2 text-xs font-bold outline-none cursor-pointer">
                   <option value="">-- Całe zlecenie --</option>
                   ${activeCommentOrder.items.map(it => `
                     <option value="${it.sku || it.symbol || it.name}" ${activeCommentSku === (it.sku || it.symbol) ? 'selected' : ''}>${it.sku || it.symbol || '-'} • ${it.name || ''}</option>
@@ -1742,18 +1828,19 @@ export function renderOrderImportView(container, navigateTo) {
 
             <!-- Description Textarea -->
             <div>
-              <label class="text-[11px] font-bold block mb-1 ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Opis problemu / co jest nie tak:</label>
-              <textarea id="issue-text" rows="3" required placeholder="Opisz dokładnie co nie działa, jaki jest problem z detalem, maszyną lub zamówieniem..." class="w-full ${isCream ? 'bg-white border-[#d8ccb8] text-[#1e1913] placeholder-[#9a8c7b]' : 'bg-slate-950 border-slate-700 text-white placeholder-slate-500'} border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-amber-500 font-sans"></textarea>
+              <label class="text-[11px] font-bold block mb-1 ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Treść notatki / co jest nie tak:</label>
+              <textarea id="issue-text" rows="4" required placeholder="Wpisz dokładnie co jest nie tak, np. błąd wymiaru na rysunku, brak materiału, uszkodzony gwint, zrobiono 5 szt. za mało, informacja dla Pawła lub Mateusza..." class="w-full ${isCream ? 'bg-white border-[#d8ccb8] text-[#1e1913] placeholder-[#9a8c7b]' : 'bg-slate-950 border-slate-700 text-white placeholder-slate-500'} border rounded-xl p-3 text-xs outline-none focus:ring-2 focus:ring-amber-500 font-sans leading-relaxed"></textarea>
             </div>
 
             <!-- Photo Attachment with Camera / File Upload -->
             <div>
-              <label class="text-[11px] font-bold block mb-1 ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">📸 Zdjęcie ze stanowiska (aparat w telefonie lub plik):</label>
+              <label class="text-[11px] font-bold block mb-1 ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">📸 Zdjęcie ze stanowiska (aparat w telefonie lub plik ze zdjęciem):</label>
               
               <div class="flex items-center gap-2">
-                <label for="input-issue-photo" class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-dashed ${isCream ? 'border-[#d8ccb8] bg-[#f5ebd9] hover:bg-[#ede0ca] text-[#4d4233]' : 'border-slate-700 bg-slate-950/60 hover:bg-slate-800 text-slate-300'} cursor-pointer transition-all active:scale-98">
-                  <span class="material-symbols-outlined text-amber-500 text-2xl">photo_camera</span>
-                  <span class="text-xs font-bold">Zrób zdjęcie aparatem lub wybierz plik</span>
+                <label for="input-issue-photo" class="flex-1 flex flex-col items-center justify-center gap-1.5 py-4 px-4 rounded-xl border-2 border-dashed ${isCream ? 'border-[#d8ccb8] bg-[#f5ebd9] hover:bg-[#ede0ca] text-[#4d4233]' : 'border-slate-700 bg-slate-950/60 hover:bg-slate-800 text-slate-300'} cursor-pointer transition-all active:scale-98">
+                  <span class="material-symbols-outlined text-amber-500 text-3xl">add_a_photo</span>
+                  <span class="text-xs font-black">📸 Zrób zdjęcie aparatem lub wybierz z galerii</span>
+                  <span class="text-[10px] ${isCream ? 'text-[#7d6f5e]' : 'text-slate-500'}">Możesz dołączyć zdjęcie uszkodzonego detalu, detalu na maszynie lub szkicu</span>
                   <input type="file" id="input-issue-photo" accept="image/*" capture="environment" class="hidden" />
                 </label>
               </div>
@@ -2399,15 +2486,41 @@ export function renderOrderImportView(container, navigateTo) {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const orderId = btn.getAttribute('data-order-id');
+        const itemSku = btn.getAttribute('data-item-sku');
         const allOrders = getSavedOrders();
         activeCommentOrder = allOrders.find(o => o.id === orderId) || null;
-        activeCommentSku = '';
+        activeCommentSku = itemSku || '';
         selectedCommentPhotoFile = null;
         selectedCommentPhotoPreview = null;
         showAddCommentModal = true;
         renderUI();
       });
     });
+
+    // Top Header + Notatka / Foto button
+    const btnHeaderAddIssue = container.querySelector('#btn-header-add-issue');
+    if (btnHeaderAddIssue) {
+      btnHeaderAddIssue.addEventListener('click', () => {
+        activeCommentOrder = null;
+        activeCommentSku = '';
+        selectedCommentPhotoFile = null;
+        selectedCommentPhotoPreview = null;
+        showAddCommentModal = true;
+        renderUI();
+      });
+    }
+
+    // Dynamic order selection inside modal
+    const modalOrderSelect = container.querySelector('#issue-order-select');
+    if (modalOrderSelect) {
+      modalOrderSelect.addEventListener('change', (e) => {
+        const selId = e.target.value;
+        const allOrders = getSavedOrders();
+        activeCommentOrder = allOrders.find(o => o.id === selId) || null;
+        activeCommentSku = '';
+        renderUI();
+      });
+    }
 
     // Close Comment Modal
     const closeCommentBtn = container.querySelector('#close-comment-modal');
@@ -2476,6 +2589,13 @@ export function renderOrderImportView(container, navigateTo) {
         const skuEl = container.querySelector('#issue-sku');
         const textEl = container.querySelector('#issue-text');
         const submitBtn = container.querySelector('#btn-submit-issue-action');
+        const orderSelectEl = container.querySelector('#issue-order-select');
+
+        let effectiveOrder = activeCommentOrder;
+        if (orderSelectEl && orderSelectEl.value) {
+          const allOrders = getSavedOrders();
+          effectiveOrder = allOrders.find(o => o.id === orderSelectEl.value) || activeCommentOrder;
+        }
 
         const operatorVal = operatorEl ? operatorEl.value : 'Mateusz';
         const typeVal = typeEl ? typeEl.value : 'PROBLEM';
@@ -2493,8 +2613,8 @@ export function renderOrderImportView(container, navigateTo) {
         }
 
         const res = await submitComment({
-          orderId: activeCommentOrder?.id,
-          orderRef: activeCommentOrder?.orderRef || activeCommentOrder?.odooOrderName || '',
+          orderId: effectiveOrder?.id || null,
+          orderRef: effectiveOrder?.orderRef || effectiveOrder?.odooOrderName || '',
           sku: skuVal,
           operator: operatorVal,
           text: textVal,
