@@ -15,16 +15,19 @@ import {
   setOrderPdf,
   getOrderYear,
   getAvailableOrderYears,
-  getAnnualOrdersSummary
+  getAnnualOrdersSummary,
+  fetchServerOrders
 } from '../services/orderStorageService.js';
-import { getSavedCustomers, getOrderWzShipmentSummary, prepareOrderItemsForWz } from '../services/wzStorageService.js';
-import { printCustomerLabelsHtml } from '../utils/customerLabelGenerator.js';
+import { getSavedCustomers, getOrderWzShipmentSummary, prepareOrderItemsForWz, fetchServerWzDocuments } from '../services/wzStorageService.js';
+import { printCustomerLabelsHtml, openAndPrintEcBarcodePdf, resolveOrderPdfUrl } from '../utils/customerLabelGenerator.js';
+import { findItemDrawingPdf } from '../services/drawingService.js';
 import { getProductAttachments, getAttachmentData } from '../services/odooApi.js';
-import { isAdmin, getCurrentOperator } from '../services/authService.js';
+import { isAdmin, getCurrentOperator, switchActiveOperator, fetchServerAuditLogs, getAuditLogs } from '../services/authService.js';
+import { fetchComments, submitComment, toggleResolveComment, deleteComment } from '../services/issueCommentService.js';
 
 export function renderOrderImportView(container, navigateTo) {
-  const currentOperator = getCurrentOperator();
-  const isUserAdmin = isAdmin(currentOperator);
+  let currentOperator = getCurrentOperator();
+  let isUserAdmin = isAdmin(currentOperator);
 
   // Color Theme: 'warm-cream' | 'soft-dark'
   let currentTheme = localStorage.getItem('bluemake_ui_theme') || 'warm-cream';
@@ -38,10 +41,96 @@ export function renderOrderImportView(container, navigateTo) {
 
   let activeCustomerFilter = 'ALL';
   let activeMonthFilter = 'ALL';
+  let currentSortBy = 'DEFAULT'; // 'DEFAULT' (Po terminie = Priorytet + Najbliższy termin) | 'DELIVERY_DATE_ASC' | 'DELIVERY_DATE_DESC' | 'ORDER_DATE_DESC' | 'ORDER_DATE_ASC' | 'AMOUNT_DESC' | 'AMOUNT_ASC'
+  let filterOnlyOverdue = false;
+  let filterOnlyIssues = false;
   let searchQuery = '';
   let searchCursorPos = 0;
   let isSearchingFocus = false;
   let showImportModal = false;
+
+  // Workshop comments & photo issues state
+  let orderComments = [];
+  let centralAuditLogs = getAuditLogs() || [];
+  let isSyncing = false;
+  let showAddCommentModal = false;
+  let activeCommentOrder = null;
+  let activeCommentSku = '';
+  let selectedCommentPhotoFile = null;
+  let selectedCommentPhotoPreview = null;
+  let lightboxImageUrl = null;
+
+  async function syncAllData(silent = false) {
+    if (isSyncing) return;
+    isSyncing = true;
+    try {
+      const [fetchedOrders, fetchedWz, comments, logs] = await Promise.all([
+        fetchServerOrders(true),
+        fetchServerWzDocuments(true),
+        fetchComments(),
+        fetchServerAuditLogs()
+      ]);
+      if (comments) orderComments = comments;
+      if (logs) centralAuditLogs = logs;
+      renderUI();
+    } catch (e) {
+      console.warn('Sync error:', e);
+    } finally {
+      isSyncing = false;
+    }
+  }
+
+  // Trigger initial server sync
+  syncAllData(true);
+
+  // Periodic polling every 8s to sync changes between Paweł and Mateusz in real-time
+  const pollInterval = setInterval(() => {
+    if (!container.isConnected) {
+      clearInterval(pollInterval);
+      window.removeEventListener('focus', onFocusHandler);
+      window.removeEventListener('bluemake_orders_synced', onOrdersSynced);
+      return;
+    }
+    const isEditing = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
+    const isModalOpen = Boolean(
+      container.querySelector('#issue-comment-modal:not(.hidden)') || 
+      container.querySelector('#image-zoom-modal:not(.hidden)') || 
+      previewPdfUrl
+    );
+    if (!isEditing && !isModalOpen) {
+      Promise.all([
+        fetchServerOrders(),
+        fetchServerWzDocuments(),
+        fetchComments(),
+        fetchServerAuditLogs()
+      ]).then(([orders, wzs, comments, logs]) => {
+        let changed = false;
+        if (comments && JSON.stringify(comments) !== JSON.stringify(orderComments)) {
+          orderComments = comments;
+          changed = true;
+        }
+        if (logs && JSON.stringify(logs.slice(0, 5)) !== JSON.stringify(centralAuditLogs.slice(0, 5))) {
+          centralAuditLogs = logs;
+          changed = true;
+        }
+        if (changed) {
+          renderUI();
+        }
+      }).catch(() => {});
+    }
+  }, 8000);
+
+  const onFocusHandler = () => {
+    syncAllData(true);
+  };
+  window.addEventListener('focus', onFocusHandler);
+
+  const onOrdersSynced = (e) => {
+    if (e.detail?.source === 'server') {
+      renderUI();
+    }
+  };
+  window.addEventListener('bluemake_orders_synced', onOrdersSynced);
 
   // PDF Preview Modal state
   let previewPdfUrl = null;
@@ -98,10 +187,13 @@ export function renderOrderImportView(container, navigateTo) {
   function getOrderPdfUrl(order) {
     if (order.pdfUrl) return order.pdfUrl;
     if (order.orderRef && knownPdfMap[order.orderRef]) return knownPdfMap[order.orderRef];
-    // Check if clean ref matches any known pdf
-    const clean = (order.orderRef || '').replace(/[\/\s]/g, '-');
+    const clean = (order.orderRef || order.odooOrderName || '').replace(/[\/\s]/g, '-');
     for (const k in knownPdfMap) {
       if (k.replace(/[\/\s]/g, '-') === clean) return knownPdfMap[k];
+    }
+    if (clean.toLowerCase().startsWith('zz-')) {
+      const noSuff = clean.replace(/-(ec|zn)$/i, '');
+      return `/orders_pdf/${noSuff}.pdf`;
     }
     return null;
   }
@@ -212,35 +304,51 @@ export function renderOrderImportView(container, navigateTo) {
 
   function getFilteredOrders() {
     const all = getSavedOrders();
-    return all.filter(ord => {
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const filtered = all.filter(ord => {
       // 0. Year filter (Default 2026, or chosen year - 2025 is kept but excluded from general view)
       if (activeYear !== 'ALL') {
         if (getOrderYear(ord) !== activeYear) return false;
       }
 
+      const isDone = ord.productionStatus === 'PRODUCED' || ord.productionStatus === 'ARCHIVED' || ord.isArchived === true;
+
       // 1. Tab filter
       if (activeTab === 'ACTIVE') {
-        if (ord.productionStatus === 'PRODUCED' || ord.productionStatus === 'ARCHIVED') return false;
+        if (isDone) return false;
       } else if (activeTab === 'COMPLETED') {
         if (ord.productionStatus !== 'PRODUCED') return false;
       } else if (activeTab === 'ARCHIVED') {
-        if (ord.productionStatus !== 'ARCHIVED') return false;
+        if (ord.productionStatus !== 'ARCHIVED' && !ord.isArchived) return false;
       }
 
-      // 2. Company filter
+      // 2. Overdue filter (Tylko po terminie)
+      const isOverdue = !isDone && ord.deliveryDate && ord.deliveryDate < todayStr;
+      if (filterOnlyOverdue) {
+        if (!isOverdue) return false;
+      }
+
+      // 2b. Workshop Issues & Notes filter (Tylko zlecenia ze zgłoszeniami od Mateusza/operatorów)
+      if (filterOnlyIssues) {
+        const hasIssue = orderComments.some(c => c.orderId === ord.id && c.status !== 'RESOLVED');
+        if (!hasIssue) return false;
+      }
+
+      // 3. Company filter
       if (activeCustomerFilter !== 'ALL') {
         const cName = (ord.customerName || ord.category || '').toUpperCase();
         const fName = activeCustomerFilter.toUpperCase();
         if (!cName.includes(fName) && !fName.includes(cName)) return false;
       }
 
-      // 3. Month filter
+      // 4. Month filter
       if (activeMonthFilter !== 'ALL') {
         const d = ord.orderDate || ord.deliveryDate || '';
         if (!d.startsWith(activeMonthFilter)) return false;
       }
 
-      // 4. Search query
+      // 5. Search query
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase();
         const matchesRef = (ord.orderRef || '').toLowerCase().includes(q);
@@ -253,6 +361,74 @@ export function renderOrderImportView(container, navigateTo) {
       }
 
       return true;
+    });
+
+    return sortOrders(filtered, currentSortBy, todayStr);
+  }
+
+  function sortOrders(orders, sortBy, todayStr) {
+    const getOrderNetto = (ord) => {
+      let sum = 0;
+      (ord.items || []).forEach(it => {
+        const q = parseFloat(it.orderedQty || it.quantity || 1);
+        const p = parseFloat(it.unitPrice || 0);
+        sum += q * p;
+      });
+      return sum;
+    };
+
+    const getEffectiveDeliveryDate = (ord) => {
+      return ord.deliveryDate || ord.orderDate || '9999-99-99';
+    };
+
+    return [...orders].sort((a, b) => {
+      if (sortBy === 'ORDER_DATE_DESC') {
+        return (b.orderDate || '').localeCompare(a.orderDate || '');
+      }
+      if (sortBy === 'ORDER_DATE_ASC') {
+        return (a.orderDate || '').localeCompare(b.orderDate || '');
+      }
+      if (sortBy === 'DELIVERY_DATE_ASC') {
+        return getEffectiveDeliveryDate(a).localeCompare(getEffectiveDeliveryDate(b));
+      }
+      if (sortBy === 'DELIVERY_DATE_DESC') {
+        return getEffectiveDeliveryDate(b).localeCompare(getEffectiveDeliveryDate(a));
+      }
+      if (sortBy === 'AMOUNT_DESC') {
+        return getOrderNetto(b) - getOrderNetto(a);
+      }
+      if (sortBy === 'AMOUNT_ASC') {
+        return getOrderNetto(a) - getOrderNetto(b);
+      }
+
+      // DEFAULT:
+      // "domyslnie pokazuje zamowienie ktore jest najblizej daty realizacji lub daty poterminie to priorytet pozniej data realizacji"
+      const isDoneA = a.productionStatus === 'PRODUCED' || a.productionStatus === 'ARCHIVED' || a.isArchived === true;
+      const isDoneB = b.productionStatus === 'PRODUCED' || b.productionStatus === 'ARCHIVED' || b.isArchived === true;
+
+      // Active orders come before completed/archived orders
+      if (isDoneA !== isDoneB) {
+        return isDoneA ? 1 : -1;
+      }
+
+      const dateA = a.deliveryDate || a.orderDate || '9999-99-99';
+      const dateB = b.deliveryDate || b.orderDate || '9999-99-99';
+
+      const isOverdueA = !isDoneA && (a.deliveryDate ? a.deliveryDate < todayStr : false);
+      const isOverdueB = !isDoneB && (b.deliveryDate ? b.deliveryDate < todayStr : false);
+
+      // Overdue orders have absolute TOP PRIORITY!
+      if (isOverdueA !== isOverdueB) {
+        return isOverdueA ? -1 : 1;
+      }
+
+      // If both are overdue, sort by delivery date ascending (the most overdue first)
+      if (isOverdueA && isOverdueB) {
+        return dateA.localeCompare(dateB);
+      }
+
+      // If both are upcoming active, sort by delivery date ascending (closest deadline first!)
+      return dateA.localeCompare(dateB);
     });
   }
 
@@ -305,25 +481,44 @@ export function renderOrderImportView(container, navigateTo) {
       else grandActiveCount++;
     });
 
+    const todayStr = new Date().toISOString().split('T')[0];
+    let totalOverdueCount = 0;
+    activeYearOrders.forEach(o => {
+      const isDone = o.productionStatus === 'PRODUCED' || o.productionStatus === 'ARCHIVED' || o.isArchived === true;
+      if (!isDone && o.deliveryDate && o.deliveryDate < todayStr) {
+        totalOverdueCount++;
+      }
+    });
+
     const isCream = currentTheme === 'warm-cream';
 
-    // Theme palette
+    // Set CNC machine background on container with subtle gradient overlay
+    container.style.backgroundImage = isCream
+      ? "linear-gradient(rgba(235, 227, 213, 0.90), rgba(224, 214, 198, 0.94)), url('/cnc_machine_bg.jpg')"
+      : "linear-gradient(rgba(10, 15, 26, 0.90), rgba(15, 23, 42, 0.95)), url('/cnc_machine_bg.jpg')";
+    container.style.backgroundPosition = "center center";
+    container.style.backgroundSize = "cover";
+    container.style.backgroundAttachment = "fixed";
+    container.style.backgroundRepeat = "no-repeat";
+    container.style.minHeight = "100vh";
+
+    // Theme palette (darker, richer, deeper cream tone)
     const themeStyles = {
-      headerBg: isCream ? 'bg-[#f4efe6] border-[#e2d7c5] text-[#2c2825]' : 'bg-slate-900 border-slate-800 text-slate-100',
-      mainText: isCream ? 'text-[#2e2a25]' : 'text-slate-200',
-      btnBack: isCream ? 'bg-[#e9dfcf] hover:bg-[#ded1bd] text-[#3d3730] border-[#d8c7b0]' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700',
-      cardBg: isCream ? 'bg-[#fbf8f2] border-[#e5dcce] text-[#2c2825] shadow-sm' : 'bg-slate-900 border-slate-800 text-slate-200 shadow-md',
-      metricBoxInProd: isCream ? 'bg-[#fef9f0] border-[#f0cfa0] text-[#78350f]' : 'bg-slate-900/90 border-amber-500/30 text-amber-300',
-      metricBoxProd: isCream ? 'bg-[#f0fbf4] border-[#bbf7d0] text-[#14532d]' : 'bg-slate-900/90 border-emerald-500/30 text-emerald-300',
-      metricBoxArchived: isCream ? 'bg-[#f5f5f4] border-[#d6d3d1] text-[#44403c]' : 'bg-slate-900/90 border-slate-700 text-slate-300',
-      metricBoxPieces: isCream ? 'bg-[#f5f3ff] border-[#ddd6fe] text-[#4338ca]' : 'bg-slate-900/90 border-indigo-500/30 text-indigo-300',
-      metricBoxValue: isCream ? 'bg-[#f9f6f0] border-[#e2d9cb] text-[#292524]' : 'bg-slate-900/90 border-slate-800 text-white',
-      filterPanel: isCream ? 'bg-[#f6f1e8] border-[#e0d6c4]' : 'bg-slate-900 border-slate-800',
-      inputSearch: isCream ? 'bg-white border-[#d8ccb8] text-[#2c2825] placeholder-[#9c9182] focus:border-amber-600' : 'bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:border-indigo-500',
-      tableHeader: isCream ? 'bg-[#ede5d6] text-[#574e42] border-[#ded3c0]' : 'bg-slate-950 text-slate-400 border-slate-800',
-      tableRowBg: isCream ? 'bg-white hover:bg-[#f7f2ea]' : 'bg-slate-900/60 hover:bg-slate-800/40',
-      tableBorder: isCream ? 'border-[#e8dfcf]' : 'border-slate-800',
-      footerBox: isCream ? 'bg-[#f2ebdf] border-[#e0d6c4]' : 'bg-slate-950/70 border-slate-800'
+      headerBg: isCream ? 'bg-[#ebe2d4]/95 backdrop-blur-md border-[#d2c3ad] text-[#221c16]' : 'bg-slate-900 border-slate-800 text-slate-100',
+      mainText: isCream ? 'text-[#1e1812]' : 'text-slate-200',
+      btnBack: isCream ? 'bg-[#ded0bc] hover:bg-[#cfbfab] text-[#34291f] border-[#cbbba5]' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700',
+      cardBg: isCream ? 'bg-[#f4ebe0]/95 border-[#d6c7b2] text-[#221c16] shadow-sm' : 'bg-slate-900 border-slate-800 text-slate-200 shadow-md',
+      metricBoxInProd: isCream ? 'bg-[#fcefdc]/90 border-[#e8be88] text-[#78350f]' : 'bg-slate-900/90 border-amber-500/30 text-amber-300',
+      metricBoxProd: isCream ? 'bg-[#e8f7ee]/90 border-[#a3e6be] text-[#14532d]' : 'bg-slate-900/90 border-emerald-500/30 text-emerald-300',
+      metricBoxArchived: isCream ? 'bg-[#ede8e1]/90 border-[#cdc6bc] text-[#44403c]' : 'bg-slate-900/90 border-slate-700 text-slate-300',
+      metricBoxPieces: isCream ? 'bg-[#eee9fc]/90 border-[#c7bcf5] text-[#4338ca]' : 'bg-slate-900/90 border-indigo-500/30 text-indigo-300',
+      metricBoxValue: isCream ? 'bg-[#ede3d4]/90 border-[#d2c2ad] text-[#201912]' : 'bg-slate-900/90 border-slate-800 text-white',
+      filterPanel: isCream ? 'bg-[#ebe0d2]/95 border-[#cfbfa9]' : 'bg-slate-900 border-slate-800',
+      inputSearch: isCream ? 'bg-[#f8f2e9] border-[#cfbfa9] text-[#1e1812] placeholder-[#8a7a68] focus:border-amber-600' : 'bg-slate-950 border-slate-800 text-white placeholder-slate-500 focus:border-indigo-500',
+      tableHeader: isCream ? 'bg-[#e2d5c2] text-[#453727] border-[#cfbfa9]' : 'bg-slate-950 text-slate-400 border-slate-800',
+      tableRowBg: isCream ? 'bg-[#faf5ee]/95 hover:bg-[#ede1d0]' : 'bg-slate-900/60 hover:bg-slate-800/40',
+      tableBorder: isCream ? 'border-[#d8c9b4]' : 'border-slate-800',
+      footerBox: isCream ? 'bg-[#e7dcce] border-[#cfbfa9]' : 'bg-slate-950/70 border-slate-800'
     };
 
     container.innerHTML = `
@@ -354,16 +549,31 @@ export function renderOrderImportView(container, navigateTo) {
             </button>
           </div>
 
-          <!-- Operator Pill -->
-          <div class="flex items-center gap-1.5 ${isCream ? 'bg-[#e9dfce] text-[#2c2825] border-[#d8ccb8]' : 'bg-slate-800/90 text-white border-slate-700'} px-3 py-1.5 rounded-xl text-xs border shadow-sm">
+          <!-- Operator Switcher Dropdown (1-Click Switch: Paweł, Mateusz, Szymon, Patryk) -->
+          <div class="flex items-center gap-1.5 ${isCream ? 'bg-[#e9dfce] text-[#2c2825] border-[#d8ccb8]' : 'bg-slate-800/90 text-white border-slate-700'} px-2.5 py-1 rounded-xl text-xs border shadow-sm">
             <span class="material-symbols-outlined text-[16px] ${isUserAdmin ? 'text-amber-600' : 'text-indigo-500'}">
               ${isUserAdmin ? 'admin_panel_settings' : 'badge'}
             </span>
-            <span class="font-bold">${currentOperator?.name || 'Operator'}</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-md font-bold ${isUserAdmin ? (isCream ? 'bg-amber-200 text-amber-950 border border-amber-300' : 'bg-amber-950/80 text-amber-300 border border-amber-800/60') : (isCream ? 'bg-indigo-100 text-indigo-900 border border-indigo-200' : 'bg-indigo-950/80 text-indigo-300 border border-indigo-800/60')}">
-              ${isUserAdmin ? 'ADMIN' : 'PRODUKCJA'}
-            </span>
+            <select id="header-select-operator" class="bg-transparent font-black text-xs cursor-pointer outline-none border-none pr-1 ${isCream ? 'text-[#2c2825]' : 'text-white'}">
+              <option value="Paweł" ${currentOperator?.name === 'Paweł' ? 'selected' : ''}>👑 Paweł (Admin)</option>
+              <option value="Mateusz" ${currentOperator?.name === 'Mateusz' ? 'selected' : ''}>👑 Mateusz (Admin)</option>
+              <option value="Szymon" ${currentOperator?.name === 'Szymon' ? 'selected' : ''}>📦 Szymon (Magazynier)</option>
+              <option value="Patryk" ${currentOperator?.name === 'Patryk' ? 'selected' : ''}>📦 Patryk (Magazynier)</option>
+            </select>
           </div>
+
+          <!-- Synchronizuj Button -->
+          <button id="btn-manual-sync" class="flex items-center gap-1.5 ${isCream ? 'bg-[#ede3d3] hover:bg-[#ded1bd] text-[#3d3224] border-[#d8ccb8]' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'} px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-sm" title="Synchronizuj dane z serwerem i pobierz zmiany od Mateusza/Pawła">
+            <span id="sync-icon-spin" class="material-symbols-outlined text-[16px] text-emerald-600 ${isSyncing ? 'animate-spin' : ''}">sync</span>
+            <span class="hidden md:inline">SYNCHRONIZUJ</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          </button>
+
+          <!-- Dziennik Zdarzeń Button -->
+          <button id="btn-nav-history" class="flex items-center gap-1.5 ${isCream ? 'bg-[#f7efe1] hover:bg-[#eadbc3] text-amber-950 border-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-amber-400 border-amber-500/40'} px-3 py-1.5 rounded-xl text-xs font-black border transition-all cursor-pointer shadow-sm" title="Zobacz co robili Mateusz, Paweł i pracownicy w Dzienniku Zdarzeń">
+            <span class="material-symbols-outlined text-[16px] text-amber-600">history_edu</span>
+            <span class="hidden lg:inline">DZIENNIK ZDARZEŃ</span>
+          </button>
 
           <!-- Przycisk przejścia do Kreatora WZ -->
           <button id="btn-nav-wz" class="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs px-3.5 py-1.5 rounded-xl transition-all active:scale-95 shadow-md cursor-pointer">
@@ -381,6 +591,53 @@ export function renderOrderImportView(container, navigateTo) {
       </header>
 
       <main class="w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 flex flex-col gap-4 mt-14 mb-20 ${themeStyles.mainText}">
+
+        <!-- Live Activity Bar (Ostatnie działania Mateusza i Pawła na żywo) -->
+        <div class="border rounded-2xl p-3 sm:p-3.5 ${isCream ? 'bg-[#f7f0e3] border-[#ded1be]' : 'bg-slate-900 border-slate-800'} shadow-sm flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-amber-600 text-[18px]">bolt</span>
+              <span class="text-xs font-black uppercase tracking-wider ${isCream ? 'text-[#4a3d2c]' : 'text-slate-300'}">
+                Ostatnia aktywność na warsztacie (Mateusz & Paweł & Zespół)
+              </span>
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Synchronizacja w czasie rzeczywistym"></span>
+            </div>
+            <button id="btn-feed-to-history" class="text-xs font-black text-amber-600 hover:text-amber-500 flex items-center gap-1 cursor-pointer">
+              <span>Pełny dziennik zdarzeń</span>
+              <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            ${(centralAuditLogs && centralAuditLogs.length > 0 ? centralAuditLogs.slice(0, 4) : [
+              { operator: 'System', action: 'Brak nowych zdarzeń', details: 'Wszystkie operacje będą widoczne tutaj', timeShort: '' }
+            ]).map(log => {
+              const isMateusz = log.operator === 'Mateusz';
+              const isPawel = log.operator === 'Paweł';
+              const opBadgeColor = isMateusz 
+                ? (isCream ? 'bg-amber-200 text-amber-950 border-amber-300' : 'bg-amber-950/80 text-amber-300 border-amber-800')
+                : (isPawel 
+                  ? (isCream ? 'bg-blue-100 text-blue-950 border-blue-200' : 'bg-blue-950/80 text-blue-300 border-blue-800')
+                  : (isCream ? 'bg-stone-200 text-stone-800 border-stone-300' : 'bg-slate-800 text-slate-300 border-slate-700'));
+              return `
+                <div class="p-2.5 rounded-xl border ${isCream ? 'bg-[#fffdfa] border-[#e8ddcb]' : 'bg-slate-950/80 border-slate-800'} flex flex-col justify-between gap-1 shadow-xs">
+                  <div class="flex items-center justify-between gap-1">
+                    <span class="px-2 py-0.5 rounded-md border text-[10px] font-black ${opBadgeColor} flex items-center gap-1">
+                      <span>👤 ${log.operator || 'Operator'}</span>
+                    </span>
+                    <span class="text-[10px] font-mono ${isCream ? 'text-[#7a6d5c]' : 'text-slate-500'}">${log.timeShort || log.dateFormatted?.split(',')[1] || ''}</span>
+                  </div>
+                  <div class="font-bold text-[11px] truncate ${isCream ? 'text-[#2a241e]' : 'text-slate-100'}" title="${log.action}">
+                    ${log.action || 'Operacja'}
+                  </div>
+                  <div class="text-[10px] line-clamp-2 ${isCream ? 'text-[#6b5d4c]' : 'text-slate-400'}" title="${log.details}">
+                    ${log.details || 'Brak dodatkowych szczegółów'}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
 
         <!-- Year Selection & Annual Summary Controls Bar -->
         <div class="flex flex-wrap items-center justify-between gap-2.5 p-2.5 rounded-2xl border ${isCream ? 'bg-[#ede5d6] border-[#d8ccb8]' : 'bg-slate-900 border-slate-800'} shadow-sm">
@@ -635,18 +892,32 @@ export function renderOrderImportView(container, navigateTo) {
           </div>
         </div>
 
-        <!-- Filter Controls: Month Filter, Search, Customer Filter -->
-        <div class="${themeStyles.filterPanel} border rounded-2xl p-3.5 flex flex-col gap-3 shadow-sm">
+        <!-- Filter Controls: Month Filter, Search, Sort, Overdue Filter, Customer Filter -->
+        <div class="${themeStyles.filterPanel} border rounded-2xl p-3.5 flex flex-col gap-3 shadow-sm backdrop-blur-sm">
           <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
             
             <!-- Month Selector -->
-            <div class="sm:col-span-4 flex items-center gap-2">
+            <div class="sm:col-span-3 flex items-center gap-1.5">
               <span class="material-symbols-outlined text-amber-600 text-[18px]">calendar_month</span>
-              <select id="month-filter-select" class="w-full ${themeStyles.inputSearch} border rounded-xl px-3 py-2 text-xs font-bold outline-none cursor-pointer">
-                <option value="ALL" ${activeMonthFilter === 'ALL' ? 'selected' : ''}>📅 Wszystkie miesiące (${activeYear === 'ALL' ? 'Wszystkie lata: ' + allOrders.length : activeYear + ': ' + activeYearOrders.length} zleceń)</option>
+              <select id="month-filter-select" class="w-full ${themeStyles.inputSearch} border rounded-xl px-2.5 py-2 text-xs font-bold outline-none cursor-pointer">
+                <option value="ALL" ${activeMonthFilter === 'ALL' ? 'selected' : ''}>📅 Wszystkie m-ce (${activeYear === 'ALL' ? allOrders.length : activeYearOrders.length})</option>
                 ${monthFilters.map(m => `
                   <option value="${m.id}" ${activeMonthFilter === m.id ? 'selected' : ''}>${m.label}</option>
                 `).join('')}
+              </select>
+            </div>
+
+            <!-- Sort By Selector -->
+            <div class="sm:col-span-4 flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-amber-600 text-[18px]">sort</span>
+              <select id="orders-sort-select" class="w-full ${themeStyles.inputSearch} border rounded-xl px-2.5 py-2 text-xs font-bold outline-none cursor-pointer">
+                <option value="DEFAULT" ${currentSortBy === 'DEFAULT' ? 'selected' : ''}>⚡ Domyślnie: Po terminie (Priorytet) + Najbliższy termin</option>
+                <option value="DELIVERY_DATE_ASC" ${currentSortBy === 'DELIVERY_DATE_ASC' ? 'selected' : ''}>📅 Termin realizacji: Najbliższe najpierw</option>
+                <option value="DELIVERY_DATE_DESC" ${currentSortBy === 'DELIVERY_DATE_DESC' ? 'selected' : ''}>📅 Termin realizacji: Najdalsze najpierw</option>
+                <option value="ORDER_DATE_DESC" ${currentSortBy === 'ORDER_DATE_DESC' ? 'selected' : ''}>🗓️ Data zamówienia: Od najnowszych</option>
+                <option value="ORDER_DATE_ASC" ${currentSortBy === 'ORDER_DATE_ASC' ? 'selected' : ''}>🗓️ Data zamówienia: Od najstarszych</option>
+                <option value="AMOUNT_DESC" ${currentSortBy === 'AMOUNT_DESC' ? 'selected' : ''}>💰 Kwota zamówienia: Od najwyższej</option>
+                <option value="AMOUNT_ASC" ${currentSortBy === 'AMOUNT_ASC' ? 'selected' : ''}>💰 Kwota zamówienia: Od najniższej</option>
               </select>
             </div>
 
@@ -655,34 +926,59 @@ export function renderOrderImportView(container, navigateTo) {
               <span class="material-symbols-outlined absolute left-3 top-2.5 ${isCream ? 'text-[#8c7f6f]' : 'text-slate-500'} text-[18px]">search</span>
               <input id="orders-search-input" type="text" value="${searchQuery}" placeholder="Szukaj zlecenia, SO, rysunku, nazwy detalu..." class="w-full ${themeStyles.inputSearch} border rounded-xl pl-9 pr-3 py-2 text-xs outline-none" />
             </div>
-
-            <!-- Total count label -->
-            <div class="sm:col-span-3 flex justify-end items-center text-xs font-bold ${isCream ? 'text-[#6e604f]' : 'text-slate-400'}">
-              Znaleziono: <span class="ml-1.5 px-2 py-0.5 rounded-lg ${isCream ? 'bg-[#ede5d6] text-[#2c2825]' : 'bg-slate-800 text-white'} font-mono">${filteredOrders.length}</span> zleceń
-            </div>
           </div>
 
-          <!-- Company Filter Buttons -->
-          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 scrollbar-thin">
-            ${companyFilters.map(comp => {
-              const isSelected = activeCustomerFilter.toUpperCase() === comp.id.toUpperCase();
-              return `
-                <button class="btn-filter-company flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${isSelected ? (isCream ? 'bg-[#84532b] text-white shadow-sm' : 'bg-indigo-600 text-white shadow-sm') : (isCream ? 'bg-[#ede5d7] hover:bg-[#e2d6c3] text-[#4d4233] border border-[#d8ccb8]' : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700')}" data-company="${comp.id}">
-                  <span class="material-symbols-outlined text-[14px]">${comp.icon || 'business'}</span>
-                  <span>${comp.label}</span>
-                </button>
-              `;
-            }).join('')}
+          <!-- Bottom Row: Overdue Button + Workshop Issues Button + Company Filter Buttons + Count -->
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t ${isCream ? 'border-[#dfd4c3]' : 'border-slate-800'}">
+            <div class="flex items-center gap-2 flex-wrap">
+              <!-- Overdue Filter Toggle Button -->
+              <button id="btn-toggle-overdue-filter" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer border ${filterOnlyOverdue ? 'bg-orange-600 text-white border-orange-500 shadow-md ring-2 ring-orange-500/50' : (isCream ? 'bg-[#f5ebd9] hover:bg-[#ebdcc7] text-orange-950 border-orange-300' : 'bg-slate-800 hover:bg-slate-700 text-orange-400 border-orange-500/40')}" title="Filtruj tylko zlecenia po terminie realizacji">
+                <span class="material-symbols-outlined text-[16px] text-orange-500 ${filterOnlyOverdue ? 'text-white' : ''}">warning</span>
+                <span>PO TERMINIE</span>
+                <span class="px-1.5 py-0.2 rounded font-mono text-[10px] ${filterOnlyOverdue ? 'bg-white/20 text-white' : 'bg-orange-500 text-white'}">
+                  ${totalOverdueCount}
+                </span>
+              </button>
+
+              <!-- Workshop Issues / Photos Filter Toggle Button (Od Mateusza / Operatorów) -->
+              <button id="btn-toggle-issues-filter" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer border ${filterOnlyIssues ? 'bg-amber-600 text-white border-amber-500 shadow-md ring-2 ring-amber-500/50' : (isCream ? 'bg-[#f7efe1] hover:bg-[#ebdcc7] text-amber-950 border-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-amber-400 border-amber-500/40')}" title="Filtruj tylko zlecenia z uwagami lub problemami ze zdjęciem od Mateusza">
+                <span class="material-symbols-outlined text-[16px] text-amber-500 ${filterOnlyIssues ? 'text-white' : ''}">add_a_photo</span>
+                <span>ZGŁOSZENIA / FOTO</span>
+                <span class="px-1.5 py-0.2 rounded font-mono text-[10px] ${filterOnlyIssues ? 'bg-white/20 text-white' : 'bg-amber-500 text-white'}">
+                  ${orderComments.filter(c => c.status !== 'RESOLVED').length}
+                </span>
+              </button>
+
+              <div class="h-4 w-px ${isCream ? 'bg-[#d8ccb8]' : 'bg-slate-800'}"></div>
+
+              <!-- Company Filter Buttons -->
+              <div class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 scrollbar-thin">
+                ${companyFilters.map(comp => {
+                  const isSelected = activeCustomerFilter.toUpperCase() === comp.id.toUpperCase();
+                  return `
+                    <button class="btn-filter-company flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${isSelected ? (isCream ? 'bg-[#84532b] text-white shadow-sm' : 'bg-indigo-600 text-white shadow-sm') : (isCream ? 'bg-[#ede5d7] hover:bg-[#e2d6c3] text-[#4d4233] border border-[#d8ccb8]' : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700')}" data-company="${comp.id}">
+                      <span class="material-symbols-outlined text-[14px]">${comp.icon || 'business'}</span>
+                      <span>${comp.label}</span>
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+            <!-- Count badge -->
+            <div class="text-xs font-bold ${isCream ? 'text-[#6e604f]' : 'text-slate-400'} ml-auto">
+              Znaleziono: <span class="ml-1 px-2 py-0.5 rounded-lg ${isCream ? 'bg-[#ede5d6] text-[#2c2825]' : 'bg-slate-800 text-white'} font-mono">${filteredOrders.length}</span> zleceń
+            </div>
           </div>
         </div>
 
         <!-- Orders Accordion List -->
         <div class="flex flex-col gap-2.5">
           ${filteredOrders.length === 0 ? `
-            <div class="border-2 border-dashed ${isCream ? 'border-[#d8ccb8] bg-[#fbf8f2]' : 'border-slate-800 bg-slate-900/50'} rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3">
+            <div class="border-2 border-dashed ${isCream ? 'border-[#d8ccb8] bg-[#fbf8f2]/95' : 'border-slate-800 bg-slate-900/50'} rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
               <span class="material-symbols-outlined text-5xl ${isCream ? 'text-[#a89985]' : 'text-slate-600'}">search_off</span>
-              <div class="text-sm font-bold ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Brak zleceń dla roku ${activeYear === 'ALL' ? 'w tej kategorii' : activeYear}</div>
-              <p class="text-xs ${isCream ? 'text-[#7d6f5e]' : 'text-slate-500'}">Zmień rok (np. 2026 / 2025), wybierz inny miesiąc lub wyczyść filtry.</p>
+              <div class="text-sm font-bold ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Brak zleceń dla wybranych filtrów</div>
+              <p class="text-xs ${isCream ? 'text-[#7d6f5e]' : 'text-slate-500'}">Zmień rok (np. 2026 / 2025), wyłącz filtr po terminie lub wyczyść filtry.</p>
               <button id="btn-reset-filters" class="mt-2 px-4 py-2 ${isCream ? 'bg-[#ede5d6] text-[#2c2825] border-[#d8ccb8]' : 'bg-slate-800 text-white border-slate-700'} rounded-xl border text-xs font-bold cursor-pointer">
                 Resetuj Filtry
               </button>
@@ -691,19 +987,28 @@ export function renderOrderImportView(container, navigateTo) {
             const isExpanded = expandedOrderIds.has(order.id);
             const totals = calculateTotals(order.items || []);
             const wzSummary = getOrderWzShipmentSummary(order);
-            const isArchived = order.productionStatus === 'ARCHIVED';
+            const isArchived = order.productionStatus === 'ARCHIVED' || order.isArchived === true;
             const isFullyProduced = order.productionStatus === 'PRODUCED';
             const isPartiallyProduced = order.productionStatus === 'PARTIALLY_PRODUCED' || (totals.totalProducedQty > 0 && totals.totalProducedQty < totals.totalOrderedQty);
+            const isOrderDone = isFullyProduced || isArchived;
+            const isOverdue = !isOrderDone && order.deliveryDate && order.deliveryDate < todayStr;
+
+            // Workshop comments & photo issues for this order
+            const orderIssues = orderComments.filter(c => c.orderId === order.id);
+            const orderOpenIssues = orderIssues.filter(c => c.status !== 'RESOLVED');
+            const hasOpenIssues = orderOpenIssues.length > 0;
 
             const pdfUrl = getOrderPdfUrl(order);
 
             const borderStatusClass = isArchived
-              ? (isCream ? 'border-[#d6d3d1] bg-[#f8f8f7]' : 'border-slate-700 bg-slate-900/60 opacity-90')
-              : (isFullyProduced 
-                  ? (isCream ? 'border-[#86efac]/90 bg-[#fbfdfb]' : 'border-emerald-500/40 bg-slate-900/90')
-                  : (isPartiallyProduced 
-                      ? (isCream ? 'border-[#fdba74]/90 bg-[#fffdfa]' : 'border-amber-500/40 bg-slate-900/90')
-                      : (isCream ? 'border-[#e0d6c4] bg-[#fbf8f2]' : 'border-slate-800 bg-slate-900/80')));
+              ? (isCream ? 'border-[#d6d3d1] bg-[#f8f8f7]/95' : 'border-slate-700 bg-slate-900/60 opacity-90')
+              : (isOverdue
+                  ? (isCream ? 'border-orange-500/80 bg-[#fff8f0]/95 shadow-md shadow-orange-500/10' : 'border-orange-500/80 bg-orange-950/20 shadow-md shadow-orange-500/10')
+                  : (isFullyProduced 
+                      ? (isCream ? 'border-[#86efac]/90 bg-[#fbfdfb]/95' : 'border-emerald-500/40 bg-slate-900/90')
+                      : (isPartiallyProduced 
+                          ? (isCream ? 'border-[#fdba74]/90 bg-[#fffdfa]/95' : 'border-amber-500/40 bg-slate-900/90')
+                          : (isCream ? 'border-[#d6c7b2] bg-[#f4ebe0]/95' : 'border-slate-800 bg-slate-900/80'))));
 
             return `
               <div class="border rounded-2xl transition-all shadow-sm ${borderStatusClass} overflow-hidden" data-order-card-id="${order.id}">
@@ -725,6 +1030,14 @@ export function renderOrderImportView(container, navigateTo) {
                         ${order.odooOrderName && order.odooOrderName !== order.orderRef ? `
                           <span class="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold ${isCream ? 'bg-[#ede5d6] text-[#5c4a35] border border-[#d8ccb8]' : 'bg-slate-800 text-slate-300 border border-slate-700'}">
                             Odoo: ${order.odooOrderName}
+                          </span>
+                        ` : ''}
+
+                        <!-- Overdue Warning Badge in Orange -->
+                        ${isOverdue ? `
+                          <span class="px-2.5 py-0.5 rounded-md text-xs font-black bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/60 shadow-xs flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px] text-orange-500">warning</span>
+                            <span>PO TERMINIE: ${order.deliveryDate}</span>
                           </span>
                         ` : ''}
                         
@@ -761,12 +1074,27 @@ export function renderOrderImportView(container, navigateTo) {
                             </span>
                           `
                         ) : ''}
+
+                        <!-- Workshop Issues Badge (Zgłoszenia i zdjęcia od Mateusza/operatorów) -->
+                        ${orderIssues.length > 0 ? `
+                          <span class="px-2.5 py-0.5 rounded-md text-xs font-black ${hasOpenIssues ? 'bg-amber-500/25 text-amber-900 border border-amber-500 shadow-xs' : 'bg-stone-200 text-stone-800 border border-stone-300'} flex items-center gap-1" title="Zgłoszone uwagi i zdjęcia z warsztatu">
+                            <span class="material-symbols-outlined text-[14px] text-amber-600">report_problem</span>
+                            <span>${hasOpenIssues ? `⚠️ ZGŁOSZENIE (${orderOpenIssues.length})` : `💬 UWAGI (${orderIssues.length})`}</span>
+                            ${orderIssues.some(i => i.photoUrl) ? '<span class="material-symbols-outlined text-[13px] text-amber-600">photo_camera</span>' : ''}
+                          </span>
+                        ` : ''}
                       </div>
                       
                       <div class="flex items-center gap-2 mt-0.5 text-xs ${isCream ? 'text-[#6e604f]' : 'text-slate-400'} flex-wrap">
                         <span class="font-bold ${isCream ? 'text-[#3d3224]' : 'text-slate-200'}">${order.customerName || 'EC Engineering'}</span>
                         <span>•</span>
-                        <span>Data: ${order.orderDate || '2026-06'}</span>
+                        ${order.deliveryDate ? `
+                          <span class="${isOverdue ? 'text-orange-600 dark:text-orange-400 font-black' : ''}">
+                            Termin: ${order.deliveryDate}
+                          </span>
+                          <span>•</span>
+                        ` : ''}
+                        <span>Data zam.: ${order.orderDate || '2026-06'}</span>
                         <span>•</span>
                         <span>${(order.items || []).length} poz. (${totals.totalOrderedQty} szt.)</span>
                       </div>
@@ -833,6 +1161,12 @@ export function renderOrderImportView(container, navigateTo) {
                     <button class="btn-print-order-label flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 border cursor-pointer ${isCream ? 'bg-[#ede5d6] hover:bg-[#ded1bd] text-[#2c2825] border-[#d8ccb8]' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'}" data-order-id="${order.id}" title="Drukuj kody kreskowe / etykiety wysyłkowe do paczek z zamówienia (bez faktury)">
                       <span class="material-symbols-outlined text-[16px] text-amber-600">barcode</span>
                       <span class="hidden sm:inline">Kody Kreskowe</span>
+                    </button>
+
+                    <!-- Zgłoś problem / dodaj komentarz ze zdjęciem od Mateusza -->
+                    <button class="btn-open-issue-form flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${hasOpenIssues ? 'bg-amber-500 text-slate-950 border-amber-600 font-black' : (isCream ? 'bg-[#ede5d6] hover:bg-[#ded1bd] text-[#2c2825] border-[#d8ccb8]' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700')}" data-order-id="${order.id}" title="Dodaj komentarz lub zgłoś usterkę ze zdjęciem (np. od Mateusza)">
+                      <span class="material-symbols-outlined text-[16px] text-amber-600">add_a_photo</span>
+                      <span class="hidden sm:inline">${orderIssues.length > 0 ? `Foto/Uwagi (${orderIssues.length})` : '+ Foto'}</span>
                     </button>
 
                     <!-- Archiving / Status Quick Actions -->
@@ -979,16 +1313,28 @@ export function renderOrderImportView(container, navigateTo) {
                                     <input 
                                       type="number" 
                                       min="0" 
-                                      max="${orderedQty}" 
+                                      max="${wzSummary.relatedWzs.length > 0 ? itRemainingQty : orderedQty}" 
                                       step="1"
                                       value="${producedQty}" 
-                                      class="input-item-qty w-16 text-center font-mono font-black text-xs py-1 px-1.5 rounded-lg border outline-none ${isItemProduced ? (isCream ? 'bg-emerald-50 border-emerald-400 text-emerald-950' : 'bg-emerald-950/60 border-emerald-500 text-emerald-300') : (isItemPartial ? (isCream ? 'bg-amber-50 border-amber-400 text-amber-950' : 'bg-amber-950/60 border-amber-500 text-amber-300') : (isCream ? 'bg-white border-[#d8ccb8] text-[#1e1913]' : 'bg-slate-900 border-slate-700 text-white'))}"
+                                      class="input-item-qty w-14 text-center font-mono font-black text-xs py-1 px-1 rounded-lg border outline-none ${isItemProduced ? (isCream ? 'bg-emerald-50 border-emerald-400 text-emerald-950' : 'bg-emerald-950/60 border-emerald-500 text-emerald-300') : (isItemPartial ? (isCream ? 'bg-amber-50 border-amber-400 text-amber-950' : 'bg-amber-950/60 border-amber-500 text-amber-300') : (isCream ? 'bg-white border-[#d8ccb8] text-[#1e1913]' : 'bg-slate-900 border-slate-700 text-white'))}"
                                       data-order-id="${order.id}" 
                                       data-item-id="${it.id}"
                                       data-ordered-qty="${orderedQty}"
-                                      title="Wpisz wyprodukowaną ilość (np. 10/${orderedQty})"
+                                      data-max-qty="${wzSummary.relatedWzs.length > 0 ? itRemainingQty : orderedQty}"
+                                      title="Wpisz ilość do wysyłki (maks. ${wzSummary.relatedWzs.length > 0 ? itRemainingQty : orderedQty} szt.)"
                                     />
-                                    <span class="font-mono text-xs font-bold ${isCream ? 'text-[#6e604f]' : 'text-slate-400'}">/ ${orderedQty}</span>
+                                    <button 
+                                      type="button" 
+                                      class="btn-item-qty-all px-1.5 py-0.5 rounded text-[10px] font-black font-mono tracking-tight transition-all active:scale-90 border shadow-xs cursor-pointer ${(wzSummary.relatedWzs.length > 0 ? itRemainingQty : orderedQty) === 0 ? 'bg-slate-200 text-slate-400 border-slate-300 opacity-60 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-600'}" 
+                                      data-order-id="${order.id}" 
+                                      data-item-id="${it.id}" 
+                                      data-max-qty="${wzSummary.relatedWzs.length > 0 ? itRemainingQty : orderedQty}" 
+                                      title="Wstaw całość (${wzSummary.relatedWzs.length > 0 ? itRemainingQty : orderedQty} szt.)"
+                                      ${(wzSummary.relatedWzs.length > 0 ? itRemainingQty : orderedQty) === 0 ? 'disabled' : ''}
+                                    >
+                                      ALL
+                                    </button>
+                                    <span class="font-mono text-xs font-bold ${isCream ? 'text-[#6e604f]' : 'text-slate-400'}">/ ${wzSummary.relatedWzs.length > 0 ? itRemainingQty : orderedQty}</span>
                                   </div>
                                 </td>
                                 <td class="py-2 px-2 text-center">
@@ -1004,6 +1350,157 @@ export function renderOrderImportView(container, navigateTo) {
                           }).join('')}
                         </tbody>
                       </table>
+                    </div>
+
+                    <!-- Dedicated WZ Dispatch History Section -->
+                    ${wzSummary.relatedWzs.length > 0 ? `
+                      <div class="mt-3 mb-2 p-3 rounded-xl border ${isCream ? 'bg-[#f7f2ea] border-[#e2d5c3]' : 'bg-slate-900/90 border-slate-800'}">
+                        <div class="flex items-center justify-between mb-2 pb-1.5 border-b ${isCream ? 'border-[#e2d5c3]' : 'border-slate-800'}">
+                          <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[18px] text-amber-500">local_shipping</span>
+                            <span class="font-bold text-xs ${isCream ? 'text-[#1e1913]' : 'text-slate-200'}">
+                              📦 Historia Wystawionych Dokumentów WZ (${wzSummary.relatedWzs.length} dok.)
+                            </span>
+                          </div>
+                          <div class="text-[11px] font-mono font-bold ${isCream ? 'text-emerald-800' : 'text-emerald-400'}">
+                            Wysłano łącznie: ${wzSummary.totalShipped} / ${wzSummary.totalOrdered} szt. ${wzSummary.isAllShipped ? '• 100% ZREALIZOWANE' : `• Pozostało: ${wzSummary.totalRemaining} szt.`}
+                          </div>
+                        </div>
+                        <div class="space-y-1.5">
+                          ${wzSummary.relatedWzs.map(wz => {
+                            const wzNum = wz.formattedNumber || `Nr ${wz.wzNum}/${wz.wzMonth}/${wz.wzYear}${wz.wzSuffix || '/BM'}`;
+                            const wzDate = wz.issueDate || 'Brak daty';
+                            const operator = wz.operatorName || wz.issuerName || 'Operator';
+                            const shippedList = (wz.items || []).map(it => {
+                              const q = it.quantity || 0;
+                              const label = it.symbol || it.sku || it.name || 'Detal';
+                              return `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono ${isCream ? 'bg-[#ede5d6] text-[#2c2825] border border-[#d8ccb8]' : 'bg-slate-800 text-slate-200 border border-slate-700'}"><span>${label}:</span> <strong class="text-amber-500 font-bold">${q} ${it.uom || 'szt'}</strong></span>`;
+                            }).join(' ');
+
+                            return `
+                              <div class="flex flex-wrap items-center justify-between p-2 rounded-lg ${isCream ? 'bg-white border border-[#e8ded0]' : 'bg-slate-950/70 border border-slate-800/80'} gap-2">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                  <span class="px-2 py-0.5 rounded font-mono font-black text-xs ${isCream ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-amber-950/80 text-amber-300 border border-amber-700'}">
+                                    ${wzNum}
+                                  </span>
+                                  <span class="text-xs ${isCream ? 'text-[#6e604f]' : 'text-slate-400'}">
+                                    📅 ${wzDate}
+                                  </span>
+                                  <span class="text-xs ${isCream ? 'text-[#6e604f]' : 'text-slate-400'}">
+                                    👤 ${operator}
+                                  </span>
+                                  <div class="flex items-center gap-1 flex-wrap ml-1">
+                                    ${shippedList || '<span class="text-xs text-slate-500">Brak pozycji</span>'}
+                                  </div>
+                                </div>
+                                <button 
+                                  type="button" 
+                                  class="btn-open-historical-wz px-2.5 py-1 rounded-lg text-xs font-bold transition-all active:scale-95 shadow-sm flex items-center gap-1 cursor-pointer ${isCream ? 'bg-[#ede5d6] hover:bg-[#dfd2be] text-[#1e1913] border border-[#d8ccb8]' : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'}" 
+                                  data-wz-id="${wz.id}" 
+                                  title="Otwórz podgląd tego dokumentu WZ"
+                                >
+                                  <span class="material-symbols-outlined text-[15px] text-amber-500">visibility</span>
+                                  <span>Otwórz WZ</span>
+                                </button>
+                              </div>
+                            `;
+                          }).join('')}
+                        </div>
+                      </div>
+                    ` : `
+                      <div class="mt-2 mb-2 p-2 rounded-lg text-[11px] ${isCream ? 'bg-[#f7f2ea]/60 text-[#7a6d5c]' : 'bg-slate-900/40 text-slate-500'} flex items-center gap-1.5 border ${isCream ? 'border-[#e8ded0]' : 'border-slate-800/50'}">
+                        <span class="material-symbols-outlined text-[15px] text-slate-400">history</span>
+                        <span>Brak wystawionych dokumentów WZ dla tego zlecenia (Wszystkie pozycje oczekują na wysyłkę).</span>
+                      </div>
+                    `}
+
+                    <!-- Workshop Comments & Photo Issues Section (Zgłoszenia od Mateusza i warsztatu) -->
+                    <div class="mt-2 mb-2 p-3 rounded-xl border ${isCream ? 'bg-[#f7f2ea] border-[#e2d5c3]' : 'bg-slate-900/90 border-slate-800'}">
+                      <div class="flex items-center justify-between mb-2 pb-1.5 border-b ${isCream ? 'border-[#e2d5c3]' : 'border-slate-800'}">
+                        <div class="flex items-center gap-2">
+                          <span class="material-symbols-outlined text-[18px] text-amber-500">rate_review</span>
+                          <span class="font-bold text-xs ${isCream ? 'text-[#1e1913]' : 'text-slate-200'}">
+                            💬 Zgłoszenia z Warsztatu i Zdjęcia Usterek (${orderIssues.length})
+                          </span>
+                          ${hasOpenIssues ? `
+                            <span class="px-2 py-0.2 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 border border-amber-500/40">
+                              ⚠️ ${orderOpenIssues.length} do wyjaśnienia
+                            </span>
+                          ` : ''}
+                        </div>
+                        
+                        <button type="button" class="btn-open-issue-form px-2.5 py-1 rounded-lg text-xs font-bold transition-all active:scale-95 shadow-sm flex items-center gap-1 cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black border border-amber-600" data-order-id="${order.id}">
+                          <span class="material-symbols-outlined text-[15px]">add_a_photo</span>
+                          <span>+ Dodaj Komentarz / Zdjęcie</span>
+                        </button>
+                      </div>
+
+                      ${orderIssues.length === 0 ? `
+                        <div class="p-2.5 text-center text-[11px] ${isCream ? 'text-[#7a6d5c]' : 'text-slate-500'}">
+                          Brak zgłoszonych uwag lub usterek do tego zlecenia. Kliknij <strong>"+ Dodaj Komentarz / Zdjęcie"</strong>, aby dodać wpis lub fotkę od Mateusza.
+                        </div>
+                      ` : `
+                        <div class="space-y-2">
+                          ${orderIssues.map(issue => {
+                            const isResolved = issue.status === 'RESOLVED';
+                            const typeBadge = issue.type === 'DEFECT' 
+                              ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-600 border border-rose-500/40">❌ WADA / BUBEL</span>'
+                              : (issue.type === 'PROBLEM' 
+                                  ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-700 border border-amber-500/40">⚠️ PROBLEM / AWARIA</span>'
+                                  : '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-600 border border-blue-500/40">💬 UWAGA</span>');
+
+                            return `
+                              <div class="p-2.5 rounded-xl ${isCream ? 'bg-white border border-[#e8ded0]' : 'bg-slate-950/70 border border-slate-800/80'} flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${isResolved ? 'opacity-70' : ''}">
+                                <div class="flex items-start gap-2.5 min-w-0 flex-1">
+                                  <div class="p-1.5 rounded-lg ${issue.type === 'DEFECT' ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'} shrink-0 mt-0.5">
+                                    <span class="material-symbols-outlined text-[20px]">${issue.photoUrl ? 'photo_camera' : 'chat'}</span>
+                                  </div>
+                                  <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                      ${typeBadge}
+                                      <span class="text-xs font-bold ${isCream ? 'text-[#1e1913]' : 'text-slate-200'}">👤 ${issue.operator}</span>
+                                      <span class="text-[10px] ${isCream ? 'text-[#7a6d5c]' : 'text-slate-400'} font-mono">${issue.dateFormatted || issue.createdAt}</span>
+                                      ${issue.sku ? `
+                                        <span class="text-[10px] font-mono px-1 rounded ${isCream ? 'bg-stone-100 text-stone-800' : 'bg-slate-800 text-slate-300'}">SKU: ${issue.sku}</span>
+                                      ` : ''}
+                                      ${isResolved ? `
+                                        <span class="text-[10px] px-1.5 py-0.2 rounded font-bold bg-emerald-500/20 text-emerald-600 border border-emerald-500/30">
+                                          ✓ Rozwiązane (${issue.resolvedBy || 'Admin'})
+                                        </span>
+                                      ` : `
+                                        <span class="text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-amber-600 border border-amber-500/30">
+                                          Oczekuje
+                                        </span>
+                                      `}
+                                    </div>
+                                    <div class="text-xs ${isCream ? 'text-[#3d3224]' : 'text-slate-300'} mt-1 font-medium break-words leading-relaxed">
+                                      ${issue.text}
+                                    </div>
+                                    ${issue.photoUrl ? `
+                                      <div class="mt-2 flex items-center gap-2">
+                                        <img src="${issue.photoUrl}" alt="Zdjęcie usterki" class="h-16 w-24 object-cover rounded-lg border border-outline-variant cursor-pointer hover:scale-105 transition-transform shadow-xs btn-open-lightbox" data-img-url="${issue.photoUrl}" title="Kliknij, aby powiększyć zdjęcie" />
+                                        <button type="button" class="btn-open-lightbox text-[11px] font-bold text-amber-600 hover:underline flex items-center gap-1 cursor-pointer" data-img-url="${issue.photoUrl}">
+                                          <span class="material-symbols-outlined text-[14px]">zoom_in</span>
+                                          <span>Powiększ zdjęcie</span>
+                                        </button>
+                                      </div>
+                                    ` : ''}
+                                  </div>
+                                </div>
+
+                                <div class="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+                                  <button type="button" class="btn-toggle-resolve-issue px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer border ${isResolved ? (isCream ? 'bg-[#ede5d6] text-[#4d4233] border-[#d8ccb8]' : 'bg-slate-800 text-slate-300 border-slate-700') : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-700 shadow-sm'}" data-issue-id="${issue.id}">
+                                    ${isResolved ? 'Wznów zgłoszenie' : '✓ Rozwiązane'}
+                                  </button>
+                                  <button type="button" class="btn-delete-issue p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/20 cursor-pointer transition-colors" data-issue-id="${issue.id}" title="Usuń ten wpis">
+                                    <span class="material-symbols-outlined text-[16px]">delete</span>
+                                  </button>
+                                </div>
+                              </div>
+                            `;
+                          }).join('')}
+                        </div>
+                      `}
                     </div>
 
                     <!-- Footer of Expanded Card -->
@@ -1022,10 +1519,10 @@ export function renderOrderImportView(container, navigateTo) {
                           Wartość: <strong class="${isCream ? 'text-[#1e1913]' : 'text-white'}">${totals.netto} zł netto</strong> (${totals.brutto} zł brutto)
                         </span>
 
-                        ${totals.totalProducedQty > 0 && !isArchived ? `
+                        ${!isArchived ? `
                           <button class="btn-issue-wz-order flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs px-3.5 py-1.5 rounded-xl transition-all active:scale-95 shadow-sm cursor-pointer" data-order-id="${order.id}">
                             <span class="material-symbols-outlined text-[16px]">description</span>
-                            <span>WYSTAW DOKUMENT WZ (${totals.totalProducedQty} szt.)</span>
+                            <span>${totals.totalProducedQty > 0 ? `WYSTAW DOKUMENT WZ (${totals.totalProducedQty} szt.)` : (wzSummary.totalRemaining > 0 ? `WYSTAW DOKUMENT WZ (Pozostałe ${wzSummary.totalRemaining} szt.)` : 'WYSTAW DOKUMENT WZ')}</span>
                           </button>
                         ` : ''}
 
@@ -1055,6 +1552,10 @@ export function renderOrderImportView(container, navigateTo) {
               <h2 class="font-bold ${isCream ? 'text-[#2a241e]' : 'text-white'} text-sm sm:text-base font-mono truncate max-w-md">${previewPdfTitle || 'Podgląd Dokumentu PDF'}</h2>
             </div>
             <div class="flex items-center gap-2">
+              <button id="btn-print-modal-pdf" class="flex items-center gap-1 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold cursor-pointer shadow-sm active:scale-95 transition-all" title="Drukuj ten dokument">
+                <span class="material-symbols-outlined text-[16px]">print</span>
+                <span>Drukuj</span>
+              </button>
               <a href="${previewPdfUrl || '#'}" target="_blank" download class="flex items-center gap-1 px-3 py-1.5 ${isCream ? 'bg-[#ede5d6] text-[#3d3224] border-[#d8ccb8]' : 'bg-slate-800 text-slate-200 border-slate-700'} rounded-xl border text-xs font-bold">
                 <span class="material-symbols-outlined text-[16px]">download</span>
                 <span>Pobierz</span>
@@ -1186,6 +1687,118 @@ export function renderOrderImportView(container, navigateTo) {
 
         </div>
       </div>
+
+      <!-- MODAL: ADD COMMENT / REPORT PROBLEM WITH PHOTO (Od Mateusza / Operatorów) -->
+      <div id="issue-comment-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 ${showAddCommentModal ? 'flex' : 'hidden'} items-center justify-center p-3">
+        <div class="${isCream ? 'bg-[#fbf7f0] text-[#2c2825] border-[#d8ccb8]' : 'bg-slate-900 text-slate-100 border-slate-700'} border rounded-2xl max-w-lg w-full p-5 shadow-2xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150 max-h-[95vh] overflow-y-auto">
+          
+          <div class="flex justify-between items-center border-b ${isCream ? 'border-[#ded3c0]' : 'border-slate-800'} pb-3">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-amber-500 text-2xl">add_a_photo</span>
+              <div>
+                <h3 class="font-bold text-base ${isCream ? 'text-[#2a241e]' : 'text-white'}">Zgłoszenie / Komentarz ze zdjęciem</h3>
+                <p class="text-[11px] ${isCream ? 'text-[#7d6f5e]' : 'text-slate-400'}">${activeCommentOrder ? (activeCommentOrder.orderRef || activeCommentOrder.odooOrderName || 'Zlecenie') + ' • ' + (activeCommentOrder.customerName || '') : 'Warsztat'}</p>
+              </div>
+            </div>
+            <button id="close-comment-modal" class="p-1.5 ${isCream ? 'text-[#786c5e] hover:bg-[#ede5d6]' : 'text-slate-400 hover:text-white hover:bg-slate-800'} rounded-full cursor-pointer">
+              <span class="material-symbols-outlined text-xl">close</span>
+            </button>
+          </div>
+
+          <form id="form-submit-issue" class="flex flex-col gap-3">
+            <!-- Operator & Type Selection -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label class="text-[11px] font-bold block mb-1 ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Kto zgłasza (Operator):</label>
+                <select id="issue-operator" class="w-full ${isCream ? 'bg-white border-[#d8ccb8] text-[#1e1913]' : 'bg-slate-950 border-slate-700 text-white'} border rounded-xl px-2.5 py-2 text-xs font-bold outline-none cursor-pointer">
+                  <option value="Mateusz" ${currentOperator?.name === 'Mateusz' ? 'selected' : ''}>👑 Mateusz Klimkowski (Admin)</option>
+                  <option value="Paweł" ${currentOperator?.name === 'Paweł' ? 'selected' : ''}>👑 Paweł Peret (Admin)</option>
+                  <option value="Szymon" ${currentOperator?.name === 'Szymon' ? 'selected' : ''}>📦 Szymon Klimkowski</option>
+                  <option value="Patryk" ${currentOperator?.name === 'Patryk' ? 'selected' : ''}>📦 Patryk Majka</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[11px] font-bold block mb-1 ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Typ zgłoszenia:</label>
+                <select id="issue-type" class="w-full ${isCream ? 'bg-white border-[#d8ccb8] text-[#1e1913]' : 'bg-slate-950 border-slate-700 text-white'} border rounded-xl px-2.5 py-2 text-xs font-bold outline-none cursor-pointer">
+                  <option value="PROBLEM">⚠️ Awaria / Problem ze zleceniem</option>
+                  <option value="DEFECT">❌ Wada materiału / błąd detalu</option>
+                  <option value="NOTE">💬 Zwykła uwaga / informacja</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Item selection if order has items -->
+            ${activeCommentOrder && Array.isArray(activeCommentOrder.items) && activeCommentOrder.items.length > 0 ? `
+              <div>
+                <label class="text-[11px] font-bold block mb-1 ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Dotyczy detalu / SKU (opcjonalnie):</label>
+                <select id="issue-sku" class="w-full ${isCream ? 'bg-white border-[#d8ccb8] text-[#1e1913]' : 'bg-slate-950 border-slate-700 text-white'} border rounded-xl px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer">
+                  <option value="">-- Całe zlecenie --</option>
+                  ${activeCommentOrder.items.map(it => `
+                    <option value="${it.sku || it.symbol || it.name}" ${activeCommentSku === (it.sku || it.symbol) ? 'selected' : ''}>${it.sku || it.symbol || '-'} • ${it.name || ''}</option>
+                  `).join('')}
+                </select>
+              </div>
+            ` : ''}
+
+            <!-- Description Textarea -->
+            <div>
+              <label class="text-[11px] font-bold block mb-1 ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">Opis problemu / co jest nie tak:</label>
+              <textarea id="issue-text" rows="3" required placeholder="Opisz dokładnie co nie działa, jaki jest problem z detalem, maszyną lub zamówieniem..." class="w-full ${isCream ? 'bg-white border-[#d8ccb8] text-[#1e1913] placeholder-[#9a8c7b]' : 'bg-slate-950 border-slate-700 text-white placeholder-slate-500'} border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-amber-500 font-sans"></textarea>
+            </div>
+
+            <!-- Photo Attachment with Camera / File Upload -->
+            <div>
+              <label class="text-[11px] font-bold block mb-1 ${isCream ? 'text-[#4d4233]' : 'text-slate-300'}">📸 Zdjęcie ze stanowiska (aparat w telefonie lub plik):</label>
+              
+              <div class="flex items-center gap-2">
+                <label for="input-issue-photo" class="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-dashed ${isCream ? 'border-[#d8ccb8] bg-[#f5ebd9] hover:bg-[#ede0ca] text-[#4d4233]' : 'border-slate-700 bg-slate-950/60 hover:bg-slate-800 text-slate-300'} cursor-pointer transition-all active:scale-98">
+                  <span class="material-symbols-outlined text-amber-500 text-2xl">photo_camera</span>
+                  <span class="text-xs font-bold">Zrób zdjęcie aparatem lub wybierz plik</span>
+                  <input type="file" id="input-issue-photo" accept="image/*" capture="environment" class="hidden" />
+                </label>
+              </div>
+
+              <div id="issue-photo-preview-container" class="mt-2 ${selectedCommentPhotoPreview ? 'flex' : 'hidden'} items-center gap-3 p-2 rounded-xl border ${isCream ? 'bg-white border-[#d8ccb8]' : 'bg-slate-950 border-slate-800'}">
+                <img id="issue-photo-preview-img" src="${selectedCommentPhotoPreview || ''}" class="h-16 w-16 object-cover rounded-lg border border-outline-variant" />
+                <div class="flex-1 min-w-0">
+                  <span class="text-xs font-bold ${isCream ? 'text-[#2a241e]' : 'text-white'} block truncate" id="issue-photo-name">Zdjęcie wybrane</span>
+                  <span class="text-[10px] text-emerald-600 font-bold">✓ Gotowe do wysłania</span>
+                </div>
+                <button type="button" id="btn-remove-photo" class="p-1 rounded-lg hover:bg-rose-500/20 text-rose-500 cursor-pointer">
+                  <span class="material-symbols-outlined text-lg">delete</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Submit button -->
+            <div class="flex items-center justify-end gap-2 pt-2 border-t ${isCream ? 'border-[#ded3c0]' : 'border-slate-800'}">
+              <button type="button" id="btn-cancel-issue" class="px-4 py-2 rounded-xl text-xs font-bold ${isCream ? 'bg-[#ede5d6] text-[#4d4233] hover:bg-[#ded1bd]' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'} cursor-pointer">
+                Anuluj
+              </button>
+              <button type="submit" id="btn-submit-issue-action" class="flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-md cursor-pointer transition-all active:scale-95">
+                <span class="material-symbols-outlined text-[16px]">send</span>
+                <span>WYŚLIJ ZGŁOSZENIE (ZAPISZ)</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- MODAL: IMAGE LIGHTBOX ZOOM -->
+      <div id="image-zoom-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[60] ${lightboxImageUrl ? 'flex' : 'hidden'} items-center justify-center p-3 select-none">
+        <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center justify-center" onclick="event.stopPropagation()">
+          <button id="close-zoom-modal" class="absolute -top-10 right-0 text-white bg-slate-800/80 hover:bg-slate-700 p-1.5 rounded-full cursor-pointer">
+            <span class="material-symbols-outlined text-2xl">close</span>
+          </button>
+          <img id="zoom-modal-img" src="${lightboxImageUrl || ''}" class="max-w-full max-h-[85vh] object-contain rounded-2xl border border-white/20 shadow-2xl" />
+          <div class="mt-3 flex items-center gap-3">
+            <a id="zoom-download-link" href="${lightboxImageUrl || '#'}" target="_blank" download class="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-md">
+              <span class="material-symbols-outlined text-[16px]">download</span>
+              <span>Pobierz zdjęcie w pełnym rozmiarze</span>
+            </a>
+          </div>
+        </div>
+      </div>
     `;
 
     attachEvents();
@@ -1202,6 +1815,39 @@ export function renderOrderImportView(container, navigateTo) {
           navigateTo('dashboard');
         }
       });
+    }
+
+    // Operator switcher dropdown
+    const headerOpSelect = container.querySelector('#header-select-operator');
+    if (headerOpSelect) {
+      headerOpSelect.addEventListener('change', (e) => {
+        const newOp = e.target.value;
+        switchActiveOperator(newOp);
+        currentOperator = getCurrentOperator();
+        isUserAdmin = isAdmin(currentOperator);
+        renderUI();
+      });
+    }
+
+    // Manual sync button
+    const btnSync = container.querySelector('#btn-manual-sync');
+    if (btnSync) {
+      btnSync.addEventListener('click', async () => {
+        const icon = btnSync.querySelector('#sync-icon-spin');
+        if (icon) icon.classList.add('animate-spin');
+        await syncAllData();
+        if (icon) icon.classList.remove('animate-spin');
+      });
+    }
+
+    // Navigation to History / Audit Log
+    const btnNavHist = container.querySelector('#btn-nav-history');
+    if (btnNavHist) {
+      btnNavHist.addEventListener('click', () => navigateTo('history'));
+    }
+    const btnFeedHist = container.querySelector('#btn-feed-to-history');
+    if (btnFeedHist) {
+      btnFeedHist.addEventListener('click', () => navigateTo('history'));
     }
 
     // Navigation to WZ generator
@@ -1339,6 +1985,33 @@ export function renderOrderImportView(container, navigateTo) {
       });
     }
 
+    // Sort By selector
+    const sortSelect = container.querySelector('#orders-sort-select');
+    if (sortSelect) {
+      sortSelect.addEventListener('change', (e) => {
+        currentSortBy = e.target.value;
+        renderUI();
+      });
+    }
+
+    // Overdue filter toggle button
+    const btnOverdue = container.querySelector('#btn-toggle-overdue-filter');
+    if (btnOverdue) {
+      btnOverdue.addEventListener('click', () => {
+        filterOnlyOverdue = !filterOnlyOverdue;
+        renderUI();
+      });
+    }
+
+    // Workshop Issues / Photos filter toggle button
+    const btnIssues = container.querySelector('#btn-toggle-issues-filter');
+    if (btnIssues) {
+      btnIssues.addEventListener('click', () => {
+        filterOnlyIssues = !filterOnlyIssues;
+        renderUI();
+      });
+    }
+
     // Reset filters button
     const btnReset = container.querySelector('#btn-reset-filters');
     if (btnReset) {
@@ -1347,6 +2020,9 @@ export function renderOrderImportView(container, navigateTo) {
         activeYear = '2026';
         activeCustomerFilter = 'ALL';
         activeMonthFilter = 'ALL';
+        currentSortBy = 'DEFAULT';
+        filterOnlyOverdue = false;
+        filterOnlyIssues = false;
         searchQuery = '';
         renderUI();
       });
@@ -1378,16 +2054,37 @@ export function renderOrderImportView(container, navigateTo) {
       const flushInputQty = () => {
         const orderId = input.getAttribute('data-order-id');
         const itemId = input.getAttribute('data-item-id');
-        const orderedQty = parseFloat(input.getAttribute('data-ordered-qty') || 1);
+        const maxVal = parseFloat(input.getAttribute('data-max-qty') || input.getAttribute('data-ordered-qty') || 1);
         let val = parseFloat(input.value) || 0;
         if (val < 0) val = 0;
-        if (val > orderedQty) val = orderedQty;
+        if (val > maxVal) val = maxVal;
         updateItemProducedQty(orderId, itemId, val);
       };
       input.addEventListener('input', flushInputQty);
       input.addEventListener('change', () => {
         flushInputQty();
         renderUI();
+      });
+    });
+
+    // ALL button click (Sets max remaining quantity for this item)
+    container.querySelectorAll('.btn-item-qty-all').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const orderId = btn.getAttribute('data-order-id');
+        const itemId = btn.getAttribute('data-item-id');
+        const maxQty = parseFloat(btn.getAttribute('data-max-qty') || 0);
+        updateItemProducedQty(orderId, itemId, maxQty);
+        renderUI();
+      });
+    });
+
+    // Open historical WZ document
+    container.querySelectorAll('.btn-open-historical-wz').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wzId = btn.getAttribute('data-wz-id');
+        navigateTo('wz', { loadWzId: wzId });
       });
     });
 
@@ -1470,6 +2167,26 @@ export function renderOrderImportView(container, navigateTo) {
       });
     }
 
+    // Direct Print from PDF Modal Header
+    const btnPrintModalPdf = container.querySelector('#btn-print-modal-pdf');
+    if (btnPrintModalPdf) {
+      btnPrintModalPdf.addEventListener('click', () => {
+        if (previewPdfUrl) {
+          const iframe = container.querySelector('#pdf-viewer-modal iframe');
+          if (iframe && iframe.contentWindow) {
+            try {
+              iframe.contentWindow.focus();
+              iframe.contentWindow.print();
+              return;
+            } catch (e) {
+              console.warn('Iframe print fallback to window.open:', e);
+            }
+          }
+          window.open(previewPdfUrl, '_blank');
+        }
+      });
+    }
+
     // Attach PDF input change (Direct file attachment)
     container.querySelectorAll('.input-order-pdf-upload').forEach(input => {
       input.addEventListener('change', (e) => {
@@ -1497,7 +2214,7 @@ export function renderOrderImportView(container, navigateTo) {
           card.querySelectorAll('.input-item-qty').forEach(input => {
             const iOrderId = input.getAttribute('data-order-id');
             const iItemId = input.getAttribute('data-item-id');
-            const maxVal = parseFloat(input.getAttribute('data-ordered-qty') || 1);
+            const maxVal = parseFloat(input.getAttribute('data-max-qty') || input.getAttribute('data-ordered-qty') || 1);
             let val = parseFloat(input.value);
             if (!isNaN(val)) {
               if (val < 0) val = 0;
@@ -1533,20 +2250,38 @@ export function renderOrderImportView(container, navigateTo) {
       });
     });
 
-    // Print barcode labels for order (Code 128 / EC shipping labels)
+    // Print Barcodes: Slices clean original EC Engineering vector pages (1:1 fidelity, no invoice)
     container.querySelectorAll('.btn-print-order-label').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const orderId = btn.getAttribute('data-order-id');
         const all = getSavedOrders();
         const order = all.find(o => o.id === orderId);
         if (order) {
-          printCustomerLabelsHtml(order);
+          const originalContent = btn.innerHTML;
+          btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[16px] text-amber-600">sync</span><span class="hidden sm:inline">Wycinanie stron...</span>`;
+          btn.disabled = true;
+
+          try {
+            await openAndPrintEcBarcodePdf(order, {
+              openModal: (blobUrl, title) => {
+                previewPdfUrl = blobUrl;
+                previewPdfTitle = title;
+                renderUI();
+              }
+            });
+          } catch (err) {
+            console.error('Błąd wycinania kodów EC:', err);
+            alert(`Błąd: ${err.message || err}`);
+          } finally {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+          }
         }
       });
     });
 
-    // Preview technical drawing PDF for an item
+    // Preview technical drawing PDF for an item (Local /orders_pdf/ first, then Odoo attachments)
     container.querySelectorAll('.btn-preview-item-drawing').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -1558,35 +2293,18 @@ export function renderOrderImportView(container, navigateTo) {
         btn.disabled = true;
 
         try {
-          // 1. Search in Odoo attachments
-          let atts = await getProductAttachments(null, null, sku || symbol);
-          if ((!atts || atts.length === 0) && symbol && symbol !== sku) {
-            atts = await getProductAttachments(null, null, symbol);
+          const res = await findItemDrawingPdf(sku, symbol, name);
+          if (res && res.url) {
+            previewPdfUrl = res.url;
+            previewPdfTitle = `Rysunek detalu: ${sku || symbol} (${res.fileName || ''})`;
+            renderUI();
+            return;
           }
 
-          if (atts && atts.length > 0) {
-            const attData = await getAttachmentData(atts[0].id);
-            if (attData && attData.datas) {
-              const byteCharacters = atob(attData.datas);
-              const byteNumbers = new Array(byteCharacters.length);
-              for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-              }
-              const byteArray = new Uint8Array(byteNumbers);
-              const blob = new Blob([byteArray], { type: 'application/pdf' });
-              const blobUrl = URL.createObjectURL(blob);
-
-              previewPdfUrl = blobUrl;
-              previewPdfTitle = `Rysunek detalu: ${sku || symbol} - ${name || atts[0].name}`;
-              renderUI();
-              return;
-            }
-          }
-
-          alert(`ℹ️ Brak podpiętego pliku PDF / rysunku dla detalu "${sku || symbol}" w systemie Odoo.\n\nMożesz wgrać rysunek bezpośrednio w Odoo w Karcie Produktu.`);
+          alert(`ℹ️ Brak podpiętego rysunku technicznego dla detalu "${sku || symbol}" (${name}).\n\nMożesz wgrać rysunek do Odoo lub skopiować do katalogu orders_pdf.`);
         } catch (err) {
           console.error('Błąd otwierania rysunku detalu:', err);
-          alert(`Błąd odczytu rysunku detalu z Odoo: ${err.message || err}`);
+          alert(`Błąd odczytu rysunku: ${err.message || err}`);
         } finally {
           btn.innerHTML = originalContent;
           btn.disabled = false;
@@ -1674,6 +2392,188 @@ export function renderOrderImportView(container, navigateTo) {
         }
       });
     }
+    // === WORKSHOP COMMENTS & PHOTO ISSUES LISTENERS ===
+
+    // Open Issue / Comment Form
+    container.querySelectorAll('.btn-open-issue-form').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const orderId = btn.getAttribute('data-order-id');
+        const allOrders = getSavedOrders();
+        activeCommentOrder = allOrders.find(o => o.id === orderId) || null;
+        activeCommentSku = '';
+        selectedCommentPhotoFile = null;
+        selectedCommentPhotoPreview = null;
+        showAddCommentModal = true;
+        renderUI();
+      });
+    });
+
+    // Close Comment Modal
+    const closeCommentBtn = container.querySelector('#close-comment-modal');
+    if (closeCommentBtn) {
+      closeCommentBtn.addEventListener('click', () => {
+        showAddCommentModal = false;
+        renderUI();
+      });
+    }
+
+    const cancelIssueBtn = container.querySelector('#btn-cancel-issue');
+    if (cancelIssueBtn) {
+      cancelIssueBtn.addEventListener('click', () => {
+        showAddCommentModal = false;
+        renderUI();
+      });
+    }
+
+    // Photo input change (Camera / File)
+    const issuePhotoInput = container.querySelector('#input-issue-photo');
+    if (issuePhotoInput) {
+      issuePhotoInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          selectedCommentPhotoFile = file;
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            selectedCommentPhotoPreview = evt.target.result;
+            const previewContainer = container.querySelector('#issue-photo-preview-container');
+            const previewImg = container.querySelector('#issue-photo-preview-img');
+            const photoName = container.querySelector('#issue-photo-name');
+            if (previewContainer && previewImg) {
+              previewImg.src = selectedCommentPhotoPreview;
+              if (photoName) photoName.textContent = file.name;
+              previewContainer.classList.remove('hidden');
+              previewContainer.classList.add('flex');
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // Remove selected photo
+    const btnRemovePhoto = container.querySelector('#btn-remove-photo');
+    if (btnRemovePhoto) {
+      btnRemovePhoto.addEventListener('click', () => {
+        selectedCommentPhotoFile = null;
+        selectedCommentPhotoPreview = null;
+        const previewContainer = container.querySelector('#issue-photo-preview-container');
+        if (previewContainer) {
+          previewContainer.classList.add('hidden');
+          previewContainer.classList.remove('flex');
+        }
+        if (issuePhotoInput) issuePhotoInput.value = '';
+      });
+    }
+
+    // Submit Issue / Comment
+    const formSubmitIssue = container.querySelector('#form-submit-issue');
+    if (formSubmitIssue) {
+      formSubmitIssue.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const operatorEl = container.querySelector('#issue-operator');
+        const typeEl = container.querySelector('#issue-type');
+        const skuEl = container.querySelector('#issue-sku');
+        const textEl = container.querySelector('#issue-text');
+        const submitBtn = container.querySelector('#btn-submit-issue-action');
+
+        const operatorVal = operatorEl ? operatorEl.value : 'Mateusz';
+        const typeVal = typeEl ? typeEl.value : 'PROBLEM';
+        const skuVal = skuEl ? skuEl.value : '';
+        const textVal = textEl ? textEl.value.trim() : '';
+
+        if (!textVal && !selectedCommentPhotoFile) {
+          alert('Wprowadź treść zgłoszenia lub załącz zdjęcie!');
+          return;
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[16px]">sync</span><span>Wysyłanie...</span>`;
+        }
+
+        const res = await submitComment({
+          orderId: activeCommentOrder?.id,
+          orderRef: activeCommentOrder?.orderRef || activeCommentOrder?.odooOrderName || '',
+          sku: skuVal,
+          operator: operatorVal,
+          text: textVal,
+          photoFile: selectedCommentPhotoFile,
+          type: typeVal
+        });
+
+        if (res.success) {
+          showAddCommentModal = false;
+          selectedCommentPhotoFile = null;
+          selectedCommentPhotoPreview = null;
+          orderComments = await fetchComments();
+          renderUI();
+        } else {
+          alert('Błąd podczas zapisywania zgłoszenia: ' + (res.error || 'Nieznany błąd'));
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<span class="material-symbols-outlined text-[16px]">send</span><span>WYŚLIJ ZGŁOSZENIE (ZAPISZ)</span>`;
+          }
+        }
+      });
+    }
+
+    // Toggle Resolve issue
+    container.querySelectorAll('.btn-toggle-resolve-issue').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const issueId = btn.getAttribute('data-issue-id');
+        btn.disabled = true;
+        btn.textContent = 'Zapisywanie...';
+        await toggleResolveComment(issueId, currentOperator?.name || 'Admin');
+        orderComments = await fetchComments();
+        renderUI();
+      });
+    });
+
+    // Delete issue
+    container.querySelectorAll('.btn-delete-issue').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const issueId = btn.getAttribute('data-issue-id');
+        if (confirm('Czy na pewno chcesz usunąć to zgłoszenie?')) {
+          await deleteComment(issueId);
+          orderComments = await fetchComments();
+          renderUI();
+        }
+      });
+    });
+
+    // Open Lightbox Image
+    container.querySelectorAll('.btn-open-lightbox').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const imgUrl = el.getAttribute('data-img-url');
+        lightboxImageUrl = imgUrl;
+        const modal = container.querySelector('#image-zoom-modal');
+        const modalImg = container.querySelector('#zoom-modal-img');
+        const downloadLink = container.querySelector('#zoom-download-link');
+        if (modal && modalImg) {
+          modalImg.src = imgUrl;
+          if (downloadLink) downloadLink.href = imgUrl;
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+        }
+      });
+    });
+
+    const closeZoomBtn = container.querySelector('#close-zoom-modal');
+    if (closeZoomBtn) {
+      closeZoomBtn.addEventListener('click', () => {
+        const modal = container.querySelector('#image-zoom-modal');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        }
+        lightboxImageUrl = null;
+      });
+    }
+
     // Restore focus and cursor position in search bar after re-render
     if (isSearchingFocus) {
       const freshSearchInput = container.querySelector('#orders-search-input');

@@ -8186,29 +8186,131 @@ export const INITIAL_ORDERS_2026 = [
   }
 ];
 
+const MIGRATION_JUNE_2026_KEY = 'bluemake_migration_june_2026_done_v2';
+
+export function markOrdersUpToJuneAsCompleted(orders) {
+  let changed = false;
+  if (!Array.isArray(orders)) return false;
+  orders.forEach(o => {
+    const d = o.orderDate || o.deliveryDate || '';
+    const yr = getOrderYear(o);
+    // If year 2025 or year 2026 up to June 30
+    const isUpToJune = yr === '2025' || (d && d <= '2026-06-30') || (d && d.startsWith('2026-0') && parseInt(d.substring(5, 7), 10) <= 6);
+    if (isUpToJune && o.productionStatus !== 'PRODUCED' && o.productionStatus !== 'ARCHIVED') {
+      o.productionStatus = 'PRODUCED';
+      (o.items || []).forEach(it => {
+        it.productionStatus = 'PRODUCED';
+        it.producedQty = it.orderedQty;
+      });
+      changed = true;
+    }
+  });
+  return changed;
+}
+
 export function getSavedOrders() {
   try {
     const raw = localStorage.getItem(ORDERS_STORAGE_KEY);
+    let orders;
     if (!raw) {
-      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(INITIAL_ORDERS_2026));
-      return INITIAL_ORDERS_2026;
+      orders = JSON.parse(JSON.stringify(INITIAL_ORDERS_2026));
+      markOrdersUpToJuneAsCompleted(orders);
+      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+      localStorage.setItem(MIGRATION_JUNE_2026_KEY, 'true');
+      return orders;
     }
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length < INITIAL_ORDERS_2026.length) {
       console.log('Upgrading orders storage to full combined database (' + INITIAL_ORDERS_2026.length + ' orders)...');
-      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(INITIAL_ORDERS_2026));
-      return INITIAL_ORDERS_2026;
+      orders = JSON.parse(JSON.stringify(INITIAL_ORDERS_2026));
+      markOrdersUpToJuneAsCompleted(orders);
+      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+      localStorage.setItem(MIGRATION_JUNE_2026_KEY, 'true');
+      return orders;
     }
-    return parsed;
+    orders = parsed;
+
+    // Run migration once if not yet applied
+    if (!localStorage.getItem(MIGRATION_JUNE_2026_KEY)) {
+      const changed = markOrdersUpToJuneAsCompleted(orders);
+      if (changed) {
+        localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+      }
+      localStorage.setItem(MIGRATION_JUNE_2026_KEY, 'true');
+    }
+
+    return orders;
   } catch (e) {
     console.error('Błąd odczytu zleceń z localStorage:', e);
     return INITIAL_ORDERS_2026;
   }
 }
 
+let syncInProgress = false;
+
+export async function pushOrdersToServer(orders) {
+  try {
+    const res = await fetch('/api/sync/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orders })
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn('Błąd wysyłania zleceń na centralny serwer:', e);
+    return false;
+  }
+}
+
+export async function fetchServerOrders(force = false) {
+  if (syncInProgress && !force) return getSavedOrders();
+  syncInProgress = true;
+  try {
+    const res = await fetch('/api/sync/orders');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.orders) && data.orders.length > 0) {
+        const serverOrders = data.orders;
+        const localOrders = getSavedOrders();
+        const serverStr = JSON.stringify(serverOrders);
+        const localStr = JSON.stringify(localOrders);
+
+        if (serverStr !== localStr) {
+          localStorage.setItem(ORDERS_STORAGE_KEY, serverStr);
+          window.dispatchEvent(new CustomEvent('bluemake_orders_synced', {
+            detail: { orders: serverOrders, source: 'server' }
+          }));
+        }
+        return serverOrders;
+      } else {
+        // Server empty: push local orders to seed server DB
+        const localOrders = getSavedOrders();
+        if (localOrders && localOrders.length > 0) {
+          await pushOrdersToServer(localOrders);
+        }
+        return localOrders;
+      }
+    }
+  } catch (e) {
+    console.warn('Błąd pobierania zleceń z centralnego serwera:', e);
+  } finally {
+    syncInProgress = false;
+  }
+  return getSavedOrders();
+}
+
+// Background auto sync on module load
+setTimeout(() => {
+  fetchServerOrders().catch(() => {});
+}, 800);
+
 export function saveOrders(orders) {
   try {
     localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+    pushOrdersToServer(orders).catch(() => {});
+    window.dispatchEvent(new CustomEvent('bluemake_orders_synced', {
+      detail: { orders, source: 'local' }
+    }));
   } catch (e) {
     console.error('Błąd zapisu zleceń do localStorage:', e);
   }
@@ -8312,6 +8414,7 @@ export function updateItemProducedQty(orderId, itemId, qty) {
   saveOrders(orders);
   logAuditAction('ZMIANA_ILOSCI_WYPRODUKOWANEJ', {
     orderId,
+    numer: order.orderRef || order.odooOrderName || orderId,
     itemId,
     symbol: item.symbol,
     producedQty: item.producedQty,
@@ -8356,6 +8459,7 @@ export function setItemProductionStatus(orderId, itemId, newStatus) {
   saveOrders(orders);
   logAuditAction('ZMIANA_STATUSU_POZYCJI', {
     orderId,
+    numer: order.orderRef || order.odooOrderName || orderId,
     itemId,
     symbol: item.symbol,
     oldStatus,

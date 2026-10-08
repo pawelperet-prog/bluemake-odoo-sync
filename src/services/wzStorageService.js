@@ -257,6 +257,77 @@ export function isCustomerEc(customerOrName) {
   return clean.includes('ec engineering') || clean === 'ec' || clean.startsWith('ec-') || clean.includes('ec_eng');
 }
 
+let wzSyncInProgress = false;
+
+export async function pushWzToServer(documents) {
+  try {
+    const res = await fetch('/api/sync/wz', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ documents })
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn('Błąd wysyłania dokumentów WZ na centralny serwer:', e);
+    return false;
+  }
+}
+
+export async function fetchServerWzDocuments(force = false) {
+  if (wzSyncInProgress && !force) return getWzHistory();
+  wzSyncInProgress = true;
+  try {
+    const res = await fetch('/api/sync/wz');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.documents) && data.documents.length > 0) {
+        const localDocs = getWzHistory();
+        const map = new Map();
+        localDocs.forEach(d => { if (d && d.id) map.set(d.id, d); });
+        data.documents.forEach(d => {
+          if (d && d.id) {
+            const existing = map.get(d.id);
+            if (!existing || new Date(d.savedAt || 0) >= new Date(existing.savedAt || 0)) {
+              map.set(d.id, d);
+            }
+          }
+        });
+        const merged = Array.from(map.values()).sort((a, b) => {
+          return new Date(b.savedAt || b.issueDate || 0) - new Date(a.savedAt || a.issueDate || 0);
+        });
+
+        const mergedStr = JSON.stringify(merged);
+        const curStr = JSON.stringify(localDocs);
+        if (mergedStr !== curStr) {
+          localStorage.setItem(STORAGE_KEY_WZ_HISTORY, mergedStr);
+          window.dispatchEvent(new CustomEvent('bluemake_wz_synced', { detail: { documents: merged, source: 'server' } }));
+        }
+
+        if (merged.length > data.documents.length) {
+          pushWzToServer(merged).catch(() => {});
+        }
+        return merged;
+      } else {
+        const localDocs = getWzHistory();
+        if (localDocs && localDocs.length > 0) {
+          await pushWzToServer(localDocs);
+        }
+        return localDocs;
+      }
+    }
+  } catch (e) {
+    console.warn('Błąd pobierania dokumentów WZ z centralnego serwera:', e);
+  } finally {
+    wzSyncInProgress = false;
+  }
+  return getWzHistory();
+}
+
+// Background auto sync on module load
+setTimeout(() => {
+  fetchServerWzDocuments().catch(() => {});
+}, 900);
+
 export function getWzHistory() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY_WZ_HISTORY);
@@ -307,6 +378,8 @@ export function saveWzDocument(wzDoc, operatorName = null) {
     history.unshift(docWithMeta);
   }
   localStorage.setItem(STORAGE_KEY_WZ_HISTORY, JSON.stringify(history));
+  pushWzToServer(history).catch(() => {});
+  window.dispatchEvent(new CustomEvent('bluemake_wz_synced', { detail: { documents: history, source: 'local' } }));
 
   const itemsCount = Array.isArray(wzDoc.items) ? wzDoc.items.length : 0;
   const actionTitle = isDraft 
@@ -335,6 +408,8 @@ export function deleteWzDocument(wzId, operatorName = null) {
   const isDraft = doc?.status === 'DRAFT' || doc?.isDraft === true;
   const updated = history.filter(w => w.id !== wzId);
   localStorage.setItem(STORAGE_KEY_WZ_HISTORY, JSON.stringify(updated));
+  pushWzToServer(updated).catch(() => {});
+  window.dispatchEvent(new CustomEvent('bluemake_wz_synced', { detail: { documents: updated, source: 'local' } }));
 
   // If was issued, sync the order back
   if (doc && !isDraft && (doc.orderNumber || doc.orderId)) {
@@ -560,26 +635,19 @@ export function getOrderWzShipmentSummary(order, wzHistory = null) {
 export function prepareOrderItemsForWz(order, wzHistory = null) {
   const summary = getOrderWzShipmentSummary(order, wzHistory);
 
-  // Check if any items have recorded production (producedQty > 0 or status PRODUCED)
-  const hasProducedItems = (order.items || []).some(it => 
-    (it.producedQty !== undefined && Number(it.producedQty) > 0) || it.productionStatus === 'PRODUCED'
-  );
+  // Check if operator entered any specific produced quantities for this shipment (producedQty > 0)
+  const itemsWithActiveProducedQty = summary.itemsSummary.filter(entry => {
+    const prod = entry.item.producedQty !== undefined ? parseFloat(entry.item.producedQty) : 0;
+    return prod > 0 && entry.remainingQty > 0;
+  });
 
   let sourceEntries;
-  if (hasProducedItems) {
-    // If the operator marked specific quantities as produced (e.g. 5 szt.):
-    // ONLY take items that have producedQty > 0 or are PRODUCED!
-    sourceEntries = summary.itemsSummary.filter(entry => {
-      const it = entry.item;
-      const prod = it.producedQty !== undefined ? parseFloat(it.producedQty) : 0;
-      return (prod > 0 || it.productionStatus === 'PRODUCED') && entry.remainingQty > 0;
-    });
-    // If all produced items happen to be fully shipped already, fallback to remaining
-    if (sourceEntries.length === 0) {
-      sourceEntries = summary.itemsSummary.filter(entry => entry.remainingQty > 0);
-    }
+  if (itemsWithActiveProducedQty.length > 0) {
+    // If the operator typed specific quantities (e.g. 5 of item A, 10 of item B):
+    // ONLY take those specific items! Do NOT take untouched items where producedQty is 0!
+    sourceEntries = itemsWithActiveProducedQty;
   } else {
-    // If no items were specifically marked produced, include all remaining unfulfilled items
+    // If no specific quantities were typed, propose all items that still have unfulfilled remaining quantity:
     sourceEntries = summary.itemsSummary.filter(entry => entry.remainingQty > 0);
   }
 
@@ -593,7 +661,7 @@ export function prepareOrderItemsForWz(order, wzHistory = null) {
     const producedQty = it.producedQty !== undefined ? parseFloat(it.producedQty) : 0;
     
     // Propose quantity:
-    // If user entered producedQty (e.g. 5 szt.), use EXACTLY that produced quantity!
+    // If operator entered producedQty > 0 (e.g. 5 szt.), use EXACTLY that produced quantity!
     let proposedQty = entry.remainingQty;
     if (producedQty > 0) {
       proposedQty = Math.min(producedQty, entry.remainingQty > 0 ? entry.remainingQty : producedQty);
@@ -650,18 +718,29 @@ export function syncOrderFromWzHistory(orderRefOrId) {
     const order = orders[orderIdx];
     const summary = getOrderWzShipmentSummary(order);
 
-    // Update shippedQty on order items
+    // Update shippedQty and remainingQty on order items, and reset producedQty to 0
     order.items = (order.items || []).map(orderItem => {
       const match = summary.itemsSummary.find(s => s.orderItemId === orderItem.id);
       if (match) {
         return {
           ...orderItem,
           shippedQty: match.shippedQty,
-          remainingQty: match.remainingQty
+          remainingQty: match.remainingQty,
+          // CRITICAL: Reset producedQty to 0! All produced quantities have now left on the issued WZ!
+          producedQty: 0,
+          productionStatus: match.remainingQty === 0 ? 'PRODUCED' : (match.shippedQty > 0 ? 'PARTIALLY_PRODUCED' : 'IN_PRODUCTION')
         };
       }
       return orderItem;
     });
+
+    if (summary.isAllShipped) {
+      order.productionStatus = 'PRODUCED';
+      order.isArchived = true;
+      order.archivedAt = new Date().toISOString();
+    } else if (summary.totalShipped > 0) {
+      order.productionStatus = 'PARTIALLY_PRODUCED';
+    }
 
     order.wzSummary = {
       wzCount: summary.relatedWzs.length,
@@ -672,6 +751,16 @@ export function syncOrderFromWzHistory(orderRefOrId) {
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+
+    // Clear stale draft caches so the next WZ will start completely fresh
+    try {
+      localStorage.removeItem('bluemake_wz_active_draft');
+      sessionStorage.removeItem('bluemake_wz_prefill');
+      if (typeof window !== 'undefined') {
+        window.__ACTIVE_WZ_ORDER_PARAMS = null;
+      }
+    } catch (e) {}
+
     return order;
   } catch (e) {
     console.error('Error syncing order from WZ history:', e);

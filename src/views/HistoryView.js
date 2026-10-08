@@ -1,6 +1,6 @@
 import { checkApiStatus, getHistory, syncPendingItems } from '../services/odooApi.js';
 import { openSettingsModal } from './SettingsModal.js';
-import { getCurrentOperator, logoutOperator, getAuditLogs, clearAuditLogs, isAdmin } from '../services/authService.js';
+import { getCurrentOperator, logoutOperator, getAuditLogs, fetchServerAuditLogs, clearAuditLogs, isAdmin } from '../services/authService.js';
 import { openOperatorModal } from './OperatorModal.js';
 
 export function renderHistoryView(container, navigateTo) {
@@ -437,6 +437,16 @@ export function renderHistoryView(container, navigateTo) {
                 
                 <div class="text-xs text-on-surface-variant mt-1 leading-relaxed break-words font-body-md">${item.details}</div>
                 
+                ${item.metadata?.photoUrl ? `
+                  <div class="mt-2 flex items-center gap-2">
+                    <a href="${item.metadata.photoUrl}" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold hover:bg-amber-500/30 transition-all cursor-pointer">
+                      <span class="material-symbols-outlined text-[16px]">photo_camera</span>
+                      <span>Podgląd zdjęcia z warsztatu</span>
+                    </a>
+                    <img src="${item.metadata.photoUrl}" alt="Foto" class="h-10 w-10 object-cover rounded-md border border-outline-variant cursor-pointer hover:scale-110 transition-transform shadow-xs" onclick="window.open('${item.metadata.photoUrl}', '_blank')" />
+                  </div>
+                ` : ''}
+                
                 <div class="flex items-center gap-2 mt-1.5 text-xs text-gray-400 flex-wrap">
                   <span class="font-mono text-[11px] text-primary/80">${item.dateFormatted || 'Niedawno'}</span>
                   ${relTime ? `<span class="text-[10px] text-gray-500 font-mono">(${relTime})</span>` : ''}
@@ -655,6 +665,7 @@ export function renderHistoryView(container, navigateTo) {
     syncBtn.disabled = true;
     syncBtn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[16px]">sync</span><span>SYNCHRONIZOWANIE...</span>`;
     await syncPendingItems();
+    await fetchServerAuditLogs();
     await updateApiStatus();
     renderHistoryItems();
     syncBtn.disabled = false;
@@ -677,4 +688,5 @@ export function renderHistoryView(container, navigateTo) {
 
   updateApiStatus();
   renderHistoryItems();
+  fetchServerAuditLogs().then(() => renderHistoryItems()).catch(() => {});
 }

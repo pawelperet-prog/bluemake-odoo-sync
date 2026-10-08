@@ -1,10 +1,404 @@
+import { PDFDocument } from 'pdf-lib';
+import * as pdfjsLib from 'pdfjs-dist';
 import { sendZplViaMqtt } from '../services/mqttService.js';
 
-/**
- * Generate Printable Logistics Barcode Label for Customer Orders (Matching Page 3 of EC Engineering PO)
- * Supports Zebra Thermal Printer (ZPL via MQTT/ESP32) and Browser Printable HTML (50x30mm or 100x70mm)
- */
+// Configure PDF.js worker
+if (typeof window !== 'undefined' && pdfjsLib && pdfjsLib.GlobalWorkerOptions) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
 
+let cachedOrdersManifest = null;
+
+/**
+ * Fetch list of order PDFs available in public /orders_pdf/
+ */
+export async function getOrdersManifest() {
+  if (cachedOrdersManifest && cachedOrdersManifest.length > 0) {
+    return cachedOrdersManifest;
+  }
+  try {
+    const res = await fetch('/orders_pdf/orders_manifest.json');
+    if (res.ok) {
+      cachedOrdersManifest = await res.json();
+      return cachedOrdersManifest;
+    }
+  } catch (err) {
+    console.warn('Nie udało się pobrać orders_manifest.json:', err);
+  }
+  return [];
+}
+
+/**
+ * Resolve PDF URL for a given order object
+ */
+export async function resolveOrderPdfUrl(order) {
+  if (!order) return null;
+  if (order.pdfUrl && typeof order.pdfUrl === 'string' && order.pdfUrl.trim() !== '') {
+    return order.pdfUrl.startsWith('/') || order.pdfUrl.startsWith('http') 
+      ? order.pdfUrl 
+      : `/orders_pdf/${order.pdfUrl}`;
+  }
+
+  const ref = (order.orderRef || order.odooOrderName || '').trim();
+  if (!ref) return null;
+
+  const clean = ref.replace(/[\/\s]/g, '-');
+  const cleanNoSuffix = clean.replace(/-(EC|ZN)$/i, '');
+
+  const manifest = await getOrdersManifest();
+  if (manifest && manifest.length > 0) {
+    const exact = manifest.find(f => f.toLowerCase() === `${clean.toLowerCase()}.pdf`);
+    if (exact) return `/orders_pdf/${encodeURIComponent(exact)}`;
+
+    const noSuff = manifest.find(f => f.toLowerCase() === `${cleanNoSuffix.toLowerCase()}.pdf`);
+    if (noSuff) return `/orders_pdf/${encodeURIComponent(noSuff)}`;
+
+    const sub = manifest.find(f => f.toLowerCase().includes(cleanNoSuffix.toLowerCase()));
+    if (sub) return `/orders_pdf/${encodeURIComponent(sub)}`;
+  }
+
+  return `/orders_pdf/${cleanNoSuffix}.pdf`;
+}
+
+/**
+ * Slices specific pages from a PDF buffer by 0-based indices.
+ * 100% Vector fidelity, no re-encoding of graphics or text.
+ */
+export async function slicePdfByPageIndices(rawArrayBuffer, pageIndices) {
+  if (!rawArrayBuffer || pageIndices.length === 0) {
+    throw new Error('Brak danych PDF lub nie wybrano żadnych stron.');
+  }
+
+  // Clone buffer to avoid any detachment issues
+  const bufferCopy = rawArrayBuffer.slice(0);
+  const srcDoc = await PDFDocument.load(bufferCopy);
+  const outDoc = await PDFDocument.create();
+
+  const validIndices = pageIndices.filter(idx => idx >= 0 && idx < srcDoc.getPageCount());
+  if (validIndices.length === 0) {
+    throw new Error('Wybrane numery stron wykraczają poza zakres dokumentu.');
+  }
+
+  const copiedPages = await outDoc.copyPages(srcDoc, validIndices);
+  copiedPages.forEach(p => outDoc.addPage(p));
+
+  const slicedBytes = await outDoc.save();
+  const blob = new Blob([slicedBytes], { type: 'application/pdf' });
+  const blobUrl = URL.createObjectURL(blob);
+
+  return {
+    blobUrl,
+    blob,
+    bytes: slicedBytes,
+    pageCount: validIndices.length,
+    pageNumbers: validIndices.map(i => i + 1)
+  };
+}
+
+/**
+ * Slices ONLY the original barcode pages from an EC Engineering Purchase Order PDF (1:1 Vector Fidelity)
+ * Fixes ArrayBuffer detachment by cleanly cloning buffers before worker execution.
+ */
+export async function sliceOriginalEcBarcodePdf(orderOrPdfUrl, onProgress = null) {
+  let pdfUrl = null;
+  let orderRef = '';
+
+  if (typeof orderOrPdfUrl === 'string') {
+    pdfUrl = orderOrPdfUrl;
+  } else if (orderOrPdfUrl && typeof orderOrPdfUrl === 'object') {
+    orderRef = orderOrPdfUrl.orderRef || orderOrPdfUrl.odooOrderName || '';
+    pdfUrl = await resolveOrderPdfUrl(orderOrPdfUrl);
+  }
+
+  if (!pdfUrl) {
+    throw new Error('Nie znaleziono pliku PDF powiązanego z tym zamówieniem.');
+  }
+
+  if (onProgress) onProgress('Pobieranie oryginalnego pliku PDF...');
+
+  const resp = await fetch(pdfUrl);
+  if (!resp.ok) {
+    throw new Error(`Nie udało się otworzyć pliku PDF zamówienia (${resp.status} ${resp.statusText})`);
+  }
+
+  const rawBytes = await resp.arrayBuffer();
+
+  // CLONE BUFFERS: PDF.js worker transfers and detaches buffers, so we must give it a separate copy!
+  const pdfJsBuffer = rawBytes.slice(0);
+  const pdfLibBuffer = rawBytes.slice(0);
+
+  if (onProgress) onProgress('Analiza stron dokumentu...');
+
+  const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfJsBuffer) });
+  const pdfDoc = await loadingTask.promise;
+  const numPages = pdfDoc.numPages;
+
+  const barcodePageIndices = [];
+
+  for (let i = 1; i <= numPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const textContent = await page.getTextContent();
+    const text = textContent.items.map(it => it.str).join(' ');
+
+    const hasPriceOrVat = text.includes('23%') || 
+                          text.includes('VAT') || 
+                          text.includes('Cena') || 
+                          text.includes('Wartość') || 
+                          text.includes('Zamówienie na zakup') || 
+                          text.includes('Upoważniamy') ||
+                          text.includes('Warunki płatności') ||
+                          text.includes('Warunki dostawy');
+
+    const hasBarcodeMarkers = (text.includes('BLUEMAKE') || text.includes('szt') || text.includes('Szt') || text.includes('SZT')) &&
+                              (text.includes('ZZ-') || text.includes('/EC') || text.includes('/ZN') || /\d{2}\.\d{2}\.\d{4}/.test(text));
+
+    const isLegalFooterPage = text.includes('Sąd Rejonowy') && !text.includes('BLUEMAKE');
+
+    if (!hasPriceOrVat && hasBarcodeMarkers && !isLegalFooterPage) {
+      barcodePageIndices.push(i - 1);
+    }
+  }
+
+  if (barcodePageIndices.length === 0) {
+    return {
+      success: false,
+      reason: 'no_barcode_pages',
+      pdfUrl,
+      rawBytes: pdfLibBuffer,
+      numPages,
+      orderRef
+    };
+  }
+
+  if (onProgress) onProgress(`Wycinanie ${barcodePageIndices.length} stron kodów 1:1...`);
+
+  const sliceRes = await slicePdfByPageIndices(pdfLibBuffer, barcodePageIndices);
+
+  return {
+    success: true,
+    blobUrl: sliceRes.blobUrl,
+    blob: sliceRes.blob,
+    bytes: sliceRes.bytes,
+    pageNumbers: sliceRes.pageNumbers,
+    pageCount: sliceRes.pageCount,
+    totalPages: numPages,
+    pdfUrl,
+    rawBytes: pdfLibBuffer,
+    orderRef
+  };
+}
+
+/**
+ * Interactive Modal allowing operator to choose which pages of the PDF to print.
+ * Pre-selects barcode pages by default, lets user check/uncheck any pages.
+ */
+export async function openPdfPageSelectorModal(order, { openPreviewModal = null, onStatusChange = null } = {}) {
+  try {
+    if (onStatusChange) onStatusChange('Ładowanie dokumentu PDF...');
+
+    let pdfUrl = await resolveOrderPdfUrl(order);
+    if (!pdfUrl) {
+      alert(`Brak pliku PDF dla zlecenia ${order.orderRef || order.odooOrderName || ''}`);
+      return;
+    }
+
+    const resp = await fetch(pdfUrl);
+    if (!resp.ok) {
+      throw new Error(`Nie udało się pobrać pliku PDF: status ${resp.status}`);
+    }
+
+    const rawBytes = await resp.arrayBuffer();
+    const pdfJsBuffer = rawBytes.slice(0);
+    const pdfLibBuffer = rawBytes.slice(0);
+
+    const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfJsBuffer) });
+    const pdfDoc = await loadingTask.promise;
+    const numPages = pdfDoc.numPages;
+
+    const pageMeta = [];
+    const barcodeIndices = [];
+
+    for (let i = 1; i <= numPages; i++) {
+      const page = await pdfDoc.getPage(i);
+      const textContent = await page.getTextContent();
+      const text = textContent.items.map(it => it.str).join(' ');
+
+      const hasPriceOrVat = text.includes('23%') || 
+                            text.includes('VAT') || 
+                            text.includes('Cena') || 
+                            text.includes('Wartość') || 
+                            text.includes('Zamówienie na zakup') || 
+                            text.includes('Upoważniamy') ||
+                            text.includes('Warunki płatności') ||
+                            text.includes('Warunki dostawy');
+
+      const hasBarcodeMarkers = (text.includes('BLUEMAKE') || text.includes('szt') || text.includes('Szt') || text.includes('SZT')) &&
+                                (text.includes('ZZ-') || text.includes('/EC') || text.includes('/ZN') || /\d{2}\.\d{2}\.\d{4}/.test(text));
+
+      const isLegal = text.includes('Sąd Rejonowy') && !text.includes('BLUEMAKE');
+      const isBarcode = !hasPriceOrVat && hasBarcodeMarkers && !isLegal;
+
+      if (isBarcode) barcodeIndices.push(i - 1);
+
+      pageMeta.push({
+        pageIndex: i - 1,
+        pageNumber: i,
+        isBarcode,
+        snippet: text.trim().substring(0, 45)
+      });
+    }
+
+    // Remove existing modal if any
+    const existing = document.getElementById('pdf-page-selector-modal');
+    if (existing) existing.remove();
+
+    const orderRef = order.orderRef || order.odooOrderName || 'Zamówienie';
+
+    // Build modal markup
+    const modalHtml = `
+      <div id="pdf-page-selector-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-3 animate-fadeIn">
+        <div class="bg-slate-900 text-slate-100 border border-slate-700 rounded-2xl max-w-lg w-full p-5 shadow-2xl flex flex-col gap-4">
+          
+          <!-- Header -->
+          <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <span class="material-symbols-outlined text-amber-500">print</span>
+                Drukuj strony z PDF zamówienia
+              </h3>
+              <p class="text-xs text-slate-400 font-mono mt-0.5">${orderRef} (Łącznie ${numPages} str.)</p>
+            </div>
+            <button id="close-page-selector-modal" class="text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <!-- Quick presets -->
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            ${barcodeIndices.length > 0 ? `
+              <button type="button" id="btn-select-only-barcodes" class="px-3 py-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded-xl font-bold hover:bg-amber-500/30 cursor-pointer flex items-center gap-1 active:scale-95">
+                <span class="material-symbols-outlined text-[15px]">barcode</span>
+                <span>Tylko Kody Kreskowe (${barcodeIndices.length} str.)</span>
+              </button>
+            ` : ''}
+            <button type="button" id="btn-select-all-pages" class="px-2.5 py-1.5 bg-slate-800 text-slate-300 border border-slate-700 rounded-xl font-semibold hover:bg-slate-700 cursor-pointer">
+              Wszystkie
+            </button>
+            <button type="button" id="btn-clear-pages" class="px-2.5 py-1.5 bg-slate-800 text-slate-300 border border-slate-700 rounded-xl font-semibold hover:bg-slate-700 cursor-pointer">
+              Odznacz
+            </button>
+          </div>
+
+          <p class="text-[11px] text-slate-400">
+            Zaznacz strony, które chcesz wydrukować. Dokument zostanie ucięty 1:1 bez modyfikacji i bez cen:
+          </p>
+
+          <!-- Checkboxes Grid -->
+          <div class="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto p-1 border border-slate-800 rounded-xl bg-slate-950/40">
+            ${pageMeta.map(p => `
+              <label class="flex items-center justify-between p-2 rounded-lg border ${p.isBarcode ? 'border-amber-500/40 bg-amber-950/20' : 'border-slate-800 bg-slate-900/60'} hover:bg-slate-800/80 cursor-pointer transition-colors text-xs">
+                <div class="flex items-center gap-2">
+                  <input type="checkbox" value="${p.pageIndex}" class="page-select-checkbox rounded text-amber-500 w-4 h-4 cursor-pointer" ${p.isBarcode || (barcodeIndices.length === 0 && p.pageNumber === 1) ? 'checked' : ''} />
+                  <span class="font-bold text-white">Strona ${p.pageNumber}</span>
+                </div>
+                ${p.isBarcode ? `
+                  <span class="text-[9px] bg-amber-500/30 text-amber-300 border border-amber-500/50 px-1.5 py-0.5 rounded font-mono font-bold">KODY EC</span>
+                ` : `
+                  <span class="text-[9px] text-slate-500 font-mono">DOK</span>
+                `}
+              </label>
+            `).join('')}
+          </div>
+
+          <!-- Footer Actions -->
+          <div class="flex justify-between items-center border-t border-slate-800 pt-3 gap-2">
+            <button type="button" id="btn-cancel-page-selector" class="px-4 py-2 text-xs text-slate-400 hover:text-white rounded-lg cursor-pointer">
+              Anuluj
+            </button>
+            <button type="button" id="btn-execute-print-pages" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer transition-all">
+              <span class="material-symbols-outlined text-[18px]">print</span>
+              <span>DRUKUJ WYBRANE STRONY (1:1)</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modalEl = document.getElementById('pdf-page-selector-modal');
+
+    const closeModal = () => modalEl.remove();
+
+    modalEl.querySelector('#close-page-selector-modal')?.addEventListener('click', closeModal);
+    modalEl.querySelector('#btn-cancel-page-selector')?.addEventListener('click', closeModal);
+
+    modalEl.querySelector('#btn-select-only-barcodes')?.addEventListener('click', () => {
+      modalEl.querySelectorAll('.page-select-checkbox').forEach(cb => {
+        const idx = parseInt(cb.value, 10);
+        cb.checked = barcodeIndices.includes(idx);
+      });
+    });
+
+    modalEl.querySelector('#btn-select-all-pages')?.addEventListener('click', () => {
+      modalEl.querySelectorAll('.page-select-checkbox').forEach(cb => cb.checked = true);
+    });
+
+    modalEl.querySelector('#btn-clear-pages')?.addEventListener('click', () => {
+      modalEl.querySelectorAll('.page-select-checkbox').forEach(cb => cb.checked = false);
+    });
+
+    modalEl.querySelector('#btn-execute-print-pages')?.addEventListener('click', async () => {
+      const selected = Array.from(modalEl.querySelectorAll('.page-select-checkbox:checked')).map(cb => parseInt(cb.value, 10));
+
+      if (selected.length === 0) {
+        alert('Proszę zaznaczyć przynajmniej jedną stronę do wydruku.');
+        return;
+      }
+
+      const btn = modalEl.querySelector('#btn-execute-print-pages');
+      btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[18px]">sync</span><span>Wycinanie stron...</span>`;
+      btn.disabled = true;
+
+      try {
+        const sliceRes = await slicePdfByPageIndices(pdfLibBuffer, selected);
+        closeModal();
+
+        const title = `Czysty PDF (${selected.length} str: ${sliceRes.pageNumbers.join(', ')}) - ${orderRef}`;
+
+        if (openPreviewModal) {
+          openPreviewModal(sliceRes.blobUrl, title);
+        }
+
+        const printWin = window.open(sliceRes.blobUrl, '_blank');
+        if (!printWin && !openPreviewModal) {
+          alert('Przeglądarka zablokowała wyskakujące okno wydruku. Zezwól na wyskakujące okna dla pestkalink.pl');
+        }
+      } catch (err) {
+        alert(`Błąd wycinania stron: ${err.message || err}`);
+        btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">print</span><span>DRUKUJ WYBRANE STRONY (1:1)</span>`;
+        btn.disabled = false;
+      }
+    });
+
+  } catch (err) {
+    console.error('Błąd otwierania selektora stron PDF:', err);
+    alert(`Błąd odczytu pliku PDF: ${err.message || err}`);
+  } finally {
+    if (onStatusChange) onStatusChange(null);
+  }
+}
+
+/**
+ * High-level function: opens page selector modal so user can pick exact pages
+ */
+export async function openAndPrintEcBarcodePdf(order, { openModal = null, onStatusChange = null } = {}) {
+  return await openPdfPageSelectorModal(order, { openPreviewModal: openModal, onStatusChange });
+}
+
+/**
+ * Generate ZPL for thermal printer
+ */
 export function generateCustomerBarcodeZpl(item, orderRef, customerName = 'BLUEMAKE') {
   const sku = (item.sku || '00000').trim();
   const symbol = (item.symbol || item.sku || '').trim();
@@ -13,7 +407,6 @@ export function generateCustomerBarcodeZpl(item, orderRef, customerName = 'BLUEM
   const dateStr = new Date().toLocaleDateString('pl-PL');
   const ref = (orderRef || '').trim();
 
-  // ZPL for 50x30mm / 70x50mm Thermal Label with Code 128
   return `^XA
 ^PW400
 ^LL240
@@ -30,6 +423,9 @@ export function generateCustomerBarcodeZpl(item, orderRef, customerName = 'BLUEM
 ^XZ`;
 }
 
+/**
+ * Standard synthetic label generator (HTML/JsBarcode fallback)
+ */
 export function printCustomerLabelsHtml(orderOrCustomer, customItems = null) {
   let orderRef = '';
   let customerName = 'EC Engineering';
@@ -50,13 +446,12 @@ export function printCustomerLabelsHtml(orderOrCustomer, customItems = null) {
     return;
   }
 
-  // Filter out items with 0 qty if specific produced quantities exist
   const hasProduced = rawItems.some(it => it.producedQty !== undefined && parseFloat(it.producedQty) > 0);
   const items = hasProduced ? rawItems.filter(it => (it.producedQty !== undefined ? parseFloat(it.producedQty) : (parseFloat(it.orderedQty) || 1)) > 0) : rawItems;
 
   const dateStr = new Date().toLocaleDateString('pl-PL');
 
-  const labelsHtml = items.map((item, idx) => {
+  const labelsHtml = items.map((item) => {
     const sku = (item.sku || '00000').trim();
     const symbol = (item.symbol || item.sku || '').trim();
     const name = (item.name || '').replace(`${symbol} - `, '').trim();

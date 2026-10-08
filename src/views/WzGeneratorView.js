@@ -24,7 +24,8 @@ import {
   syncOrderFromWzHistory,
   normalizeOrderRef
 } from '../services/wzStorageService.js';
-import { printCustomerLabelsHtml } from '../utils/customerLabelGenerator.js';
+import { printCustomerLabelsHtml, openAndPrintEcBarcodePdf } from '../utils/customerLabelGenerator.js';
+import { findItemDrawingPdf } from '../services/drawingService.js';
 
 export function renderWzGeneratorView(container, navigateTo, params = null) {
   const currentOp = getCurrentOperator();
@@ -157,6 +158,14 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
     items: initialItems
   };
 
+  // If specific historical WZ was requested to be viewed
+  if (params?.loadWzId) {
+    const found = getWzHistory().find(w => w.id === params.loadWzId);
+    if (found) {
+      wzState = JSON.parse(JSON.stringify(found));
+    }
+  }
+
   let odooProductsList = [];
   let showHistoryModal = false;
   let activeHistoryTab = 'drafts'; // 'drafts' | 'issued'
@@ -166,7 +175,9 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
   let showOdooPickerModal = false;
   let targetPickerItemIdx = null;
   let isProcessing = false;
-  let statusBannerMsg = fromOrder ? `✅ Wczytano dane zlecenia ${fromOrder.orderRef} dla "${initialCustomer.name}" (${initialItems.length} pozycji). Gotowe do wystawienia WZ!` : '';
+  let statusBannerMsg = params?.loadWzId && wzState 
+    ? `📄 Wczytano dokument WZ ${wzState.formattedNumber || wzState.wzNum} dla "${wzState.customer?.name || 'Klient'}" (Data: ${wzState.issueDate}).`
+    : (fromOrder ? `✅ Wczytano dane zlecenia ${fromOrder.orderRef} dla "${initialCustomer.name}" (${initialItems.length} pozycji). Gotowe do wystawienia WZ!` : '');
   let statusBannerType = 'success'; // 'success' | 'info' | 'error'
 
   // Asynchronously fetch Odoo products for SKU autocomplete
@@ -727,6 +738,15 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
                       >
                         <span class="material-symbols-outlined text-[15px]">inventory_2</span>
                         <span>BAZA</span>
+                      </button>
+                      <button 
+                        type="button" 
+                        class="btn-preview-wz-item-drawing bg-rose-950/70 hover:bg-rose-900 text-rose-300 border border-rose-700/60 px-2 py-1.5 rounded text-[11px] font-bold whitespace-nowrap flex items-center gap-1 active:scale-95 cursor-pointer" 
+                        data-idx="${idx}" 
+                        title="Podgląd rysunku PDF dla tego detalu"
+                      >
+                        <span class="material-symbols-outlined text-[15px]">picture_as_pdf</span>
+                        <span>RYS</span>
                       </button>
                     </div>
 
@@ -2002,6 +2022,17 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
             deductFromOdoo: wzState.deductFromOdoo
           });
 
+          // Mark current state as issued and clear temporary drafts
+          wzState.status = 'ISSUED';
+          wzState.isDraft = false;
+          try {
+            localStorage.removeItem('bluemake_wz_active_draft');
+            sessionStorage.removeItem('bluemake_wz_prefill');
+            if (typeof window !== 'undefined') {
+              window.__ACTIVE_WZ_ORDER_PARAMS = null;
+            }
+          } catch (e) {}
+
           // 3. Increment monthly counter
           incrementWzCounter(wzState.wzNum, wzState.wzMonth, wzState.wzYear);
 
@@ -2021,6 +2052,15 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
           statusBannerType = 'error';
           statusBannerMsg = `Błąd zapisu w Odoo: ${err.message || err}. Pobrano PDF i zapisano kopię lokalną.`;
           saveWzDocument({ ...wzState, status: 'ISSUED', isDraft: false });
+          wzState.status = 'ISSUED';
+          wzState.isDraft = false;
+          try {
+            localStorage.removeItem('bluemake_wz_active_draft');
+            sessionStorage.removeItem('bluemake_wz_prefill');
+            if (typeof window !== 'undefined') {
+              window.__ACTIVE_WZ_ORDER_PARAMS = null;
+            }
+          } catch (e) {}
           await downloadPdfFile(wzState);
         } finally {
           isProcessing = false;
@@ -2029,17 +2069,64 @@ export function renderWzGeneratorView(container, navigateTo, params = null) {
       });
     }
 
-    // Print Barcode Shipping Labels for current WZ items
+    // Print Barcode Shipping Labels for current WZ items (Slices EC original PDF if order found, fallback to thermal)
     const btnPrintBarcodes = container.querySelector('#btn-print-wz-barcodes');
     if (btnPrintBarcodes) {
-      btnPrintBarcodes.addEventListener('click', () => {
-        printCustomerLabelsHtml({
-          orderRef: wzState.orderNumber || wzState.orderId || '',
-          customerName: wzState.customer?.name || 'EC Engineering',
-          items: wzState.items
-        });
+      btnPrintBarcodes.addEventListener('click', async () => {
+        const orderRef = (wzState.orderNumber || wzState.orderId || '').trim();
+        const allOrders = getSavedOrders();
+        const matchedOrder = allOrders.find(o => 
+          (o.orderRef && normalizeOrderRef(o.orderRef) === normalizeOrderRef(orderRef)) ||
+          (o.odooOrderName && normalizeOrderRef(o.odooOrderName) === normalizeOrderRef(orderRef))
+        );
+
+        if (matchedOrder) {
+          const origHtml = btnPrintBarcodes.innerHTML;
+          btnPrintBarcodes.innerHTML = `<span class="material-symbols-outlined animate-spin text-[16px]">sync</span><span>Wycinanie stron EC...</span>`;
+          btnPrintBarcodes.disabled = true;
+          try {
+            await openAndPrintEcBarcodePdf(matchedOrder);
+          } finally {
+            btnPrintBarcodes.innerHTML = origHtml;
+            btnPrintBarcodes.disabled = false;
+          }
+        } else {
+          printCustomerLabelsHtml({
+            orderRef: orderRef,
+            customerName: wzState.customer?.name || 'EC Engineering',
+            items: wzState.items
+          });
+        }
       });
     }
+
+    // Preview drawing PDF for item in WZ
+    container.querySelectorAll('.btn-preview-wz-item-drawing').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.getAttribute('data-idx'), 10);
+        const item = wzState.items[idx];
+        if (!item) return;
+
+        const origHtml = btn.innerHTML;
+        btn.innerHTML = `<span class="material-symbols-outlined animate-spin text-[15px]">sync</span>`;
+        btn.disabled = true;
+
+        try {
+          const res = await findItemDrawingPdf(item.sku, item.symbol || item.name, item.name);
+          if (res && res.url) {
+            window.open(res.url, '_blank');
+          } else {
+            alert(`ℹ️ Brak podpiętego rysunku technicznego dla detalu "${item.name}".`);
+          }
+        } catch (err) {
+          alert(`Błąd otwierania rysunku: ${err.message || err}`);
+        } finally {
+          btn.innerHTML = origHtml;
+          btn.disabled = false;
+        }
+      });
+    });
 
     const btnDownloadHtml = container.querySelector('#btn-download-wz-html');
     if (btnDownloadHtml) {

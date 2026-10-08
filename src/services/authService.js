@@ -159,6 +159,29 @@ export function saveCurrentOperator(operator) {
   localStorage.setItem(LOCAL_STORAGE_OPERATOR_KEY, JSON.stringify(operator));
 }
 
+export function switchActiveOperator(operatorIdOrName) {
+  const users = getUsers();
+  const found = users.find(u => 
+    u.id === Number(operatorIdOrName) || 
+    (u.name && u.name.toLowerCase() === String(operatorIdOrName).toLowerCase())
+  );
+  if (found) {
+    saveCurrentOperator(found);
+    localStorage.setItem(LOCAL_STORAGE_LOGGED_IN_KEY, 'true');
+    logAuditAction({
+      category: 'AUTH',
+      action: '🔄 PRZEŁĄCZENIE OPERATORA',
+      details: `Przełączono aktywnego operatora na: ${found.name} (${found.roleLabel || found.role})`,
+      operator: found.name,
+      operatorRole: found.role,
+      status: 'SUCCESS'
+    });
+    window.dispatchEvent(new CustomEvent('bluemake_operator_changed', { detail: found }));
+    return found;
+  }
+  return null;
+}
+
 export function logoutOperator() {
   const op = getCurrentOperator();
   if (op) {
@@ -297,19 +320,63 @@ async function sendOdooSecurityAlert(targetUserName, attemptsCount, lockDuration
 /**
  * Universal Audit Logging - Complete History of all System Actions
  */
-export function logAuditAction({ 
-  id = null,
-  action, 
-  details, 
-  operator = null, 
-  operatorRole = null, 
-  sku = null, 
-  category = 'SYSTEM', 
-  status = 'SUCCESS', 
-  error = null, 
-  metadata = null 
-}) {
+export function logAuditAction(firstArg, secondArg = null, thirdArg = null) {
   try {
+    let id = null;
+    let action = 'OPERACJA';
+    let details = '';
+    let operator = null;
+    let operatorRole = null;
+    let sku = null;
+    let category = 'SYSTEM';
+    let status = 'SUCCESS';
+    let error = null;
+    let metadata = null;
+
+    if (typeof firstArg === 'string') {
+      const actionMap = {
+        'ZMIANA_ILOSCI_WYPRODUKOWANEJ': '🔢 ZMIANA WYKONANYCH SZTUK',
+        'ZMIANA_STATUSU_ZAMOWIENIA': '🏷️ ZMIANA STATUSU ZLECENIA',
+        'ZMIANA_STATUSU_POZYCJI': '⚙️ ZMIANA STATUSU DETALU',
+        'ARCHIWIZACJA_ZAMOWIENIA': '📦 ARCHIWIZACJA ZLECENIA',
+        'PRZYWROCENIE_Z_ARCHIWUM': '🔄 PRZYWRÓCENIE Z ARCHIWUM',
+        'USUNIECIE_ZAMOWIENIA': '🗑️ USUNIĘCIE ZLECENIA',
+        'PODPIECIE_PDF_ZLECENIA': '📎 PODPIĘCIE PLIKU PDF',
+        'UTWORZENIE_ZAMOWIENIA': '✨ NOWE ZLECENIE'
+      };
+      action = actionMap[firstArg] || firstArg;
+      category = 'ORDER';
+
+      if (secondArg && typeof secondArg === 'object') {
+        const parts = [];
+        if (secondArg.numer) parts.push(`Zlecenie: ${secondArg.numer}`);
+        if (secondArg.symbol) parts.push(`Detal: ${secondArg.symbol}`);
+        if (secondArg.producedQty !== undefined) parts.push(`Ilość: ${secondArg.producedQty} szt.`);
+        if (secondArg.status) parts.push(`Status: ${secondArg.status}`);
+        if (secondArg.oldStatus) parts.push(`(Poprzednio: ${secondArg.oldStatus})`);
+        if (secondArg.pdfName) parts.push(`Plik: ${secondArg.pdfName}`);
+        if (secondArg.orderId && !secondArg.numer) parts.push(`ID: ${secondArg.orderId}`);
+        details = parts.join(' • ') || JSON.stringify(secondArg);
+        sku = secondArg.symbol || secondArg.sku || null;
+        operator = secondArg.operator || thirdArg;
+        metadata = secondArg;
+      } else {
+        details = String(secondArg || '');
+        operator = thirdArg;
+      }
+    } else if (firstArg && typeof firstArg === 'object') {
+      id = firstArg.id || null;
+      action = firstArg.action || 'OPERACJA';
+      details = firstArg.details || '';
+      operator = firstArg.operator || null;
+      operatorRole = firstArg.operatorRole || null;
+      sku = firstArg.sku || null;
+      category = firstArg.category || 'SYSTEM';
+      status = firstArg.status || 'SUCCESS';
+      error = firstArg.error || null;
+      metadata = firstArg.metadata || null;
+    }
+
     const curOp = getCurrentOperator();
     const opName = operator || curOp?.name || 'Operator';
     const opRole = operatorRole || curOp?.role || (opName === 'Paweł' || opName === 'Mateusz' ? 'ADMIN' : 'OPERATOR');
@@ -328,11 +395,11 @@ export function logAuditAction({
       dateOnly: now.toISOString().split('T')[0],
       operator: opName,
       operatorRole: opRole,
-      category: category || 'SYSTEM', // 'STOCK', 'EMPLOYEE', 'WZ', 'JAW', 'ORDER', 'AUTH', 'CONFIG', 'SYSTEM'
+      category: category || 'SYSTEM',
       action: action || 'OPERACJA',
       details: details || '',
       sku: sku || '',
-      status: status || 'SUCCESS', // 'SUCCESS', 'SYNCHRONIZED', 'PENDING', 'ERROR', 'WARNING', 'INFO'
+      status: status || 'SUCCESS',
       error: error || null,
       metadata: metadata || null
     };
@@ -345,6 +412,16 @@ export function logAuditAction({
     
     // Keep last 1000 actions in persistent storage
     localStorage.setItem(LOCAL_STORAGE_AUDIT_LOGS_KEY, JSON.stringify(logs.slice(0, 1000)));
+
+    // Asynchronously push to central server so ALL operators (Paweł, Mateusz, etc.) see it on all devices
+    try {
+      fetch('/api/sync/audit-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entry })
+      }).catch(() => {});
+    } catch (_) {}
+
     return entry;
   } catch (e) {
     console.warn('Could not save audit log:', e);
@@ -359,6 +436,15 @@ export function updateAuditLogStatus(id, newStatus, errorMsg = null) {
       found.status = newStatus;
       if (errorMsg !== undefined) found.error = errorMsg;
       localStorage.setItem(LOCAL_STORAGE_AUDIT_LOGS_KEY, JSON.stringify(logs));
+
+      try {
+        fetch('/api/sync/audit-logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ entry: found })
+        }).catch(() => {});
+      } catch (_) {}
+
       return true;
     }
   } catch (e) {
@@ -388,8 +474,56 @@ export function getAuditLogs() {
   }
 }
 
+/**
+ * Fetch and merge audit logs from central server (loads actions by Mateusz and other operators)
+ */
+export async function fetchServerAuditLogs() {
+  try {
+    const res = await fetch('/api/sync/audit-logs');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.logs)) {
+        const local = getAuditLogs();
+        const map = new Map();
+        local.forEach(l => { if (l && l.id) map.set(l.id, l); });
+        data.logs.forEach(l => { if (l && l.id) map.set(l.id, l); });
+
+        const merged = Array.from(map.values()).sort((a, b) => {
+          const timeA = new Date(a.timestamp || a.id).getTime() || 0;
+          const timeB = new Date(b.timestamp || b.id).getTime() || 0;
+          return timeB - timeA;
+        });
+
+        localStorage.setItem(LOCAL_STORAGE_AUDIT_LOGS_KEY, JSON.stringify(merged.slice(0, 1500)));
+
+        // If local had unsynced entries, sync merged collection back to server
+        if (local.length > data.logs.length) {
+          fetch('/api/sync/audit-logs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ logs: merged })
+          }).catch(() => {});
+        }
+        return merged;
+      }
+    }
+  } catch (e) {
+    console.warn('Could not fetch server audit logs:', e);
+  }
+  return getAuditLogs();
+}
+
+// Background initial sync
+setTimeout(() => {
+  fetchServerAuditLogs().catch(() => {});
+}, 1000);
+
 export function clearAuditLogs() {
   localStorage.setItem(LOCAL_STORAGE_AUDIT_LOGS_KEY, JSON.stringify([]));
   localStorage.removeItem('odoo_sync_history');
   localStorage.removeItem('bluemake_audit_logs_v3');
+  try {
+    fetch('/api/sync/audit-logs', { method: 'DELETE' }).catch(() => {});
+  } catch (_) {}
 }
+
