@@ -60,7 +60,24 @@ export function renderOrderImportView(container, navigateTo) {
   let selectedCommentPhotoPreview = null;
   let lightboxImageUrl = null;
 
+  let isViewActive = true;
+
+  function isOrdersRouteActive() {
+    if (!isViewActive) return false;
+    const hash = window.location.hash || '';
+    const clean = hash.replace(/^#\/?/, '').trim().split('?')[0];
+    return clean === 'orders';
+  }
+
+  function cleanup() {
+    isViewActive = false;
+    if (pollInterval) clearInterval(pollInterval);
+    window.removeEventListener('focus', onFocusHandler);
+    window.removeEventListener('bluemake_orders_synced', onOrdersSynced);
+  }
+
   async function syncAllData(silent = false) {
+    if (!isOrdersRouteActive()) return;
     if (isSyncing) return;
     isSyncing = true;
     try {
@@ -70,6 +87,10 @@ export function renderOrderImportView(container, navigateTo) {
         fetchComments(),
         fetchServerAuditLogs()
       ]);
+      if (!isOrdersRouteActive() || !container.isConnected) {
+        cleanup();
+        return;
+      }
       if (comments) orderComments = comments;
       if (logs) centralAuditLogs = logs;
       renderUI();
@@ -85,10 +106,8 @@ export function renderOrderImportView(container, navigateTo) {
 
   // Periodic polling every 8s to sync changes between Paweł and Mateusz in real-time
   const pollInterval = setInterval(() => {
-    if (!container.isConnected) {
-      clearInterval(pollInterval);
-      window.removeEventListener('focus', onFocusHandler);
-      window.removeEventListener('bluemake_orders_synced', onOrdersSynced);
+    if (!container.isConnected || !isOrdersRouteActive()) {
+      cleanup();
       return;
     }
     const isEditing = document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName);
@@ -104,6 +123,10 @@ export function renderOrderImportView(container, navigateTo) {
         fetchComments(),
         fetchServerAuditLogs()
       ]).then(([orders, wzs, comments, logs]) => {
+        if (!isOrdersRouteActive() || !container.isConnected) {
+          cleanup();
+          return;
+        }
         let changed = false;
         if (comments && JSON.stringify(comments) !== JSON.stringify(orderComments)) {
           orderComments = comments;
@@ -121,11 +144,19 @@ export function renderOrderImportView(container, navigateTo) {
   }, 8000);
 
   const onFocusHandler = () => {
+    if (!isOrdersRouteActive() || !container.isConnected) {
+      cleanup();
+      return;
+    }
     syncAllData(true);
   };
   window.addEventListener('focus', onFocusHandler);
 
   const onOrdersSynced = (e) => {
+    if (!isOrdersRouteActive() || !container.isConnected) {
+      cleanup();
+      return;
+    }
     if (e.detail?.source === 'server') {
       renderUI();
     }
@@ -433,6 +464,10 @@ export function renderOrderImportView(container, navigateTo) {
   }
 
   function renderUI() {
+    if (!isOrdersRouteActive() || !container.isConnected) {
+      cleanup();
+      return;
+    }
     const allOrders = getSavedOrders();
     const availableYears = getAvailableOrderYears();
     const annualSummary = getAnnualOrdersSummary();
@@ -2708,4 +2743,6 @@ export function renderOrderImportView(container, navigateTo) {
 
   // Initial render
   renderUI();
+
+  return cleanup;
 }

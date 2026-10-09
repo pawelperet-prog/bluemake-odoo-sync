@@ -16,6 +16,7 @@ const app = document.getElementById('app');
 
 let currentRouteParams = null;
 let isInternalNavigation = false;
+let currentViewCleanup = null;
 
 export function parseHash() {
   const hash = window.location.hash || '';
@@ -77,43 +78,57 @@ function renderRoute(route, params = null) {
     return;
   }
 
+  if (typeof currentViewCleanup === 'function') {
+    try {
+      currentViewCleanup();
+    } catch (e) {
+      console.warn('View cleanup error:', e);
+    }
+    currentViewCleanup = null;
+  }
+
   app.innerHTML = '';
   const effectiveParams = params !== null ? params : currentRouteParams;
 
+  let cleanupFn = null;
   switch (route) {
     case 'login':
-      renderLoginView(app, navigateTo);
+      cleanupFn = renderLoginView(app, navigateTo);
       break;
     case 'dashboard':
     case 'warehouse':
-      renderDashboardView(app, navigateTo);
+      cleanupFn = renderDashboardView(app, navigateTo);
       break;
     case 'scanner':
-      renderScannerView(app, navigateTo);
+      cleanupFn = renderScannerView(app, navigateTo);
       break;
     case 'product':
-      renderProductView(app, navigateTo, effectiveParams);
+      cleanupFn = renderProductView(app, navigateTo, effectiveParams);
       break;
     case 'history':
-      renderHistoryView(app, navigateTo);
+      cleanupFn = renderHistoryView(app, navigateTo);
       break;
     case 'valuation':
-      renderValuationView(app, navigateTo);
+      cleanupFn = renderValuationView(app, navigateTo);
       break;
     case 'orders':
-      renderOrderImportView(app, navigateTo);
+      cleanupFn = renderOrderImportView(app, navigateTo);
       break;
     case 'jaws':
-      renderSoftJawsView(app, navigateTo, effectiveParams);
+      cleanupFn = renderSoftJawsView(app, navigateTo, effectiveParams);
       break;
     case 'wz':
-      renderWzGeneratorView(app, navigateTo, effectiveParams);
+      cleanupFn = renderWzGeneratorView(app, navigateTo, effectiveParams);
       break;
     case 'employees':
-      renderEmployeesView(app, navigateTo);
+      cleanupFn = renderEmployeesView(app, navigateTo);
       break;
     default:
-      renderDashboardView(app, navigateTo);
+      cleanupFn = renderDashboardView(app, navigateTo);
+  }
+
+  if (typeof cleanupFn === 'function') {
+    currentViewCleanup = cleanupFn;
   }
 }
 
